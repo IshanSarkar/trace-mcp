@@ -103,8 +103,12 @@ function extractSchemaCreate(
   timestamp: string | undefined,
   migrations: RawMigration[],
 ): void {
+  // Closure shape: `function (Blueprint $table) {`, plus real-world variants —
+  // `static function`, `use (...)` capture, and `: void` return types
+  // (GH#1444: strict_types projects use `function (Blueprint $table): void`,
+  // which the old `\)\s*\{` tail silently missed → near-empty schema).
   const regex =
-    /Schema::create\s*\(\s*['"]([^'"]+)['"]\s*,\s*function\s*\([^)]*\)\s*\{([\s\S]*?)\}\s*\)/g;
+    /Schema::create\s*\(\s*['"]([^'"]+)['"]\s*,\s*(?:static\s+)?function\s*\([^)]*\)\s*(?:use\s*\([^)]*\)\s*)?(?::\s*[^{]+)?\{([\s\S]*?)\}\s*\)/g;
 
   let match: RegExpExecArray | null;
   while ((match = regex.exec(source)) !== null) {
@@ -127,8 +131,9 @@ function extractSchemaTable(
   timestamp: string | undefined,
   migrations: RawMigration[],
 ): void {
+  // Same closure variants as extractSchemaCreate (GH#1444).
   const regex =
-    /Schema::table\s*\(\s*['"]([^'"]+)['"]\s*,\s*function\s*\([^)]*\)\s*\{([\s\S]*?)\}\s*\)/g;
+    /Schema::table\s*\(\s*['"]([^'"]+)['"]\s*,\s*(?:static\s+)?function\s*\([^)]*\)\s*(?:use\s*\([^)]*\)\s*)?(?::\s*[^{]+)?\{([\s\S]*?)\}\s*\)/g;
 
   let match: RegExpExecArray | null;
   while ((match = regex.exec(source)) !== null) {

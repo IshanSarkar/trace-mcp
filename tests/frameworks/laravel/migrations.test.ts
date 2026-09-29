@@ -131,6 +131,46 @@ return new class extends Migration {
     });
   });
 
+  describe('closure variants (GH#1444 regression)', () => {
+    const makeSource = (closure: string) => `<?php
+declare(strict_types=1);
+return new class extends Migration {
+    public function up(): void {
+        Schema::create('widgets', ${closure} {
+            $table->id();
+            $table->string('name');
+        });
+        Schema::table('gadgets', ${closure} {
+            $table->string('color')->nullable();
+        });
+    }
+};`;
+
+    it.each([
+      'function (Blueprint $table)',
+      'function (Blueprint $table): void',
+      'static function (Blueprint $table)',
+      'static function (Blueprint $table): void',
+      'function (Blueprint $table) use ($tenant): void',
+    ])('parses Schema::create/table with closure: %s', (closure) => {
+      const { migrations } = extractMigrations(
+        makeSource(closure),
+        'database/migrations/2024_04_01_000000_create_widgets_table.php',
+      );
+      expect(migrations).toHaveLength(2);
+
+      const create = migrations.find((m) => m.operation === 'create')!;
+      expect(create.tableName).toBe('widgets');
+      expect(create.columns!.map((c) => (c as any).name)).toEqual(
+        expect.arrayContaining(['id', 'name']),
+      );
+
+      const alter = migrations.find((m) => m.operation === 'alter')!;
+      expect(alter.tableName).toBe('gadgets');
+      expect(alter.columns!.map((c) => (c as any).name)).toContain('color');
+    });
+  });
+
   describe('extractTimestamp()', () => {
     it('extracts timestamp from standard migration filename', () => {
       expect(extractTimestamp('database/migrations/2024_01_15_143022_create_users_table.php')).toBe(

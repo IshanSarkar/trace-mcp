@@ -19,7 +19,23 @@ if (!parentPort) {
   throw new Error('extract-worker.ts must be loaded as a worker_thread');
 }
 
-const registry = PluginRegistry.createWithDefaults();
+// One plugin registry per rootPath. A module-global shared registry cached
+// framework detection from the first project and applied it to all others
+// (GH#1441: Laravel projects indexed with 0 routes/migrations). The main
+// thread gives each project its own registry (project-manager), so the
+// worker mirrors that here. (Registry detection is additionally keyed by
+// rootPath, so a shared registry is correct — this is belt-and-braces
+// isolation matching the main-thread architecture.)
+const registryByRoot = new Map<string, PluginRegistry>();
+
+function getRegistry(rootPath: string): PluginRegistry {
+  let r = registryByRoot.get(rootPath);
+  if (!r) {
+    r = PluginRegistry.createWithDefaults();
+    registryByRoot.set(rootPath, r);
+  }
+  return r;
+}
 
 // Cache one FileExtractor per rootPath. The wsPluginCache + parser cache
 // live inside the extractor, so reusing it across requests is critical.
@@ -39,7 +55,7 @@ function getExtractor(rootPath: string, workspaces: WorkspaceInfo[]): FileExtrac
   let e = extractorByRoot.get(rootPath);
   if (!e) {
     e = new FileExtractor({
-      registry,
+      registry: getRegistry(rootPath),
       rootPath,
       workspaces,
       gitignore: undefined,
@@ -72,6 +88,7 @@ parentPort.on('message', async (msg: InboundMessage) => {
   if ('kind' in msg && msg.kind === 'drop_project') {
     extractorByRoot.delete(msg.rootPath);
     projectContextByRoot.delete(msg.rootPath);
+    registryByRoot.delete(msg.rootPath);
     // TRA-1577: the worker's own per-file tree-sitter cache is scoped by the
     // same rootPath — drop it so removed projects free their WASM trees.
     dropTreeCacheScope(msg.rootPath);

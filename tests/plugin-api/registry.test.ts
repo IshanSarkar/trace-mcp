@@ -1,5 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, describe, expect, it } from 'vitest';
 import { ok } from '../../src/errors.js';
+import { buildProjectContext } from '../../src/indexer/project-context.js';
 import { PluginRegistry } from '../../src/plugin-api/registry.js';
 import type {
   FileParseResult,
@@ -110,5 +114,108 @@ describe('plugin registry', () => {
     const result = registry.getActiveFrameworkPlugins(mockCtx);
     expect(result.isOk()).toBe(true);
     expect(result._unsafeUnwrap().map((p) => p.manifest.name)).toEqual(['inertia']);
+  });
+
+  describe('multi-root framework detection cache (GH#1441 regression)', () => {
+    const ctxFor = (rootPath: string): ProjectContext => ({
+      rootPath,
+      configFiles: [],
+      detectedVersions: [],
+      allDependencies: [],
+    });
+
+    it('does not leak one project detection into another on a shared registry', () => {
+      const registry = new PluginRegistry();
+      registry.registerFrameworkPlugin({
+        manifest: { name: 'proj-a-fw', version: '1.0.0', priority: 0 },
+        detect: (ctx) => ctx.rootPath === '/projects/a',
+        registerSchema: () => ({}),
+      });
+
+      // Both query orders must give per-root answers: the daemon worker pool
+      // shares one registry across projects, and the first project used to
+      // stamp its frameworks onto every later one (0 routes/migrations).
+      for (const first of ['/projects/a', '/projects/b'] as const) {
+        const second = first === '/projects/a' ? '/projects/b' : '/projects/a';
+        const r1 = registry.getActiveFrameworkPlugins(ctxFor(first));
+        const r2 = registry.getActiveFrameworkPlugins(ctxFor(second));
+        expect(r1.isOk() && r2.isOk()).toBe(true);
+        const names = (root: string) =>
+          (root === first ? r1 : r2)._unsafeUnwrap().map((p) => p.manifest.name);
+        expect(names('/projects/a')).toEqual(['proj-a-fw']);
+        expect(names('/projects/b')).toEqual([]);
+      }
+    });
+
+    it('clearCaches() invalidates every root', () => {
+      let detectCalls = 0;
+      const registry = new PluginRegistry();
+      registry.registerFrameworkPlugin({
+        manifest: { name: 'counted', version: '1.0.0', priority: 0 },
+        detect: () => {
+          detectCalls++;
+          return true;
+        },
+        registerSchema: () => ({}),
+      });
+
+      registry.getActiveFrameworkPlugins(ctxFor('/projects/a'));
+      registry.getActiveFrameworkPlugins(ctxFor('/projects/b'));
+      expect(detectCalls).toBe(2);
+      // Cached: no more detect calls.
+      registry.getActiveFrameworkPlugins(ctxFor('/projects/a'));
+      registry.getActiveFrameworkPlugins(ctxFor('/projects/b'));
+      expect(detectCalls).toBe(2);
+
+      registry.clearCaches();
+      registry.getActiveFrameworkPlugins(ctxFor('/projects/a'));
+      registry.getActiveFrameworkPlugins(ctxFor('/projects/b'));
+      expect(detectCalls).toBe(4);
+    });
+
+    describe('shared defaults registry over real project dirs', () => {
+      let tmpHome = '';
+      afterEach(() => {
+        if (tmpHome) rmSync(tmpHome, { recursive: true, force: true });
+        tmpHome = '';
+      });
+
+      const setupMixedRoots = () => {
+        tmpHome = mkdtempSync(join(tmpdir(), 'trace-mcp-gh1441-'));
+        const laravelRoot = join(tmpHome, 'laravel-app');
+        const plainRoot = join(tmpHome, 'plain-app');
+        mkdirSync(laravelRoot, { recursive: true });
+        mkdirSync(plainRoot, { recursive: true });
+        writeFileSync(
+          join(laravelRoot, 'composer.json'),
+          JSON.stringify({ require: { 'laravel/framework': '^11.0' } }),
+          'utf-8',
+        );
+        writeFileSync(join(plainRoot, 'package.json'), JSON.stringify({}), 'utf-8');
+        return { laravelRoot, plainRoot };
+      };
+
+      it.each([['laravel-first'], ['plain-first']])(
+        'detects laravel only for the laravel root (%s query order)',
+        (order) => {
+          const { laravelRoot, plainRoot } = setupMixedRoots();
+          const registry = PluginRegistry.createWithDefaults();
+          const laravelCtx = buildProjectContext(laravelRoot);
+          const plainCtx = buildProjectContext(plainRoot);
+
+          const [firstCtx, secondCtx] =
+            order === 'laravel-first' ? [laravelCtx, plainCtx] : [plainCtx, laravelCtx];
+          const rFirst = registry.getActiveFrameworkPlugins(firstCtx);
+          const rSecond = registry.getActiveFrameworkPlugins(secondCtx);
+          expect(rFirst.isOk() && rSecond.isOk()).toBe(true);
+
+          const names = (r: typeof rFirst) => r._unsafeUnwrap().map((p) => p.manifest.name);
+          const laravelNames = names(order === 'laravel-first' ? rFirst : rSecond);
+          const plainNames = names(order === 'laravel-first' ? rSecond : rFirst);
+          expect(laravelNames).toContain('laravel');
+          expect(plainNames).not.toContain('laravel');
+        },
+      );
+    });
   });
 });
