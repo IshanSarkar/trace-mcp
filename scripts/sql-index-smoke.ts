@@ -31,7 +31,7 @@ function loadExpectations(): SpikeReport {
   try {
     return JSON.parse(fs.readFileSync(spikeReportPath, 'utf8')) as SpikeReport;
   } catch {
-    return { cte_count_ast: 1022, cte_count_regex_first_only: 171, files: 250 };
+    return { cte_count_ast: 1021, cte_count_regex_first_only: 171, files: 250 };
   }
 }
 
@@ -119,7 +119,9 @@ function main() {
 
   const expectedAst = expectations.cte_count_ast ?? 1022;
   const expectedRegex = expectations.cte_count_regex_first_only ?? 171;
-  const astWired = astExtractor > 0 && cteInQueries >= expectedAst * 0.99;
+  const cteDrift = expectedAst - cteInQueries;
+  const astWired =
+    astExtractor > 0 && cteInQueries >= expectedAst - 1 && cteInQueries <= expectedAst;
   const regexOnly =
     astExtractor === 0 && cteInQueries <= expectedRegex + 5 && cteInQueries >= expectedRegex - 5;
 
@@ -129,6 +131,7 @@ function main() {
     dbPath,
     sql_files_under_scripts_queries: sqlFiles,
     cte_symbols_scripts_queries: cteInQueries,
+    cte_drift_vs_spike: cteDrift,
     ast_extractor_symbol_rows: astExtractor,
     expected_from_spike: {
       cte_count_ast: expectedAst,

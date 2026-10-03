@@ -23,6 +23,7 @@
     "sql-corpus:p2-inventory": "tsx scripts/sql-corpus-p2-inventory.ts",
     "sql-python:loader-inventory": "tsx scripts/sql-python-loader-inventory.ts",
     "sql-index:smoke": "tsx scripts/sql-index-smoke.ts",
+    "sql-index:cte-diff": "tsx scripts/sql-index-cte-diff.ts",
     "test:recall:report": "tsx tests/recall-harness/runner.ts",
     "eval:embeddings": "node scripts/embedding-eval/run.mjs",
     "typecheck": "tsc --noEmit",

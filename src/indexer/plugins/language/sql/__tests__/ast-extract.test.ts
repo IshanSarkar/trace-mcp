@@ -14,4 +14,14 @@ describe('extractCtesFromTree', () => {
     expect(a?.lineStart).toBe(1);
     expect(a?.lineEnd).toBeGreaterThan(1);
   });
+
+  it('keeps one entry per CTE name (matches index symbolId)', async () => {
+    const sql = `WITH x AS (SELECT 1), outer AS (
+  WITH x AS (SELECT 2) SELECT * FROM x
+) SELECT * FROM outer`;
+    const tree = await parseSqlSource(sql);
+    const ctes = extractCtesFromTree(tree.rootNode);
+    tree.delete();
+    expect(ctes.map((c) => c.name).sort()).toEqual(['outer', 'x']);
+  });
 });

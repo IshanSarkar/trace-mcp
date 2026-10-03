@@ -24,10 +24,13 @@ function lineEndOf(node: Node): number {
 
 export function extractCtesFromTree(root: Node): ExtractedCte[] {
   const out: ExtractedCte[] = [];
+  /** Symbol IDs are `path::name#variable` — duplicate CTE names in one file collapse to one symbol. */
+  const seenNames = new Set<string>();
   const walk = (node: Node) => {
     if (node.type === 'cte') {
       const id = node.children.find((c) => c.type === 'identifier');
-      if (id) {
+      if (id && !seenNames.has(id.text)) {
+        seenNames.add(id.text);
         out.push({
           name: id.text,
           lineStart: lineStartOf(id),
