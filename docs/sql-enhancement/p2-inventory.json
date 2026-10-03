@@ -1,6 +1,6 @@
 {
   "corpus_root": "/Users/ishansarkar/BrightChamps - Work/BitBucket/data-analytics-python/scripts/queries",
-  "files": 250,
+  "files": 249,
   "features": [
     {
       "id": "recursive_cte",
@@ -78,9 +78,9 @@
       "id": "trivial_invalid_sql",
       "phase": "escalation",
       "pattern": "^\\s*selec\\b",
-      "file_count": 1,
+      "file_count": 0,
       "parse_ok": 0,
-      "parse_partial": 1
+      "parse_partial": 0
     }
   ],
   "files_with_features": {
@@ -92,7 +92,6 @@
     "business_cost_temp_offline_marketing_cost.sql": ["generate_series"],
     "business_cost_temp_operational_cost_pre_sales_cost.sql": ["generate_series"],
     "business_cost_temp_zoom_cost.sql": ["generate_series"],
-    "business_cost_test_cost.sql": ["trivial_invalid_sql"],
     "sm_availabilty.sql": ["generate_series"],
     "sm_availabilty_incremental.sql": ["generate_series"],
     "student_course_churn_etl_historical.sql": ["generate_series"],

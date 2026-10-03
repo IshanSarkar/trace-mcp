@@ -4,10 +4,10 @@
   "parser": "tree-sitter-sql (tree-sitter-wasm)",
   "preprocessor": "template_mustache + python_format_braces + bind_param + pg_distinct_on_join + pg_materialized_cte + pg_ilike_to_like + pg_at_time_zone_fold",
   "corpus_root": "/Users/ishansarkar/BrightChamps - Work/BitBucket/data-analytics-python/scripts/queries",
-  "elapsed_ms": 254,
-  "files": 250,
+  "elapsed_ms": 244,
+  "files": 249,
   "parse_status": {
-    "ok": 197,
+    "ok": 196,
     "partial": 53,
     "failed": 0
   },

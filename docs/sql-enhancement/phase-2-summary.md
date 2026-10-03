@@ -13,13 +13,13 @@
 | `ast-extract.ts` | CTEs + `object_reference` relation text |
 | `spike-parse.ts` | `ok` / `partial` / `failed` + structured result |
 
-## Corpus results (`scripts/queries`, 250 files)
+## Corpus results (`scripts/queries`, 249 files — current)
 
 | Metric | Regex (v3.34.6 index) | Tree-sitter spike |
 |--------|----------------------|-------------------|
-| CTE symbols | **171** (first `WITH` only) | **1022** (all `cte` nodes) |
+| CTE symbols | **171** (first `WITH` only) | **1021** (unique CTE names per file) |
 | Parse `ok` | n/a | **196** |
-| Parse `partial` (`hasError`) | n/a | **54** |
+| Parse `partial` (`hasError`) | n/a | **53** |
 | Parse `failed` | n/a | **0** |
 
 **Former hard failures (not planned):** `communication_etl_*.sql` failed because tree-sitter-sql does not parse chained `(expr AT TIME ZONE 'a') AT TIME ZONE 'b'`. Fixed with `normalizePgAtTimeZone()` in preprocess (parse-only; original SQL unchanged in repo).
@@ -30,7 +30,7 @@
 
 | Shim | In default pipeline? | Corpus `ok` / `partial` |
 |------|---------------------|-------------------------|
-| `AS MATERIALIZED` → `AS (` | yes | 196 / 54 (no net flip vs pre-shim baseline) |
+| `AS MATERIALIZED` → `AS (` | yes | 196 / 53 (current corpus; was 54 on 250-file baseline) |
 | `ILIKE` → `LIKE` | yes | same |
 | `::type` → `CAST(... AS type)` | **no** (helper only) | **185 / 65** when enabled — net regression |
 

@@ -21,7 +21,7 @@ Example: `base_ownership.sql` indexes `scoped` only; `emp_age` is missed. `incre
 
 ### 3. What SQL symbols are persisted?
 
-**OBSERVED** (data-analytics-python index DB): 250 `.sql` files; **171** symbols; all `kind=variable`, `metadata.sqlKind=cte`. No DDL symbols in this corpus (no `CREATE TABLE` in `scripts/queries/`).
+**OBSERVED** (data-analytics-python index DB, Phase 0): **250** `.sql` files; **171** symbols; all `kind=variable`, `metadata.sqlKind=cte`. *(Corpus now **249** files — see `tests/sql-corpus/corpus-metrics.json`.)* No DDL symbols in this corpus (no `CREATE TABLE` in `scripts/queries/`).
 
 ### 4. What SQL edges are persisted?
 

@@ -31,7 +31,7 @@ function loadExpectations(): SpikeReport {
   try {
     return JSON.parse(fs.readFileSync(spikeReportPath, 'utf8')) as SpikeReport;
   } catch {
-    return { cte_count_ast: 1021, cte_count_regex_first_only: 171, files: 250 };
+    return { cte_count_ast: 1021, cte_count_regex_first_only: 171, files: 249 };
   }
 }
 
@@ -136,7 +136,7 @@ function main() {
     expected_from_spike: {
       cte_count_ast: expectedAst,
       cte_count_regex_first_only: expectedRegex,
-      sql_files: expectations.files ?? 250,
+      sql_files: expectations.files ?? 249,
     },
     mode: astWired ? 'ast' : regexOnly ? 'regex_baseline' : 'unexpected',
     fixture_base_ownership_ctes: baseOwnershipCtes,

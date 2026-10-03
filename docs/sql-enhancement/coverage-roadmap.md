@@ -14,12 +14,12 @@ Goal: **include everything we can justify with evidence**, keep **fallback** for
 
 Preprocessor changes **must not** be written back to repo files — indexing only.
 
-## Current corpus signal (250 files, post–AT TIME ZONE fix)
+## Current corpus signal (249 files, post–AT TIME ZONE fix)
 
 | Status | Count | Meaning |
 |--------|------:|---------|
 | `ok` | 196 | Clean AST (`hasError === false`). |
-| `partial` | 54 | AST usable but `hasError` (local ERROR nodes). |
+| `partial` | 53 | AST usable but `hasError` (local ERROR nodes). |
 | `failed` | 0 | No recoverable structure (regex fallback). |
 
 Run: `npm run sql-corpus:spike` and `npm run sql-partial:diagnostics`.

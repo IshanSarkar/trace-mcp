@@ -7,7 +7,7 @@ Keep these aligned when working on SQL indexing:
 | **Released CLI / app** | **3.34.6** (`trace -v`) — regex-only SQL unless built from feature branch |
 | **AST development** | Branch `feat/sql-brightchamps-corpus` (fork: `IshanSarkar/trace-mcp`); local `dist/cli.js` after `npm run build` |
 | **Cursor MCP (AST)** | Point `mcp.json` at `../trace-mcp/dist/cli.js serve` (see benchmark `trace-sql-sync.json`) |
-| **Benchmark corpus** | `data-analytics-python/scripts/queries` (**250** `.sql` files; **277** repo-wide) |
+| **Benchmark corpus** | `data-analytics-python/scripts/queries` (**249** `.sql` files; **276** repo-wide) |
 
 ## Environment
 
@@ -19,7 +19,7 @@ Keep these aligned when working on SQL indexing:
 
 ```bash
 npm run test:sql-corpus      # 42 tests (skips if corpus missing)
-npm run sql-corpus:spike     # 196 ok / 54 partial / 0 failed; 1022 AST CTEs
+npm run sql-corpus:spike     # 196 ok / 53 partial / 0 failed; 1021 AST CTEs (249 files)
 npm run build && node dist/cli.js index "<data-analytics-python>" --force
 npm run sql-index:smoke      # index DB counts + emp_age metadata
 npm run sql-index:cte-diff   # per-file spike vs index CTE parity (exit 0)

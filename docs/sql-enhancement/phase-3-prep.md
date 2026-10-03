@@ -6,8 +6,8 @@ Phase 2 proved tree-sitter-sql on the corpus. This document locks **contracts an
 
 | Scope | `.sql` count | Role |
 |-------|-------------:|------|
-| `data-analytics-python/scripts/queries` | **250** | Indexed SQL corpus + spike metrics |
-| Whole `data-analytics-python` repo | **277** | Extra SQL outside `scripts/queries` (migrations, ad-hoc); out of v1 spike unless path added |
+| `data-analytics-python/scripts/queries` | **249** | Indexed SQL corpus + spike metrics |
+| Whole `data-analytics-python` repo | **276** | Extra SQL outside `scripts/queries` (migrations, ad-hoc); out of v1 spike unless path added |
 
 Run inventories:
 
@@ -87,8 +87,7 @@ No dynamic f-string SQL paths in v1.
 
 ## 7. Partial corpus hygiene
 
-- **54** `partial` files — acceptable; index CTEs with `parse_status: partial`.
-- **1** unflagged partial: `business_cost_test_cost.sql` (`selec *`) — invalid placeholder; exclude from quality gates or fix SQL in benchmark repo separately.
+- **53** `partial` files — acceptable; index CTEs with `parse_status: partial`.
 - Diagnostics: `partial_unflagged_files` in `sql-partial:diagnostics` output.
 
 ## 7b. UNNEST regression fixtures
@@ -100,7 +99,7 @@ All six corpus files tagged with `UNNEST` in P2 inventory are in `brightchamps-g
 1. `SqlLanguagePlugin.extractSymbols` → call `spikeParseSqlSource`; on `failed`, regex fallback (current patterns).
 2. Emit CTE symbols for **all** `spike.ctes` (not first-CTE regex).
 3. Attach `buildSqlFileSymbolMetadata(spike)` to file-level symbol or first symbol in file result.
-4. Re-index benchmark repo; assert ~1022 CTE symbols vs 171 baseline.
-5. Gate: `npm run test:sql-corpus` + `sql-corpus:spike` unchanged thresholds (196/54/0).
+4. Re-index benchmark repo; assert **1021** CTE symbols vs 171 regex baseline (249 files).
+5. Gate: `npm run test:sql-corpus` + `sql-corpus:spike` thresholds **196/53/0**, **1021** CTEs (`tests/sql-corpus/corpus-metrics.json`).
 6. After `node dist/cli.js index <project> --force`: `npm run sql-index:smoke` (counts + `sample_symbol_metadata` for `emp_age` on `base_ownership.sql`).
 7. Tests: `sql-plugin-metadata.test.ts` locks `parseStatus`, `preprocessorApplied`, line spans on plugin output.
