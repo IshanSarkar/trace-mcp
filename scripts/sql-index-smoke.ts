@@ -26,20 +26,62 @@ interface SpikeReport {
   cte_count_ast?: number;
   cte_count_regex_first_only?: number;
   files?: number;
+  expectations_source?: string;
 }
 
-function loadExpectations(): SpikeReport {
+function loadExpectations(projectRoot: string | null): SpikeReport {
+  const fromEnv = process.env.TRACE_SQL_SMOKE_METRICS;
+  if (fromEnv) {
+    try {
+      const raw = JSON.parse(fs.readFileSync(path.resolve(fromEnv), 'utf8')) as SpikeReport;
+      return { ...raw, expectations_source: fromEnv };
+    } catch {
+      /* fall through */
+    }
+  }
+
+  if (projectRoot) {
+    const syncPath = path.join(projectRoot, '.cursor/trace-sql-sync.json');
+    if (fs.existsSync(syncPath)) {
+      try {
+        const sync = JSON.parse(fs.readFileSync(syncPath, 'utf8')) as {
+          corpus?: {
+            cte_count_ast?: number;
+            cte_count_regex_first_only?: number;
+            sql_files_scripts_queries?: number;
+            files?: number;
+          };
+        };
+        const c = sync.corpus;
+        if (c?.cte_count_ast != null) {
+          return {
+            cte_count_ast: c.cte_count_ast,
+            cte_count_regex_first_only: c.cte_count_regex_first_only,
+            files: c.sql_files_scripts_queries ?? c.files,
+            expectations_source: syncPath,
+          };
+        }
+      } catch {
+        /* fall through */
+      }
+    }
+  }
+
   try {
-    const raw = JSON.parse(fs.readFileSync(metricsPath, 'utf8')) as SpikeReport & {
-      cte_count_ast?: number;
-    };
+    const raw = JSON.parse(fs.readFileSync(metricsPath, 'utf8')) as SpikeReport;
     return {
       files: raw.files,
       cte_count_ast: raw.cte_count_ast,
       cte_count_regex_first_only: raw.cte_count_regex_first_only,
+      expectations_source: metricsPath,
     };
   } catch {
-    return { cte_count_ast: 15, cte_count_regex_first_only: 5, files: 8 };
+    return {
+      cte_count_ast: 15,
+      cte_count_regex_first_only: 5,
+      files: 8,
+      expectations_source: 'builtin_fallback',
+    };
   }
 }
 
@@ -66,7 +108,7 @@ function main() {
   }
 
   const db = new Database(dbPath, { readonly: true });
-  const expectations = loadExpectations();
+  const expectations = loadExpectations(projectRoot);
 
   const sqlFiles = (
     db
@@ -159,6 +201,7 @@ function main() {
       cte_count_ast: expectedAst,
       cte_count_regex_first_only: expectedRegex,
       sql_files: expectations.files ?? 249,
+      source: expectations.expectations_source,
     },
     mode: astWired ? 'ast' : regexOnly ? 'regex_baseline' : 'unexpected',
     fixture_base_ownership_ctes: baseOwnershipCtes,

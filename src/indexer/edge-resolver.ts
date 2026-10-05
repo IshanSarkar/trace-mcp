@@ -43,6 +43,8 @@ import { resolvePythonTypeEdges as _resolvePyTypes } from './edge-resolvers/pyth
 import { resolveRubyImportEdges as _resolveRubyImports } from './edge-resolvers/ruby-imports.js';
 import { resolveRustImportEdges as _resolveRustImports } from './edge-resolvers/rust-imports.js';
 import { resolveSqlCteRefEdges as _resolveSqlCteRefs } from './edge-resolvers/sql-cte-refs.js';
+import { resolveSqlReadEdges as _resolveSqlReads } from './edge-resolvers/sql-reads.js';
+import { resolveLoadsSqlEdges as _resolveLoadsSql } from './edge-resolvers/loads-sql.js';
 import { resolveTestCoversEdges as _resolveTests } from './edge-resolvers/tests.js';
 import { resolveTypeScriptCallEdges as _resolveTsCalls } from './edge-resolvers/typescript-calls.js';
 import { resolveTypeScriptTypeEdges as _resolveTsTypes } from './edge-resolvers/typescript-types.js';
@@ -315,6 +317,16 @@ export class EdgeResolver {
   /** Pass 2i-sql: CTE → CTE edges within `.sql` files. */
   resolveSqlCteRefEdges(scope?: ChangeScope): void {
     timed('sql-cte-refs', () => _resolveSqlCteRefs(this.state, scope));
+  }
+
+  /** Pass 2i-sql-reads: CTE / file → database relation phantoms. */
+  resolveSqlReadEdges(scope?: ChangeScope): void {
+    timed('sql-reads', () => _resolveSqlReads(this.state, scope));
+  }
+
+  /** Pass 2i-sql-loads: Python → `.sql` file edges from static loader paths. */
+  resolveLoadsSqlEdges(scope?: ChangeScope): void {
+    timed('loads-sql', () => _resolveLoadsSql(this.state, scope));
   }
 
   /** Pass 2h: test_covers edges. */

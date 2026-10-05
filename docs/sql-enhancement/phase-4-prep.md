@@ -1,6 +1,6 @@
 # Phase 4 — SQL graph edges
 
-**Status:** `sql_cte_ref` implemented; `sql_reads` + `loads_sql` next.
+**Status:** Phase 4 SQL graph edges implemented (`sql_cte_ref`, `sql_reads`, `loads_sql`).
 
 Design: `phase-3-prep.md` §5–6.
 
@@ -9,8 +9,8 @@ Design: `phase-3-prep.md` §5–6.
 | Edge | Status |
 |------|--------|
 | `sql_cte_ref` | CTE → CTE via `referencesCtes` + `sql-cte-refs.ts` resolver |
-| `sql_reads` | Planned |
-| `loads_sql` | Planned — `sql-python:loader-inventory` with `TRACE_SQL_BENCHMARK_ROOT` |
+| `sql_reads` | CTE / file → relation phantom via `relationRefs` + `sql-reads.ts` |
+| `loads_sql` | Python → `.sql` via `loads-sql.ts` + static path extract (`python-sql-loader-paths.ts`) |
 
 ## Verify `sql_cte_ref` (private index)
 
