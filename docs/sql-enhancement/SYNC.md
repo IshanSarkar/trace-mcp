@@ -1,39 +1,35 @@
 # SQL enhancement — repo sync
 
-Keep these aligned when working on SQL indexing:
+## Public vs private corpora
 
-| What | Pin |
-|------|-----|
-| **Released CLI / app** | **3.34.6** (`trace -v`) — regex-only SQL unless built from feature branch |
-| **AST development** | Branch `feat/sql-brightchamps-corpus` (fork: `IshanSarkar/trace-mcp`); local `dist/cli.js` after `npm run build` |
-| **Cursor MCP (AST)** | Point `mcp.json` at `../trace-mcp/dist/cli.js serve` (see benchmark `trace-sql-sync.json`) |
-| **Benchmark corpus** | `data-analytics-python/scripts/queries` (**249** `.sql` files; **276** repo-wide) |
+| Corpus | Location | CI |
+|--------|----------|-----|
+| **Public fixture pack** | `tests/sql-corpus/fixtures/` + `fixture-ground-truth.json` | `npm run test:sql-corpus` |
+| **Large / proprietary** | Your machine only — `TRACE_SQL_CORPUS_ROOT`, `TRACE_SQL_INDEX_PROJECT`, `TRACE_SQL_BENCHMARK_ROOT` | Not in upstream CI |
 
 ## Environment
 
-- `TRACE_SQL_CORPUS_ROOT` — optional override; default resolves sibling `../data-analytics-python/scripts/queries` from this repo root.
-- `TRACE_SQL_AST=0` — force regex-only SQL plugin (default on this branch: AST enabled).
-- `TRACE_SQL_INDEX_PROJECT` / `TRACE_INDEX_DB` — override paths for `npm run sql-index:smoke` and `sql-index:cte-diff`.
+- `TRACE_SQL_CORPUS_ROOT` — directory of `.sql` files for spike / inventory / cte-diff scripts (defaults to public fixtures).
+- `TRACE_SQL_INDEX_PROJECT` — project root for `sql-index:smoke` and `sql-index:cte-diff` (required for those scripts).
+- `TRACE_SQL_BENCHMARK_ROOT` — Python repo root for `sql-python:loader-inventory`.
+- `TRACE_SQL_AST=0` — regex-only SQL plugin (default on feature branch: AST enabled).
 
-## Gates (Phase 3 complete)
+## Gates (upstream)
 
 ```bash
-npm run test:sql-corpus      # 42 tests (skips if corpus missing)
-npm run sql-corpus:spike     # 196 ok / 53 partial / 0 failed; 1021 AST CTEs (249 files)
-npm run build && node dist/cli.js index "<data-analytics-python>" --force
-npm run sql-index:smoke      # index DB counts + emp_age metadata
-npm run sql-index:cte-diff   # per-file spike vs index CTE parity (exit 0)
+npm run test:sql-corpus
+npm run build
 ```
 
-## Benchmark repo pointer
+Private benchmark (optional):
 
-`data-analytics-python/.cursor/trace-sql-sync.json` mirrors this file’s pins (`phase`: `4-in-progress-sql-cte-ref`).
+```bash
+TRACE_SQL_CORPUS_ROOT=/path/to/queries npm run sql-corpus:spike
+TRACE_SQL_INDEX_PROJECT=/path/to/project npm run sql-index:smoke
+```
 
 ## Phases
 
-1. **Phase 0** — evidence (`phase-0-evidence.md`), index baseline, regex root-cause.
-2. **Phase 1** — `tests/sql-corpus/brightchamps-ground-truth.json` + baseline vitest.
-3. **Phase 2** — tree-sitter-sql spike (`phase-2-summary.md`, `npm run sql-corpus:spike`).
-4. **Phase 3** — AST wired in `SqlLanguagePlugin`, metadata contract, smoke + `sql-index:cte-diff`.
-5. **Phase 4** — `sql_cte_ref` (in progress), then `sql_reads`, `loads_sql`, MCP graph retrieval (`phase-4-prep.md`).
-6. **Coverage** — `coverage-roadmap.md`; `npm run sql-partial:diagnostics` when adding preprocessors.
+1. **Phase 0–2** — evidence, spike, preprocessors (`phase-0-evidence.md`, `phase-2-summary.md`).
+2. **Phase 3** — AST CTE plugin + metadata (`phase-3-prep.md`).
+3. **Phase 4** — graph edges (`phase-4-prep.md`): `sql_cte_ref` (in progress), `sql_reads`, `loads_sql`.

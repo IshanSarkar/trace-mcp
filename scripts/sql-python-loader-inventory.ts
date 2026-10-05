@@ -7,7 +7,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const benchmarkRoot = path.join(repoRoot, '../data-analytics-python');
+const benchmarkRoot = process.env.TRACE_SQL_BENCHMARK_ROOT
+  ? path.resolve(process.env.TRACE_SQL_BENCHMARK_ROOT)
+  : null;
 
 const PATTERNS: Array<{ id: string; re: RegExp }> = [
   { id: 'read_sql_file', re: /\bread_sql_file\s*\(/g },
@@ -30,8 +32,10 @@ function walkPy(dir: string, out: string[] = []): string[] {
 }
 
 function main() {
-  if (!fs.existsSync(benchmarkRoot)) {
-    console.error('Benchmark repo not found:', benchmarkRoot);
+  if (!benchmarkRoot || !fs.existsSync(benchmarkRoot)) {
+    console.error(
+      'Set TRACE_SQL_BENCHMARK_ROOT to the Python project root (not committed to this repo).',
+    );
     process.exit(1);
   }
 

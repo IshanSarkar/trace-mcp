@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { extractSqlSymbolsRegex } from '../../src/indexer/plugins/language/sql/sql-regex-config.js';
-import groundTruth from './brightchamps-ground-truth.json';
-import { corpusFile, resolveBrightchampsCorpusRoot } from './resolve-corpus-root.js';
+import groundTruth from './fixture-ground-truth.json';
+import { fixtureFile } from './fixture-paths.js';
 
 function extractCteNames(filePath: string, content: Buffer): string[] {
   const result = extractSqlSymbolsRegex(filePath, content);
@@ -14,18 +14,12 @@ function extractCteNames(filePath: string, content: Buffer): string[] {
     .sort();
 }
 
-describe('brightchamps SQL corpus — regex baseline (v3.34.6 behavior)', () => {
-  const root = resolveBrightchampsCorpusRoot();
-  if (!root) {
-    it.skip('corpus not found — set TRACE_SQL_CORPUS_ROOT', () => {});
-    return;
-  }
-
+describe('SQL fixture pack — regex baseline (v3.34.6 behavior)', () => {
   for (const fixture of groundTruth.fixtures) {
     it(`${fixture.id}: matches documented regex baseline`, () => {
-      const full = corpusFile(fixture.path);
+      const full = fixtureFile(fixture.path);
       expect(full, `missing ${fixture.path}`).toBeTruthy();
-      const content = fs.readFileSync(full!);
+      const content = fs.readFileSync(full);
       const names = extractCteNames(fixture.path, content);
       const expected = [...fixture.regex_baseline_ctes].sort();
       expect(names).toEqual(expected);

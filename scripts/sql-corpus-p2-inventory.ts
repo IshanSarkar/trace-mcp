@@ -8,9 +8,9 @@ import { fileURLToPath } from 'node:url';
 import { spikeParseSqlSource } from '../src/indexer/plugins/language/sql/spike-parse.js';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const corpus =
-  process.env.TRACE_SQL_CORPUS_ROOT ??
-  path.join(repoRoot, '../data-analytics-python/scripts/queries');
+const corpus = process.env.TRACE_SQL_CORPUS_ROOT
+  ? path.resolve(process.env.TRACE_SQL_CORPUS_ROOT)
+  : path.join(repoRoot, 'tests/sql-corpus/fixtures');
 
 const FEATURES: Array<{ id: string; re: RegExp; phase: 'p2' | 'p1' | 'escalation' }> = [
   { id: 'recursive_cte', re: /\bWITH\s+RECURSIVE\b/i, phase: 'p2' },

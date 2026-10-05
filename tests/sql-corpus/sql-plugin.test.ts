@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { SqlLanguagePlugin } from '../../src/indexer/plugins/language/sql/index.js';
-import groundTruth from './brightchamps-ground-truth.json';
-import { corpusFile, resolveBrightchampsCorpusRoot } from './resolve-corpus-root.js';
+import groundTruth from './fixture-ground-truth.json';
+import { fixtureFile } from './fixture-paths.js';
 
 const plugin = new SqlLanguagePlugin();
 
@@ -13,16 +13,10 @@ function cteNames(symbols: Array<{ name: string; metadata?: Record<string, unkno
     .sort();
 }
 
-describe('SqlLanguagePlugin — AST CTE extraction (Phase 3)', () => {
-  const root = resolveBrightchampsCorpusRoot();
-  if (!root) {
-    it.skip('corpus not found — set TRACE_SQL_CORPUS_ROOT', () => {});
-    return;
-  }
-
+describe('SqlLanguagePlugin — AST CTE extraction', () => {
   for (const fixture of groundTruth.fixtures) {
     it(`${fixture.id}: plugin matches expected CTEs`, async () => {
-      const full = corpusFile(fixture.path);
+      const full = fixtureFile(fixture.path);
       expect(full).toBeTruthy();
       const result = await plugin.extractSymbols(fixture.path, fs.readFileSync(full!));
       expect(result.isOk()).toBe(true);
@@ -41,8 +35,8 @@ describe('SqlLanguagePlugin — AST CTE extraction (Phase 3)', () => {
   }
 
   it('metadata includes preprocessor pipeline on CTE symbols', async () => {
-    const rel = 'booking_etl_queries/base_ownership.sql';
-    const full = corpusFile(rel);
+    const rel = 'etl/base_ownership.sql';
+    const full = fixtureFile(rel);
     expect(full).toBeTruthy();
     const result = await plugin.extractSymbols(rel, fs.readFileSync(full!));
     expect(result.isOk()).toBe(true);

@@ -21,7 +21,7 @@ Example: `base_ownership.sql` indexes `scoped` only; `emp_age` is missed. `incre
 
 ### 3. What SQL symbols are persisted?
 
-**OBSERVED** (data-analytics-python index DB, Phase 0): **250** `.sql` files; **171** symbols; all `kind=variable`, `metadata.sqlKind=cte`. *(Corpus now **249** files — see `tests/sql-corpus/corpus-metrics.json`.)* No DDL symbols in this corpus (no `CREATE TABLE` in `scripts/queries/`).
+**OBSERVED** (regex baseline, Phase 0): first-CTE-only regex on a large external corpus — see `baseline-inventory.json` / `corpus-metrics.json` for the **public fixture pack** shipped in-repo.
 
 ### 4. What SQL edges are persisted?
 
@@ -53,7 +53,7 @@ Example: `base_ownership.sql` indexes `scoped` only; `emp_age` is missed. `incre
 
 ### 11. Regression tests?
 
-**Phase 1:** `brightchamps-ground-truth.json` + `brightchamps-regex-baseline.test.ts` (current behavior) + skipped success-bar suite (`TRACE_SQL_AST=1`).
+**Phase 1:** `fixture-ground-truth.json` + `sql-regex-baseline.test.ts` (regex behavior) + AST success suite (`TRACE_SQL_AST=1` default on feature branch).
 
 ### 12. Performance impact?
 

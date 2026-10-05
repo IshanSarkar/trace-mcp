@@ -15,7 +15,7 @@ describe('sql-index-metadata', () => {
 
   it('classifies template placeholders in relation refs', () => {
     expect(relationRefConfidence('__tpl_schema_name__.booking_etl')).toBe('template-dependent');
-    expect(relationRefConfidence('eklavya.payments')).toBe('deterministic');
+    expect(relationRefConfidence('app.payments')).toBe('deterministic');
   });
 
   it('builds file metadata from spike parse', async () => {

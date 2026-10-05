@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { SQL_PREPROCESSOR_PIPELINE } from '../../src/indexer/plugins/language/sql/sql-index-metadata.js';
 import { SqlLanguagePlugin } from '../../src/indexer/plugins/language/sql/index.js';
-import { corpusFile, resolveBrightchampsCorpusRoot } from './resolve-corpus-root.js';
+import { fixtureFile } from './fixture-paths.js';
 
 const plugin = new SqlLanguagePlugin();
 
@@ -27,15 +27,9 @@ function cteMeta(
 }
 
 describe('SqlLanguagePlugin — persisted metadata contract', () => {
-  const root = resolveBrightchampsCorpusRoot();
-  if (!root) {
-    it.skip('corpus not found — set TRACE_SQL_CORPUS_ROOT', () => {});
-    return;
-  }
-
   it('base_ownership: ok AST file metadata on every CTE symbol', async () => {
-    const rel = 'booking_etl_queries/base_ownership.sql';
-    const result = await plugin.extractSymbols(rel, fs.readFileSync(corpusFile(rel)!));
+    const rel = 'etl/base_ownership.sql';
+    const result = await plugin.extractSymbols(rel, fs.readFileSync(fixtureFile(rel)!));
     expect(result.isOk()).toBe(true);
     if (result.isErr()) return;
 
@@ -59,14 +53,13 @@ describe('SqlLanguagePlugin — persisted metadata contract', () => {
     }
   });
 
-  it('row_calls_rigor_unnest: partial parse_status on file and CTEs', async () => {
-    const rel = 'Rigor Queries/calls_task_queries/row_calls_rigor_template.sql';
-    const result = await plugin.extractSymbols(rel, fs.readFileSync(corpusFile(rel)!));
+  it('partial parse_status propagates to CTE metadata', async () => {
+    const sql = 'WITH x AS (SELECT unnest(ARRAY[1,2])) SELECT * FROM x WHERE ((((';
+    const result = await plugin.extractSymbols('fixtures/partial.sql', Buffer.from(sql, 'utf8'));
     expect(result.isOk()).toBe(true);
     if (result.isErr()) return;
-
     expect(result.value.status).toBe('partial');
-    const m = cteMeta(result.value.symbols ?? [], 'day_order');
+    const m = cteMeta(result.value.symbols ?? [], 'x');
     expect(m.parseStatus).toBe('partial');
     expect(m.hasError).toBe(true);
     expect(m.extractor).toBe('tree-sitter-sql');
@@ -76,8 +69,8 @@ describe('SqlLanguagePlugin — persisted metadata contract', () => {
     const prev = process.env.TRACE_SQL_AST;
     process.env.TRACE_SQL_AST = '0';
     try {
-      const rel = 'booking_etl_queries/base_ownership.sql';
-      const result = await plugin.extractSymbols(rel, fs.readFileSync(corpusFile(rel)!));
+      const rel = 'etl/base_ownership.sql';
+      const result = await plugin.extractSymbols(rel, fs.readFileSync(fixtureFile(rel)!));
       expect(result.isOk()).toBe(true);
       if (result.isErr()) return;
       const names = (result.value.symbols ?? [])

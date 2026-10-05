@@ -9,8 +9,7 @@ import { spikeParseSqlSource } from '../src/indexer/plugins/language/sql/spike-p
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const corpus =
-  process.env.TRACE_SQL_CORPUS_ROOT ??
-  path.join(repoRoot, '../data-analytics-python/scripts/queries');
+  process.env.TRACE_SQL_CORPUS_ROOT ?? path.join(repoRoot, 'tests/sql-corpus/fixtures');
 
 const PATTERNS: Array<[string, RegExp]> = [
   ['distinct_on', /DISTINCT\s+ON\s*\(/i],

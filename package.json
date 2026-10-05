@@ -16,7 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:recall": "vitest run tests/recall-harness/recall.test.ts",
-    "test:sql-corpus": "vitest run tests/sql-corpus/brightchamps-corpus.test.ts tests/sql-corpus/ast-spike.test.ts tests/sql-corpus/sql-plugin.test.ts tests/sql-corpus/sql-plugin-metadata.test.ts",
+    "test:sql-corpus": "vitest run tests/sql-corpus/sql-regex-baseline.test.ts tests/sql-corpus/ast-spike.test.ts tests/sql-corpus/sql-plugin.test.ts tests/sql-corpus/sql-plugin-metadata.test.ts",
     "sql-corpus:inventory": "node scripts/sql-corpus-inventory.mjs",
     "sql-corpus:spike": "tsx scripts/sql-corpus-spike.ts",
     "sql-partial:diagnostics": "tsx scripts/sql-partial-diagnostics.ts",

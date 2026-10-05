@@ -6,8 +6,8 @@ Phase 2 proved tree-sitter-sql on the corpus. This document locks **contracts an
 
 | Scope | `.sql` count | Role |
 |-------|-------------:|------|
-| `data-analytics-python/scripts/queries` | **249** | Indexed SQL corpus + spike metrics |
-| Whole `data-analytics-python` repo | **276** | Extra SQL outside `scripts/queries` (migrations, ad-hoc); out of v1 spike unless path added |
+| Public fixtures | `tests/sql-corpus/fixtures` | CI gate (`npm run test:sql-corpus`) |
+| External corpus (`TRACE_SQL_CORPUS_ROOT`) | optional | Large/private SQL trees — not committed |
 
 Run inventories:
 
@@ -58,7 +58,7 @@ Policy:
 |------|------------------|
 | CTE names | Symbols `path::cteName#variable` + `SqlCteSymbolMetadata` |
 | Table refs | `SqlFileSymbolMetadata.relationRefs[]` from `object_reference` nodes (`confidence` heuristic) |
-| Aliases / per-CTE reads | Empty `aliases[]` in v1; ground truth in `brightchamps-ground-truth.json` drives Phase 4 tests |
+| Aliases / per-CTE reads | Empty `aliases[]` in v1; `fixture-ground-truth.json` drives public tests |
 | Column lineage | Explicit non-goal v1 |
 
 Module: `sql-index-metadata.ts` — `buildSqlFileSymbolMetadata()`, `buildCteSymbolMetadata()`.
@@ -92,7 +92,7 @@ No dynamic f-string SQL paths in v1.
 
 ## 7b. UNNEST regression fixtures
 
-All six corpus files tagged with `UNNEST` in P2 inventory are in `brightchamps-ground-truth.json` (`*_unnest` ids). `ast-spike.test.ts` asserts `parse_status: partial` and the full AST CTE name set so Phase 3 plugin wiring cannot drop CTEs on these paths.
+Heavy `UNNEST` / partial-parse cases can be validated with `TRACE_SQL_CORPUS_ROOT` locally; public fixtures cover representative ok/partial shapes.
 
 ## 8. Phase 3 implementation checklist
 
@@ -100,6 +100,6 @@ All six corpus files tagged with `UNNEST` in P2 inventory are in `brightchamps-g
 2. Emit CTE symbols for **all** `spike.ctes` (not first-CTE regex).
 3. Attach `buildSqlFileSymbolMetadata(spike)` to file-level symbol or first symbol in file result.
 4. Re-index benchmark repo; assert **1021** CTE symbols vs 171 regex baseline (249 files).
-5. Gate: `npm run test:sql-corpus` + `sql-corpus:spike` thresholds **196/53/0**, **1021** CTEs (`tests/sql-corpus/corpus-metrics.json`).
+5. Gate: `npm run test:sql-corpus` (public fixtures). Optional: `sql-corpus:spike` on `TRACE_SQL_CORPUS_ROOT`.
 6. After `node dist/cli.js index <project> --force`: `npm run sql-index:smoke` (counts + `sample_symbol_metadata` for `emp_age` on `base_ownership.sql`).
 7. Tests: `sql-plugin-metadata.test.ts` locks `parseStatus`, `preprocessorApplied`, line spans on plugin output.

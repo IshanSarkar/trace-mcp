@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { spikeParseSqlSource } from '../src/indexer/plugins/language/sql/spike-parse.js';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const defaultCorpus = path.join(repoRoot, '../data-analytics-python/scripts/queries');
+const defaultCorpus = path.join(repoRoot, 'tests/sql-corpus/fixtures');
 const corpusRoot = process.env.TRACE_SQL_CORPUS_ROOT
   ? path.resolve(process.env.TRACE_SQL_CORPUS_ROOT)
   : defaultCorpus;

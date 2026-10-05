@@ -10,8 +10,7 @@ import { preprocessSqlForParse } from '../src/indexer/plugins/language/sql/prepr
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const corpus =
-  process.env.TRACE_SQL_CORPUS_ROOT ??
-  path.join(repoRoot, '../data-analytics-python/scripts/queries');
+  process.env.TRACE_SQL_CORPUS_ROOT ?? path.join(repoRoot, 'tests/sql-corpus/fixtures');
 
 type Shim = { name: string; apply: (s: string) => string };
 

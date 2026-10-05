@@ -13,13 +13,14 @@ import Database from 'better-sqlite3';
 import { getDbPath } from '../src/global.js';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const defaultProject = path.join(repoRoot, '../data-analytics-python');
-const projectRoot = path.resolve(process.env.TRACE_SQL_INDEX_PROJECT ?? defaultProject);
+const projectRoot = process.env.TRACE_SQL_INDEX_PROJECT
+  ? path.resolve(process.env.TRACE_SQL_INDEX_PROJECT)
+  : null;
 const dbPath = process.env.TRACE_INDEX_DB
   ? path.resolve(process.env.TRACE_INDEX_DB)
   : getDbPath(projectRoot);
 
-const spikeReportPath = path.join(repoRoot, 'docs/sql-enhancement/phase-2-spike-report.json');
+const metricsPath = path.join(repoRoot, 'tests/sql-corpus/corpus-metrics.json');
 
 interface SpikeReport {
   cte_count_ast?: number;
@@ -29,13 +30,34 @@ interface SpikeReport {
 
 function loadExpectations(): SpikeReport {
   try {
-    return JSON.parse(fs.readFileSync(spikeReportPath, 'utf8')) as SpikeReport;
+    const raw = JSON.parse(fs.readFileSync(metricsPath, 'utf8')) as SpikeReport & {
+      cte_count_ast?: number;
+    };
+    return {
+      files: raw.files,
+      cte_count_ast: raw.cte_count_ast,
+      cte_count_regex_first_only: raw.cte_count_regex_first_only,
+    };
   } catch {
-    return { cte_count_ast: 1021, cte_count_regex_first_only: 171, files: 249 };
+    return { cte_count_ast: 15, cte_count_regex_first_only: 5, files: 8 };
   }
 }
 
 function main() {
+  if (!projectRoot) {
+    console.error(
+      JSON.stringify(
+        {
+          ok: false,
+          error: 'TRACE_SQL_INDEX_PROJECT_required',
+          hint: 'Set TRACE_SQL_INDEX_PROJECT to the indexed project root (private benchmark).',
+        },
+        null,
+        2,
+      ),
+    );
+    process.exit(1);
+  }
   if (!fs.existsSync(dbPath)) {
     console.error(
       JSON.stringify({ ok: false, error: 'index_db_not_found', dbPath, projectRoot }, null, 2),

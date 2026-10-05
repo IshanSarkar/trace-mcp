@@ -13,8 +13,9 @@ import { getDbPath } from '../src/global.js';
 import { spikeParseSqlSource } from '../src/indexer/plugins/language/sql/spike-parse.js';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const defaultProject = path.join(repoRoot, '../data-analytics-python');
-const projectRoot = path.resolve(process.env.TRACE_SQL_INDEX_PROJECT ?? defaultProject);
+const projectRoot = process.env.TRACE_SQL_INDEX_PROJECT
+  ? path.resolve(process.env.TRACE_SQL_INDEX_PROJECT)
+  : null;
 const dbPath = process.env.TRACE_INDEX_DB
   ? path.resolve(process.env.TRACE_INDEX_DB)
   : getDbPath(projectRoot);
@@ -33,6 +34,12 @@ function walkSql(dir: string, out: string[] = []): string[] {
 }
 
 async function main() {
+  if (!projectRoot) {
+    console.error(
+      JSON.stringify({ ok: false, error: 'TRACE_SQL_INDEX_PROJECT_required' }, null, 2),
+    );
+    process.exit(1);
+  }
   if (!fs.existsSync(dbPath)) {
     console.error(JSON.stringify({ ok: false, error: 'index_db_not_found', dbPath }, null, 2));
     process.exit(1);
