@@ -93,7 +93,7 @@ export function resolveLoadsSqlEdges(state: PipelineState, scope?: ChangeScope):
     const source = readPySource(state, py.path);
     if (!source) continue;
 
-    const refs = extractPythonSqlLoadRefs(source);
+    const refs = extractPythonSqlLoadRefs(source, py.path);
     if (refs.length === 0) continue;
 
     const fnRows = store.db

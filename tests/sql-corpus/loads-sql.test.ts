@@ -77,4 +77,39 @@ describe('loads_sql resolver', () => {
       expect.arrayContaining(['etl/base_ownership.sql', 'etl/incremental_list.sql']),
     );
   });
+
+  it('resolves Path(__file__) constant chains via _load_extract_df', async () => {
+    const root = resolvePublicFixtureRoot();
+    const db = initializeDatabase(':memory:');
+    const store = new Store(db);
+    for (const { rel, plugin } of [
+      { rel: 'etl/base_ownership.sql', plugin: sqlPlugin },
+      { rel: 'python/path_chain_loader.py', plugin: pyPlugin },
+    ]) {
+      const buf = fs.readFileSync(`${root}/${rel}`);
+      const result = await executeLanguagePlugin(plugin, rel, buf);
+      expect(result.isOk()).toBe(true);
+      if (result.isErr()) return;
+      const parsed = result.value;
+      const fileId = store.insertFile(rel, parsed.language ?? 'unknown', null, buf.length);
+      if (parsed.symbols.length) store.insertSymbols(fileId, parsed.symbols);
+    }
+
+    resolveLoadsSqlEdges({
+      store,
+      rootPath: root,
+      fileContentCache: new Map<string, string>(),
+    } as unknown as PipelineState);
+
+    const row = store.db
+      .prepare(
+        `SELECT f.path FROM edges e
+         JOIN edge_types t ON t.id = e.edge_type_id
+         JOIN nodes n ON n.id = e.target_node_id AND n.node_type = 'file'
+         JOIN files f ON f.id = n.ref_id
+         WHERE t.name = 'loads_sql'`,
+      )
+      .all() as Array<{ path: string }>;
+    expect(row.map((r) => r.path)).toContain('etl/base_ownership.sql');
+  });
 });

@@ -21,15 +21,34 @@ npm run test:sql-corpus
 npm run build
 ```
 
-Private benchmark (optional):
+Private benchmark (run from **this repo**; set paths to your Python/SQL project):
 
 ```bash
-TRACE_SQL_CORPUS_ROOT=/path/to/queries npm run sql-corpus:spike
+TRACE_SQL_CORPUS_ROOT=/path/to/scripts/queries npm run sql-corpus:spike
 TRACE_SQL_INDEX_PROJECT=/path/to/project npm run sql-index:smoke
+TRACE_SQL_INDEX_PROJECT=/path/to/project npm run sql-index:cte-diff
 ```
+
+When `TRACE_SQL_INDEX_PROJECT` points at a repo with `.cursor/trace-sql-sync.json`, `sql-index:smoke` uses `corpus.cte_count_ast` from that file (not `tests/sql-corpus/corpus-metrics.json`).
 
 ## Phases
 
-1. **Phase 0–2** — evidence, spike, preprocessors (`phase-0-evidence.md`, `phase-2-summary.md`).
-2. **Phase 3** — AST CTE plugin + metadata (`phase-3-prep.md`).
-3. **Phase 4** — graph edges (`phase-4-prep.md`): `sql_cte_ref` (in progress), `sql_reads`, `loads_sql`.
+| Phase | Scope | Status |
+|-------|--------|--------|
+| **0–2** | Evidence, spike, preprocessors | **Done** — `phase-0-evidence.md`, `phase-2-summary.md` |
+| **3** | AST CTE plugin + metadata | **Done** — `phase-3-prep.md` |
+| **4** | Graph edges: `sql_cte_ref`, `sql_reads`, `loads_sql` | **Done** — `phase-4-prep.md` |
+
+Phase 4 resolvers: `sql-cte-refs.ts`, `sql-reads.ts`, `loads-sql.ts` (+ SQL relation phantoms; subproject reconcile keeps `__phantom__` rows).
+
+## What's next (no more phased product work in scope)
+
+**Nothing is required** to finish the SQL indexing product you scoped (Phases 0–4). Optional follow-ups only if you need them:
+
+| Track | When | Actions |
+|-------|------|---------|
+| **Use it** | Now | Local `dist/cli.js` MCP + re-index after plugin changes; lineage via trace tools |
+| **Land upstream** | When employer allows | `git push fork feat/sql-postgresql-cte-indexing` → sign CLA on PR **#1482** → CI green → review |
+| **v1.1 polish** | In progress / optional | Path()-chain `loads_sql` (`ROOT` + `_load_extract_df` / `sql_path=`), more partial-parse fixes, dedicated SQL graph MCP tools |
+
+There is no **Phase 5** in the original plan.
