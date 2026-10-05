@@ -27,7 +27,7 @@ npm run sql-index:cte-diff   # per-file spike vs index CTE parity (exit 0)
 
 ## Benchmark repo pointer
 
-`data-analytics-python/.cursor/trace-sql-sync.json` mirrors this file’s pins (`phase`: `3-complete-ready-phase-4`).
+`data-analytics-python/.cursor/trace-sql-sync.json` mirrors this file’s pins (`phase`: `4-in-progress-sql-cte-ref`).
 
 ## Phases
 
@@ -35,5 +35,5 @@ npm run sql-index:cte-diff   # per-file spike vs index CTE parity (exit 0)
 2. **Phase 1** — `tests/sql-corpus/brightchamps-ground-truth.json` + baseline vitest.
 3. **Phase 2** — tree-sitter-sql spike (`phase-2-summary.md`, `npm run sql-corpus:spike`).
 4. **Phase 3** — AST wired in `SqlLanguagePlugin`, metadata contract, smoke + `sql-index:cte-diff`.
-5. **Phase 4** — `sql_cte_ref`, `sql_reads`, `loads_sql`, MCP graph retrieval (`phase-3-prep.md` §5–6).
+5. **Phase 4** — `sql_cte_ref` (in progress), then `sql_reads`, `loads_sql`, MCP graph retrieval (`phase-4-prep.md`).
 6. **Coverage** — `coverage-roadmap.md`; `npm run sql-partial:diagnostics` when adding preprocessors.

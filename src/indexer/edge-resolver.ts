@@ -42,6 +42,7 @@ import { resolveFastapiRouterMounts as _resolveFastapiMounts } from './edge-reso
 import { resolvePythonTypeEdges as _resolvePyTypes } from './edge-resolvers/python-types.js';
 import { resolveRubyImportEdges as _resolveRubyImports } from './edge-resolvers/ruby-imports.js';
 import { resolveRustImportEdges as _resolveRustImports } from './edge-resolvers/rust-imports.js';
+import { resolveSqlCteRefEdges as _resolveSqlCteRefs } from './edge-resolvers/sql-cte-refs.js';
 import { resolveTestCoversEdges as _resolveTests } from './edge-resolvers/tests.js';
 import { resolveTypeScriptCallEdges as _resolveTsCalls } from './edge-resolvers/typescript-calls.js';
 import { resolveTypeScriptTypeEdges as _resolveTsTypes } from './edge-resolvers/typescript-types.js';
@@ -309,6 +310,11 @@ export class EdgeResolver {
   /** Pass 2i: structural member_of edges for every nested symbol → its parent. */
   resolveMemberOfEdges(scope?: ChangeScope): void {
     timed('member-of', () => _resolveMemberOf(this.state, scope));
+  }
+
+  /** Pass 2i-sql: CTE → CTE edges within `.sql` files. */
+  resolveSqlCteRefEdges(scope?: ChangeScope): void {
+    timed('sql-cte-refs', () => _resolveSqlCteRefs(this.state, scope));
   }
 
   /** Pass 2h: test_covers edges. */

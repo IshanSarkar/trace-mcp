@@ -32,6 +32,7 @@ export interface SqlCteSymbolMetadata {
   name: string;
   lineStart: number;
   lineEnd: number;
+  referencesCtes: string[];
 }
 
 export interface SqlFileSymbolMetadata {
@@ -83,6 +84,7 @@ export function buildCteSymbolMetadata(cte: ExtractedCte): SqlCteSymbolMetadata 
     name: cte.name,
     lineStart: cte.lineStart,
     lineEnd: cte.lineEnd,
+    referencesCtes: cte.referencesCtes,
   };
 }
 

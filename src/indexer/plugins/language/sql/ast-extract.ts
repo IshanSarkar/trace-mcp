@@ -6,6 +6,8 @@ export interface ExtractedCte {
   lineEnd: number;
   byteStart: number;
   byteEnd: number;
+  /** Other CTE names referenced in this CTE body (same file). */
+  referencesCtes: string[];
 }
 
 export interface ExtractedRelationRef {
@@ -37,13 +39,49 @@ export function extractCtesFromTree(root: Node): ExtractedCte[] {
           lineEnd: lineEndOf(node),
           byteStart: id.startIndex,
           byteEnd: node.endIndex,
+          referencesCtes: [],
         });
       }
     }
     for (const child of node.children) walk(child);
   };
   walk(root);
+  attachCteReferences(root, out);
   return out;
+}
+
+function attachCteReferences(root: Node, ctes: ExtractedCte[]): void {
+  if (ctes.length === 0) return;
+  const names = new Set(ctes.map((c) => c.name));
+  const cteNodes = new Map<string, Node>();
+
+  const walk = (node: Node) => {
+    if (node.type === 'cte') {
+      const id = node.children.find((c) => c.type === 'identifier');
+      if (id && names.has(id.text) && !cteNodes.has(id.text)) {
+        cteNodes.set(id.text, node);
+      }
+    }
+    for (const child of node.children) walk(child);
+  };
+  walk(root);
+
+  for (const cte of ctes) {
+    const node = cteNodes.get(cte.name);
+    if (!node) continue;
+    const refs = new Set<string>();
+    const walkRefs = (n: Node) => {
+      if (n.type === 'identifier' && names.has(n.text) && n.text !== cte.name) {
+        refs.add(n.text);
+      }
+      for (const child of n.children) walkRefs(child);
+    };
+    for (const child of node.children) {
+      if (child.type === 'identifier') continue;
+      walkRefs(child);
+    }
+    cte.referencesCtes = Array.from(refs).sort();
+  }
 }
 
 export function extractRelationRefsFromTree(root: Node): ExtractedRelationRef[] {

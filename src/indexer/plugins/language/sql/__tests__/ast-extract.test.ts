@@ -24,4 +24,13 @@ describe('extractCtesFromTree', () => {
     tree.delete();
     expect(ctes.map((c) => c.name).sort()).toEqual(['outer', 'x']);
   });
+
+  it('records referencesCtes between CTE bodies', async () => {
+    const sql = `WITH a AS (SELECT 1), b AS (SELECT * FROM a) SELECT * FROM b`;
+    const tree = await parseSqlSource(sql);
+    const ctes = extractCtesFromTree(tree.rootNode);
+    tree.delete();
+    expect(ctes.find((c) => c.name === 'a')?.referencesCtes).toEqual([]);
+    expect(ctes.find((c) => c.name === 'b')?.referencesCtes).toEqual(['a']);
+  });
 });
