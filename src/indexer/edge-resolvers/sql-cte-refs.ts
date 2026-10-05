@@ -17,14 +17,17 @@ type CteRow = {
 export function resolveSqlCteRefEdges(state: PipelineState, scope?: ChangeScope): void {
   const { store } = state;
 
+  store.db
+    .prepare(
+      'INSERT OR IGNORE INTO edge_types (name, category, directed, description) VALUES (?, ?, 1, ?)',
+    )
+    .run('sql_cte_ref', 'sql', 'CTE references another CTE in the same file');
+
   const edgeType = store.db
     .prepare(`SELECT id FROM edge_types WHERE name = ?`)
     .get('sql_cte_ref') as { id: number } | undefined;
   if (!edgeType) {
-    logger.warn(
-      { edgeType: 'sql_cte_ref' },
-      'edge_types row missing — skipping sql_cte_ref resolution. Re-index to run migrations.',
-    );
+    logger.warn({ edgeType: 'sql_cte_ref' }, 'edge_types row missing — skipping sql_cte_ref');
     return;
   }
 
