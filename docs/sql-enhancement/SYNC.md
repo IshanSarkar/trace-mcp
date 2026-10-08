@@ -52,7 +52,9 @@ Phase 4 resolvers: `sql-cte-refs.ts`, `sql-reads.ts`, `loads-sql.ts` (+ SQL rela
 | Python `loads_sql` in comments/strings | Skip matches where `isOffsetInPythonCommentOrString` |
 | pnpm 12 migration | Reverted to pnpm 10 / upstream lockfile in SQL PR |
 
-**Indexing cost (fill after local benchmark):** record `index --force` wall time, peak RSS, and edge counts (`sql_cte_ref`, `sql_reads`, `loads_sql`) on a representative project before/after Phase 4 resolvers.
+**Regression test map:** [review-regression-tests.md](./review-regression-tests.md) (35 tests in `npm run test:sql-corpus`).
+
+**Indexing cost (representative private benchmark):** [indexing-cost-pr1482.md](./indexing-cost-pr1482.md) — wall time ~2.2–2.8s, peak RSS ~1.15 GiB, SQL edge counts, DB ~73 MiB, retrieval outline vs full-file note. **CI:** fixtures only until maintainer approves fork workflows.
 
 ## What's next (no more phased product work in scope)
 
