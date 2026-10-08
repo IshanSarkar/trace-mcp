@@ -8,13 +8,11 @@ import { spikeParseSqlSource } from '../spike-parse.js';
 
 describe('sql-index-metadata', () => {
   it('uses stable CTE symbol ids', () => {
-    expect(sqlCteSymbolId('scripts/queries/a.sql', 'scoped')).toBe(
-      'scripts/queries/a.sql::scoped#variable',
-    );
+    expect(sqlCteSymbolId('queries/a.sql', 'scoped')).toBe('queries/a.sql::scoped#variable');
   });
 
   it('classifies template placeholders in relation refs', () => {
-    expect(relationRefConfidence('__tpl_schema_name__.booking_etl')).toBe('template-dependent');
+    expect(relationRefConfidence('__tpl_schema_name__.records')).toBe('template-dependent');
     expect(relationRefConfidence('app.payments')).toBe('deterministic');
   });
 

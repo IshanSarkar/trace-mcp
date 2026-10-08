@@ -110,42 +110,65 @@ function main() {
   const db = new Database(dbPath, { readonly: true });
   const expectations = loadExpectations(projectRoot);
 
+  const sqlPathSubstr = process.env.TRACE_SQL_INDEX_SQL_PATH_SUBSTR?.trim() ?? '';
+  const sqlPathLike = sqlPathSubstr ? `%${sqlPathSubstr}%` : '%';
+  const sqlFileFilter = sqlPathSubstr ? `path LIKE '%.sql' AND path LIKE ?` : `path LIKE '%.sql'`;
+  const sqlJoinFilter = sqlPathSubstr
+    ? `f.path LIKE '%.sql' AND f.path LIKE ?`
+    : `f.path LIKE '%.sql'`;
+
   const sqlFiles = (
-    db
-      .prepare(
-        `SELECT COUNT(*) AS n FROM files WHERE path LIKE '%.sql' AND path LIKE '%scripts/queries%'`,
-      )
-      .get() as { n: number }
-  ).n;
+    sqlPathSubstr
+      ? db.prepare(`SELECT COUNT(*) AS n FROM files WHERE ${sqlFileFilter}`).get(sqlPathLike)
+      : db.prepare(`SELECT COUNT(*) AS n FROM files WHERE ${sqlFileFilter}`).get()
+  ) as { n: number };
 
   const cteInQueries = (
-    db
-      .prepare(
-        `SELECT COUNT(*) AS n FROM symbols s
+    sqlPathSubstr
+      ? db
+          .prepare(
+            `SELECT COUNT(*) AS n FROM symbols s
          JOIN files f ON f.id = s.file_id
-         WHERE f.path LIKE '%scripts/queries%' AND f.path LIKE '%.sql'
+         WHERE ${sqlJoinFilter}
            AND s.kind = 'variable' AND s.metadata LIKE '%"sqlKind":"cte"%'`,
-      )
-      .get() as { n: number }
-  ).n;
+          )
+          .get(sqlPathLike)
+      : db
+          .prepare(
+            `SELECT COUNT(*) AS n FROM symbols s
+         JOIN files f ON f.id = s.file_id
+         WHERE ${sqlJoinFilter}
+           AND s.kind = 'variable' AND s.metadata LIKE '%"sqlKind":"cte"%'`,
+          )
+          .get()
+  ) as { n: number };
 
   const astExtractor = (
-    db
-      .prepare(
-        `SELECT COUNT(*) AS n FROM symbols s
+    sqlPathSubstr
+      ? db
+          .prepare(
+            `SELECT COUNT(*) AS n FROM symbols s
          JOIN files f ON f.id = s.file_id
-         WHERE f.path LIKE '%scripts/queries%' AND f.path LIKE '%.sql'
+         WHERE ${sqlJoinFilter}
            AND s.metadata LIKE '%"extractor":"tree-sitter-sql"%'`,
-      )
-      .get() as { n: number }
-  ).n;
+          )
+          .get(sqlPathLike)
+      : db
+          .prepare(
+            `SELECT COUNT(*) AS n FROM symbols s
+         JOIN files f ON f.id = s.file_id
+         WHERE ${sqlJoinFilter}
+           AND s.metadata LIKE '%"extractor":"tree-sitter-sql"%'`,
+          )
+          .get()
+  ) as { n: number };
 
-  const baseOwnershipCtes = (
+  const fixtureTwoCteJoinSampleCtes = (
     db
       .prepare(
         `SELECT s.name FROM symbols s
          JOIN files f ON f.id = s.file_id
-         WHERE f.path LIKE '%base_ownership.sql' AND s.metadata LIKE '%"sqlKind":"cte"%'
+         WHERE f.path LIKE '%two_cte_join_sample.sql' AND s.metadata LIKE '%"sqlKind":"cte"%'
          ORDER BY s.name`,
       )
       .all() as Array<{ name: string }>
@@ -155,7 +178,7 @@ function main() {
     .prepare(
       `SELECT s.name, s.line_start, s.line_end, s.metadata FROM symbols s
        JOIN files f ON f.id = s.file_id
-       WHERE f.path LIKE '%base_ownership.sql' AND s.name = 'emp_age'`,
+       WHERE f.path LIKE '%two_cte_join_sample.sql' AND s.name = 'emp_age'`,
     )
     .get() as { name: string; line_start: number; line_end: number; metadata: string } | undefined;
 
@@ -183,20 +206,23 @@ function main() {
 
   const expectedAst = expectations.cte_count_ast ?? 1022;
   const expectedRegex = expectations.cte_count_regex_first_only ?? 171;
-  const cteDrift = expectedAst - cteInQueries;
+  const cteDrift = expectedAst - cteInQueries.n;
   const astWired =
-    astExtractor > 0 && cteInQueries >= expectedAst - 1 && cteInQueries <= expectedAst;
+    astExtractor.n > 0 && cteInQueries.n >= expectedAst - 1 && cteInQueries.n <= expectedAst;
   const regexOnly =
-    astExtractor === 0 && cteInQueries <= expectedRegex + 5 && cteInQueries >= expectedRegex - 5;
+    astExtractor.n === 0 &&
+    cteInQueries.n <= expectedRegex + 5 &&
+    cteInQueries.n >= expectedRegex - 5;
 
   const report = {
     ok: astWired,
     projectRoot,
     dbPath,
-    sql_files_under_scripts_queries: sqlFiles,
-    cte_symbols_scripts_queries: cteInQueries,
+    sql_files_indexed: sqlFiles.n,
+    sql_path_substr_filter: sqlPathSubstr || null,
+    cte_symbols_in_sql_files: cteInQueries.n,
     cte_drift_vs_spike: cteDrift,
-    ast_extractor_symbol_rows: astExtractor,
+    ast_extractor_symbol_rows: astExtractor.n,
     expected_from_spike: {
       cte_count_ast: expectedAst,
       cte_count_regex_first_only: expectedRegex,
@@ -204,7 +230,7 @@ function main() {
       source: expectations.expectations_source,
     },
     mode: astWired ? 'ast' : regexOnly ? 'regex_baseline' : 'unexpected',
-    fixture_base_ownership_ctes: baseOwnershipCtes,
+    fixture_two_cte_join_sample_ctes: fixtureTwoCteJoinSampleCtes,
     sample_symbol_metadata,
     hint: regexOnly
       ? 'Index looks like regex-only (171 CTEs). Reindex with: node dist/cli.js index <project> --force (not global trace unless linked to this build).'

@@ -81,7 +81,7 @@ Resolve in Phase 4 integration plugin (or extend Python framework plugin):
 
 - `read_sql_file(...)` — `database.session`
 - `render_sql_file`, `load_query_sql`, `load_sql_with_*` — `services/sql_loader.py`
-- String literals `scripts/queries/...sql` and `Path(...sql)`
+- String literals `path/to/query.sql` and `Path(...sql)` (repo-relative)
 
 No dynamic f-string SQL paths in v1.
 
@@ -99,7 +99,7 @@ Heavy `UNNEST` / partial-parse cases can be validated with `TRACE_SQL_CORPUS_ROO
 1. `SqlLanguagePlugin.extractSymbols` → call `spikeParseSqlSource`; on `failed`, regex fallback (current patterns).
 2. Emit CTE symbols for **all** `spike.ctes` (not first-CTE regex).
 3. Attach `buildSqlFileSymbolMetadata(spike)` to file-level symbol or first symbol in file result.
-4. Re-index benchmark repo; assert **1021** CTE symbols vs 171 regex baseline (249 files).
+4. Re-index private benchmark repo; assert AST CTE count ≫ regex first-CTE baseline (see `trace-sql-sync.json` / spike report locally).
 5. Gate: `npm run test:sql-corpus` (public fixtures). Optional: `sql-corpus:spike` on `TRACE_SQL_CORPUS_ROOT`.
-6. After `node dist/cli.js index <project> --force`: `npm run sql-index:smoke` (counts + `sample_symbol_metadata` for `emp_age` on `base_ownership.sql`).
+6. After `node dist/cli.js index <project> --force`: `npm run sql-index:smoke` (counts + `sample_symbol_metadata` for `emp_age` on `two_cte_join_sample.sql`).
 7. Tests: `sql-plugin-metadata.test.ts` locks `parseStatus`, `preprocessorApplied`, line spans on plugin output.

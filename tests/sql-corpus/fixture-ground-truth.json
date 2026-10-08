@@ -4,24 +4,24 @@
   "trace_mcp_baseline_tag": "v3.34.6",
   "fixtures": [
     {
-      "id": "base_ownership",
-      "path": "etl/base_ownership.sql",
+      "id": "two_cte_join_sample",
+      "path": "etl/two_cte_join_sample.sql",
       "dialect": "postgresql",
       "parse_expectation": "full",
-      "ctes": [{ "name": "scoped", "line_start": 2 }, { "name": "emp_age", "line_start": 12 }],
+      "ctes": [{ "name": "scoped", "line_start": 2 }, { "name": "emp_age", "line_start": 20 }],
       "parameters": [":run_mode", ":id_list"],
       "templates": ["{{SCHEMA_NAME}}"],
       "regex_baseline_ctes": ["scoped"]
     },
     {
-      "id": "incremental_list",
-      "path": "etl/incremental_list.sql",
+      "id": "incremental_keys_sample",
+      "path": "etl/incremental_keys_sample.sql",
       "dialect": "postgresql",
       "parse_expectation": "full",
       "ctes": [
         { "name": "base", "line_start": 1 },
-        { "name": "touched_parents", "line_start": 2 },
-        { "name": "keys", "line_start": 3 }
+        { "name": "touched_parents", "line_start": 4 },
+        { "name": "keys", "line_start": 7 }
       ],
       "cte_deps": {
         "touched_parents": ["base"],
@@ -40,16 +40,16 @@
       "regex_baseline_ctes": []
     },
     {
-      "id": "penalty",
-      "path": "referral/penalty.sql",
+      "id": "ranked_window_sample",
+      "path": "referral/ranked_window_sample.sql",
       "dialect": "postgresql",
       "parse_expectation": "full",
-      "ctes": [{ "name": "touched", "line_start": 1 }, { "name": "ranked", "line_start": 2 }],
+      "ctes": [{ "name": "touched", "line_start": 1 }, { "name": "ranked", "line_start": 4 }],
       "regex_baseline_ctes": ["touched"]
     },
     {
-      "id": "lead_assignment",
-      "path": "etl/lead_assignment.sql",
+      "id": "distinct_on_sample",
+      "path": "etl/distinct_on_sample.sql",
       "dialect": "postgresql",
       "parse_expectation": "full",
       "ctes": [{ "name": "pay", "line_start": 1 }],

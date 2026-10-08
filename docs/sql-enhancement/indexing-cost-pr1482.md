@@ -26,7 +26,7 @@ Full index cost is dominated by **Python + tree-sitter** extraction and existing
 
 | | v3.34.6-style (regex) | AST + Phase 4 (after review fix) |
 |--|----------------------|----------------------------------|
-| SQL file rows in `files` | ~249 under `scripts/queries` | **249** `.sql` paths |
+| SQL file rows in `files` | ~250 in benchmark SQL tree | **~250** `.sql` paths |
 | SQL CTE / file symbols | ~**171** (first CTE per file) | **~1095** (all CTEs + file-unit symbols) |
 | `sql_cte_ref` edges | **0** | **953** |
 | `sql_reads` edges | **0** | **~1998–2444** (depends on relation filter pass) |
@@ -39,14 +39,14 @@ New edge types are **additive**; DB size grows with symbol richness and SQL grap
 
 ## Retrieval token impact (illustrative)
 
-Not a formal benchmark harness in CI; illustrative MCP-style savings on one fixture:
+Not a formal benchmark harness in CI; illustrative MCP-style savings on the **public** synthetic fixture `tests/sql-corpus/fixtures/etl/two_cte_join_sample.sql` (generic `app` / `hr` tables — not a production path):
 
-| Approach | `booking_etl_queries/base_ownership.sql` (183 lines) |
-|----------|------------------------------------------------------|
-| Read full file | ~183 lines of source in context |
+| Approach | `two_cte_join_sample.sql` (33 lines) |
+|----------|--------------------------------------|
+| Read full file | ~33 lines of source in context |
 | `get_outline` (AST index) | **2** CTE rows (`scoped` 2–19, `emp_age` 20–28) — outline only, no bodies |
 
-Exact token counts depend on client and `detail_level`; the product goal is **outline + `get_symbol` on demand** instead of whole-file reads. For repo-wide search, `search` / graph edges replace grepping large `scripts/queries` trees.
+Exact token counts depend on client and `detail_level`; the product goal is **outline + `get_symbol` on demand** instead of whole-file reads. For repo-wide search, `search` / graph edges replace grepping large SQL trees.
 
 ## CI
 

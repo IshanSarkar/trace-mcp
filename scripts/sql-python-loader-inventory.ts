@@ -76,7 +76,7 @@ function main() {
     phase4_edge_proposal: {
       type: 'loads_sql',
       from: 'python symbol or file',
-      to: 'scripts/queries/*.sql file node',
+      to: 'indexed *.sql file node',
       resolution: 'resolve string literal / Path(...) under repo root',
     },
   };

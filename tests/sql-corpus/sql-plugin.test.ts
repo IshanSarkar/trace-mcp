@@ -35,7 +35,7 @@ describe('SqlLanguagePlugin — AST CTE extraction', () => {
   }
 
   it('metadata includes preprocessor pipeline on CTE symbols', async () => {
-    const rel = 'etl/base_ownership.sql';
+    const rel = 'etl/two_cte_join_sample.sql';
     const full = fixtureFile(rel);
     expect(full).toBeTruthy();
     const result = await plugin.extractSymbols(rel, fs.readFileSync(full!));

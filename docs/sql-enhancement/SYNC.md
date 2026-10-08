@@ -9,8 +9,9 @@
 
 ## Environment
 
-- `TRACE_SQL_CORPUS_ROOT` — directory of `.sql` files for spike / inventory / cte-diff scripts (defaults to public fixtures).
+- `TRACE_SQL_CORPUS_ROOT` — directory of `.sql` files for spike / inventory / cte-diff (default: `tests/sql-corpus/fixtures` when unset in spike scripts).
 - `TRACE_SQL_INDEX_PROJECT` — project root for `sql-index:smoke` and `sql-index:cte-diff` (required for those scripts).
+- `TRACE_SQL_INDEX_SQL_PATH_SUBSTR` — optional substring filter for smoke SQL counts (private benchmarks only; omit to count all `.sql` in the index).
 - `TRACE_SQL_BENCHMARK_ROOT` — Python repo root for `sql-python:loader-inventory`.
 - `TRACE_SQL_AST=0` — regex-only SQL plugin (default on feature branch: AST enabled).
 
@@ -24,9 +25,9 @@ npm run build
 Private benchmark (run from **this repo**; set paths to your Python/SQL project):
 
 ```bash
-TRACE_SQL_CORPUS_ROOT=/path/to/scripts/queries npm run sql-corpus:spike
-TRACE_SQL_INDEX_PROJECT=/path/to/project npm run sql-index:smoke
-TRACE_SQL_INDEX_PROJECT=/path/to/project npm run sql-index:cte-diff
+TRACE_SQL_CORPUS_ROOT=/path/to/your/sql-tree npm run sql-corpus:spike
+TRACE_SQL_INDEX_PROJECT=/path/to/project TRACE_SQL_INDEX_SQL_PATH_SUBSTR=queries npm run sql-index:smoke
+TRACE_SQL_INDEX_PROJECT=/path/to/project TRACE_SQL_CORPUS_ROOT=/path/to/your/sql-tree npm run sql-index:cte-diff
 ```
 
 When `TRACE_SQL_INDEX_PROJECT` points at a repo with `.cursor/trace-sql-sync.json`, `sql-index:smoke` uses `corpus.cte_count_ast` from that file (not `tests/sql-corpus/corpus-metrics.json`).

@@ -21,7 +21,7 @@ const dbPath = process.env.TRACE_INDEX_DB
   : getDbPath(projectRoot);
 const corpusRoot = process.env.TRACE_SQL_CORPUS_ROOT
   ? path.resolve(process.env.TRACE_SQL_CORPUS_ROOT)
-  : path.join(projectRoot, 'scripts/queries');
+  : null;
 
 function walkSql(dir: string, out: string[] = []): string[] {
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -42,6 +42,20 @@ async function main() {
   }
   if (!fs.existsSync(dbPath)) {
     console.error(JSON.stringify({ ok: false, error: 'index_db_not_found', dbPath }, null, 2));
+    process.exit(1);
+  }
+  if (!corpusRoot) {
+    console.error(
+      JSON.stringify(
+        {
+          ok: false,
+          error: 'TRACE_SQL_CORPUS_ROOT_required',
+          hint: 'Set TRACE_SQL_CORPUS_ROOT to the .sql tree to diff (e.g. public fixtures or your private corpus).',
+        },
+        null,
+        2,
+      ),
+    );
     process.exit(1);
   }
   if (!fs.existsSync(corpusRoot)) {

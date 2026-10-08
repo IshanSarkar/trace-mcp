@@ -22,8 +22,8 @@ function countEdgesByType(
 }
 
 describe('sql_reads resolver', () => {
-  it('base_ownership: scoped CTE reads app.demo and template schema; emp_age reads hr.employees', async () => {
-    const rel = 'etl/base_ownership.sql';
+  it('two_cte_join_sample: scoped CTE reads app.demo and template schema; emp_age reads hr.employees', async () => {
+    const rel = 'etl/two_cte_join_sample.sql';
     const harness = createTestHarness(plugin);
     await harness.indexFile(rel, fs.readFileSync(fixtureFile(rel)!, 'utf8'));
 

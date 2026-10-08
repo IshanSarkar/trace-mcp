@@ -7,7 +7,7 @@ from services.sql_loader import load_sql_with_connectorx
 ROOT = Path(__file__).resolve().parent.parent
 BASE_SQL_PATH = ROOT / "etl"
 
-WAREHOUSE_FILE = BASE_SQL_PATH / "base_ownership.sql"
+SAMPLE_SQL_FILE = BASE_SQL_PATH / "two_cte_join_sample.sql"
 
 
 def _load_extract_df(sql_path, label: str):
@@ -15,4 +15,4 @@ def _load_extract_df(sql_path, label: str):
 
 
 def run_extract():
-    return _load_extract_df(WAREHOUSE_FILE, "warehouse")
+    return _load_extract_df(SAMPLE_SQL_FILE, "sample")

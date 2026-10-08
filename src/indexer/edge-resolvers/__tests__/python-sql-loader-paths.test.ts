@@ -9,13 +9,13 @@ import {
 describe('extractPythonSqlLoadRefs', () => {
   it('resolves module constants in loader calls', () => {
     const src = `
-SQL_FILE = "etl/base_ownership.sql"
+SQL_FILE = "etl/two_cte_join_sample.sql"
 def run():
     read_sql_file(SQL_FILE)
 `;
     const refs = extractPythonSqlLoadRefs(src, 'python/etl_runner.py');
     expect(
-      refs.some((r) => r.sqlPath === 'etl/base_ownership.sql' && r.via === 'loader_call'),
+      refs.some((r) => r.sqlPath === 'etl/two_cte_join_sample.sql' && r.via === 'loader_call'),
     ).toBe(true);
   });
 
@@ -52,21 +52,21 @@ describe('extractPathConstants', () => {
     const src = `
 ROOT = Path(__file__).resolve().parent.parent
 BASE_SQL_PATH = ROOT / "etl"
-WAREHOUSE_FILE = BASE_SQL_PATH / "base_ownership.sql"
+SAMPLE_SQL_FILE = BASE_SQL_PATH / "two_cte_join_sample.sql"
 `;
     const map = extractPathConstants(src, 'python/path_chain_loader.py');
     expect(ascendFromPyFile('python/path_chain_loader.py', 2)).toBe('');
-    expect(map.get('WAREHOUSE_FILE')).toBe('etl/base_ownership.sql');
+    expect(map.get('SAMPLE_SQL_FILE')).toBe('etl/two_cte_join_sample.sql');
   });
 });
 
 describe('resolveToIndexedSqlPath', () => {
-  const indexed = new Set(['etl/base_ownership.sql', 'python/nested/query.sql']);
+  const indexed = new Set(['etl/two_cte_join_sample.sql', 'python/nested/query.sql']);
 
   it('matches repo-relative paths', () => {
-    expect(resolveToIndexedSqlPath('etl/base_ownership.sql', 'python/etl_runner.py', indexed)).toBe(
-      'etl/base_ownership.sql',
-    );
+    expect(
+      resolveToIndexedSqlPath('etl/two_cte_join_sample.sql', 'python/etl_runner.py', indexed),
+    ).toBe('etl/two_cte_join_sample.sql');
   });
 
   it('resolves relative to the Python file directory', () => {

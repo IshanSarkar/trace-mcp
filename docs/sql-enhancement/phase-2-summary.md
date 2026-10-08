@@ -13,7 +13,7 @@
 | `ast-extract.ts` | CTEs + `object_reference` relation text |
 | `spike-parse.ts` | `ok` / `partial` / `failed` + structured result |
 
-## Corpus results (`scripts/queries`, 249 files — current)
+## Corpus results (private benchmark tree — ~250 `.sql` files at spike time)
 
 | Metric | Regex (v3.34.6 index) | Tree-sitter spike |
 |--------|----------------------|-------------------|
@@ -22,7 +22,7 @@
 | Parse `partial` (`hasError`) | n/a | **53** |
 | Parse `failed` | n/a | **0** |
 
-**Former hard failures (not planned):** `communication_etl_*.sql` failed because tree-sitter-sql does not parse chained `(expr AT TIME ZONE 'a') AT TIME ZONE 'b'`. Fixed with `normalizePgAtTimeZone()` in preprocess (parse-only; original SQL unchanged in repo).
+**Former hard failures (not planned):** chained `(expr AT TIME ZONE 'a') AT TIME ZONE 'b'` (see fixture `standalone/timezone_chain_sample.sql`). Fixed with `normalizePgAtTimeZone()` in preprocess (parse-only).
 
 `partial` is acceptable for Phase 3: tree has errors but CTE/relation extraction still runs; spike no longer marks root `ERROR` as failed when CTEs are recoverable.
 

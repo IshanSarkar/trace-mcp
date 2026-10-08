@@ -1,5 +1,5 @@
 WITH base AS (
-  SELECT id FROM {{SCHEMA_NAME}}.booking_etl
+  SELECT id FROM {{SCHEMA_NAME}}.records
 ),
 touched_parents AS (
   SELECT * FROM base

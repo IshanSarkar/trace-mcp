@@ -27,8 +27,8 @@ function cteMeta(
 }
 
 describe('SqlLanguagePlugin — persisted metadata contract', () => {
-  it('base_ownership: ok AST file metadata on every CTE symbol', async () => {
-    const rel = 'etl/base_ownership.sql';
+  it('two_cte_join_sample: ok AST file metadata on every CTE symbol', async () => {
+    const rel = 'etl/two_cte_join_sample.sql';
     const result = await plugin.extractSymbols(rel, fs.readFileSync(fixtureFile(rel)!));
     expect(result.isOk()).toBe(true);
     if (result.isErr()) return;
@@ -69,7 +69,7 @@ describe('SqlLanguagePlugin — persisted metadata contract', () => {
     const prev = process.env.TRACE_SQL_AST;
     process.env.TRACE_SQL_AST = '0';
     try {
-      const rel = 'etl/base_ownership.sql';
+      const rel = 'etl/two_cte_join_sample.sql';
       const result = await plugin.extractSymbols(rel, fs.readFileSync(fixtureFile(rel)!));
       expect(result.isOk()).toBe(true);
       if (result.isErr()) return;

@@ -23,8 +23,8 @@ describe('tree-sitter-sql spike (public fixture pack)', () => {
     });
   }
 
-  it('parent_etl: MATERIALIZED CTEs and :: casts parse clean', async () => {
-    const full = fixtureFile('etl/parent_etl.sql');
+  it('materialized_union_sample: MATERIALIZED CTEs and :: casts parse clean', async () => {
+    const full = fixtureFile('etl/materialized_union_sample.sql');
     expect(full).toBeTruthy();
     const result = await spikeParseSqlSource(fs.readFileSync(full!, 'utf8'));
     expect(result.status).not.toBe('failed');
@@ -33,16 +33,16 @@ describe('tree-sitter-sql spike (public fixture pack)', () => {
     );
   });
 
-  it('lead_assignment: DISTINCT ON parses clean', async () => {
-    const full = fixtureFile('etl/lead_assignment.sql');
+  it('distinct_on_sample: DISTINCT ON parses clean', async () => {
+    const full = fixtureFile('etl/distinct_on_sample.sql');
     expect(full).toBeTruthy();
     const result = await spikeParseSqlSource(fs.readFileSync(full!, 'utf8'));
     expect(result.status).not.toBe('failed');
     expect(result.ctes.map((c) => c.name)).toEqual(['pay']);
   });
 
-  it('uri_probability_features: Python {format} slot does not break parse', async () => {
-    const full = fixtureFile('uri_probability_features.sql');
+  it('format_brace_slot: Python {format} slot does not break parse', async () => {
+    const full = fixtureFile('standalone/format_brace_slot.sql');
     expect(full).toBeTruthy();
     const result = await spikeParseSqlSource(fs.readFileSync(full!, 'utf8'));
     expect(result.preprocess.formatSlots.map((s) => s.name)).toContain('pool_date_filter');
@@ -50,20 +50,16 @@ describe('tree-sitter-sql spike (public fixture pack)', () => {
     expect(result.ctes.length).toBeGreaterThan(0);
   });
 
-  it('communication_etl_incremental: parses after AT TIME ZONE normalization', async () => {
-    const full = fixtureFile('communication_etl_incremental.sql');
+  it('timezone_chain_sample: parses after AT TIME ZONE normalization', async () => {
+    const full = fixtureFile('standalone/timezone_chain_sample.sql');
     expect(full).toBeTruthy();
     const result = await spikeParseSqlSource(fs.readFileSync(full!, 'utf8'));
     expect(result.status).toBe('ok');
-    expect(result.ctes.map((c) => c.name).sort()).toEqual([
-      'bookings',
-      'communication_logs',
-      'crat',
-    ]);
+    expect(result.ctes.map((c) => c.name).sort()).toEqual(['crat', 'event_logs', 'events']);
   });
 
-  it('base_ownership: template slots preserved', async () => {
-    const full = fixtureFile('etl/base_ownership.sql');
+  it('two_cte_join_sample: template slots preserved', async () => {
+    const full = fixtureFile('etl/two_cte_join_sample.sql');
     expect(full).toBeTruthy();
     const result = await spikeParseSqlSource(fs.readFileSync(full!, 'utf8'));
     expect(result.preprocess.templates.map((t) => t.name)).toContain('SCHEMA_NAME');

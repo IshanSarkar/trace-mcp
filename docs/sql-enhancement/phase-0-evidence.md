@@ -17,7 +17,7 @@ Evidence class: **CONFIRMED** unless marked **OBSERVED**.
 
 **CONFIRMED:** CTE pattern is `\bWITH\s+(?:RECURSIVE\s+)?([a-zA-Z_]\w*)\s+AS\s*\(` — it matches only the **first** name after `WITH`, not `, name AS (`.
 
-Example: `base_ownership.sql` indexes `scoped` only; `emp_age` is missed. `incremental_list.sql` indexes `base` only; `touched_parents`, `keys` missed. `penalty.sql` indexes `touched` only; `ranked` missed.
+Example: `two_cte_join_sample.sql` indexes `scoped` only; `emp_age` is missed. `incremental_keys_sample.sql` indexes `base` only; `touched_parents`, `keys` missed. `ranked_window_sample.sql` indexes `touched` only; `ranked` missed.
 
 ### 3. What SQL symbols are persisted?
 
@@ -63,8 +63,8 @@ Example: `base_ownership.sql` indexes `scoped` only; `emp_age` is missed. `incre
 
 | Fixture | Indexed CTE symbols (regex) | Expected CTEs (ground truth) |
 |---------|----------------------------|------------------------------|
-| `base_ownership.sql` | `scoped` | `scoped`, `emp_age` |
-| `incremental_list.sql` | `base` | `base`, `touched_parents`, `keys` |
-| `payment.sql` | (none) | (none — no WITH) |
-| `penalty.sql` | `touched` | `touched`, `ranked` |
-| `lead_assignment.sql` | `pay` | `pay` |
+| `two_cte_join_sample.sql` | `scoped` | `scoped`, `emp_age` |
+| `incremental_keys_sample.sql` | `base` | `base`, `touched_parents`, `keys` |
+| `payment_ledger.sql` | (none) | (none — no WITH) |
+| `ranked_window_sample.sql` | `touched` | `touched`, `ranked` |
+| `distinct_on_sample.sql` | `pay` | `pay` |

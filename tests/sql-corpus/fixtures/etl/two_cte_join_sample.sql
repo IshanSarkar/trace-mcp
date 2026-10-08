@@ -4,7 +4,7 @@ WITH
       d.object_id
     FROM
       app.demo d
-      LEFT JOIN {{SCHEMA_NAME}}.assignments a ON a.booking_id = d.booking_id
+      LEFT JOIN {{SCHEMA_NAME}}.assignments a ON a.record_id = d.record_id
     WHERE
       a.lead_id IS NOT NULL
       AND CASE

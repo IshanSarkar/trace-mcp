@@ -28,8 +28,8 @@ function countEdgesByType(
 
 async function indexFixturePair(store: Store, root: string): Promise<void> {
   const pairs = [
-    { rel: 'etl/base_ownership.sql', plugin: sqlPlugin },
-    { rel: 'etl/incremental_list.sql', plugin: sqlPlugin },
+    { rel: 'etl/two_cte_join_sample.sql', plugin: sqlPlugin },
+    { rel: 'etl/incremental_keys_sample.sql', plugin: sqlPlugin },
     { rel: 'python/etl_runner.py', plugin: pyPlugin },
   ];
   for (const { rel, plugin } of pairs) {
@@ -74,7 +74,7 @@ describe('loads_sql resolver', () => {
 
     const paths = targets.map((t) => t.sql_path);
     expect(paths).toEqual(
-      expect.arrayContaining(['etl/base_ownership.sql', 'etl/incremental_list.sql']),
+      expect.arrayContaining(['etl/two_cte_join_sample.sql', 'etl/incremental_keys_sample.sql']),
     );
   });
 
@@ -83,7 +83,7 @@ describe('loads_sql resolver', () => {
     const db = initializeDatabase(':memory:');
     const store = new Store(db);
     for (const { rel, plugin } of [
-      { rel: 'etl/base_ownership.sql', plugin: sqlPlugin },
+      { rel: 'etl/two_cte_join_sample.sql', plugin: sqlPlugin },
       { rel: 'python/path_chain_loader.py', plugin: pyPlugin },
     ]) {
       const buf = fs.readFileSync(`${root}/${rel}`);
@@ -110,6 +110,6 @@ describe('loads_sql resolver', () => {
          WHERE t.name = 'loads_sql'`,
       )
       .all() as Array<{ path: string }>;
-    expect(row.map((r) => r.path)).toContain('etl/base_ownership.sql');
+    expect(row.map((r) => r.path)).toContain('etl/two_cte_join_sample.sql');
   });
 });

@@ -14,7 +14,7 @@ Goal: **include everything we can justify with evidence**, keep **fallback** for
 
 Preprocessor changes **must not** be written back to repo files — indexing only.
 
-## Current corpus signal (249 files, post–AT TIME ZONE fix)
+## Current corpus signal (private benchmark ~250 files, post–AT TIME ZONE fix)
 
 | Status | Count | Meaning |
 |--------|------:|---------|
@@ -41,7 +41,7 @@ Run: `npm run sql-corpus:spike` and `npm run sql-partial:diagnostics`.
 | `AS MATERIALIZED` CTE | 15% | |
 | Chained `AT TIME ZONE` | fixed | Was 2 hard failures; now `ok`. |
 
-One partial file had **no flag** until `trivial_invalid_sql` (`business_cost_test_cost.sql` = `selec *`). See `phase-3-prep.md`.
+One partial file had **no flag** until `trivial_invalid_sql` (intentional typo `selec *` in a private sample). See `phase-3-prep.md`.
 
 ## Inclusion backlog (prioritized)
 
@@ -53,9 +53,9 @@ One partial file had **no flag** until `trivial_invalid_sql` (`business_cost_tes
 
 ### P1 — Next shims (high corpus impact, low semantic risk)
 
-- **Done:** Python-style `{name}` in SQL → `/* __fmt_name__ */` (`normalizePythonFormatBraces`). Corpus: `uri_probability_features.sql` (`pool_date_filter`). Does not touch `{{TEMPLATE}}`.
-- **Done:** join `DISTINCT` + newline + `ON (` → `DISTINCT ON (` (`normalizePgDistinctOn`). Common in booking/base*.sql and `lead_assignment.sql`.
-- **Done:** `AS MATERIALIZED (` → `AS (` (`normalizePgMaterializedCte`). e.g. `parent_etl.sql`.
+- **Done:** Python-style `{name}` in SQL → `/* __fmt_name__ */` (`normalizePythonFormatBraces`). Fixture: `standalone/format_brace_slot.sql` (`pool_date_filter`). Does not touch `{{TEMPLATE}}`.
+- **Done:** join `DISTINCT` + newline + `ON (` → `DISTINCT ON (` (`normalizePgDistinctOn`). Fixture: `etl/distinct_on_sample.sql`.
+- **Done:** `AS MATERIALIZED (` → `AS (` (`normalizePgMaterializedCte`). Fixture: `etl/materialized_union_sample.sql`.
 - **Done:** `ILIKE` → `LIKE` (`normalizePgIlike`). Parse-only; metadata can still record original operator later.
 - **Rejected (global):** `normalizePgDoubleColonCast` — enabling in L1 dropped `ok` ~196→~185; `DISTINCT ON` + `CAST(...)` still confuses tree-sitter-sql. Keep helper for targeted retries in Phase 3 fallback ladder.
 
