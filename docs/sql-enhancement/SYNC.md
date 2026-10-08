@@ -63,7 +63,7 @@ Phase 4 resolvers: `sql-cte-refs.ts`, `sql-reads.ts`, `loads-sql.ts` (+ SQL rela
 | Track | When | Actions |
 |-------|------|---------|
 | **Use it** | Now | Local `dist/cli.js` MCP + re-index after plugin changes; lineage via trace tools |
-| **Land upstream** | When employer allows | `git push fork feat/sql-postgresql-cte-indexing` → sign CLA on PR **#1482** → CI green → review |
+| **Land upstream** | When you're ready | `git push fork feat/sql-postgresql-cte-indexing` → sign CLA on PR **#1482** → CI green → review |
 | **v1.1 polish** | In progress / optional | Path()-chain `loads_sql` (`ROOT` + `_load_extract_df` / `sql_path=`), more partial-parse fixes, dedicated SQL graph MCP tools |
 
 There is no **Phase 5** in the original plan.
