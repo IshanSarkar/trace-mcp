@@ -6,7 +6,7 @@ Methodology for maintainer review: one **full** `index --force` on a representat
 
 | | |
 |--|--|
-| trace-mcp | Branch `feat/sql-postgresql-cte-indexing` @ `7b03c6d6` |
+| trace-mcp | Branch `feat/sql-postgresql-cte-indexing` @ `51a3feb5` (rebased on upstream `master`; metrics unchanged since review-fix `e48807e0`) |
 | Node | 22+ |
 | Command | `node dist/cli.js index <project_root> --force` |
 | Measurement | macOS `/usr/bin/time -l` + SQLite counts on project index DB |
