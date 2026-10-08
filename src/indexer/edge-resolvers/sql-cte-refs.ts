@@ -6,7 +6,25 @@
 import { logger } from '../../logger.js';
 import type { ChangeScope } from '../../plugin-api/types.js';
 import { sqlCteSymbolId } from '../plugins/language/sql/sql-index-metadata.js';
+import type { Store } from '../../db/store.js';
 import type { PipelineState } from '../pipeline-state.js';
+
+/** First CTE definition with `name` in file (lowest line) when names repeat. */
+function resolveCteTargetSymbolId(store: Store, filePath: string, toName: string): string | null {
+  const rows = store.db
+    .prepare(
+      `SELECT s.symbol_id
+       FROM symbols s
+       JOIN files f ON f.id = s.file_id
+       WHERE f.path = ?
+         AND json_extract(s.metadata, '$.sqlKind') = 'cte'
+         AND json_extract(s.metadata, '$.name') = ?
+       ORDER BY s.line_start ASC`,
+    )
+    .all(filePath, toName) as Array<{ symbol_id: string }>;
+  if (rows.length > 0) return rows[0]!.symbol_id;
+  return sqlCteSymbolId(filePath, toName);
+}
 
 type CteRow = {
   symbol_id: string;
@@ -79,7 +97,8 @@ export function resolveSqlCteRefEdges(state: PipelineState, scope?: ChangeScope)
     const refs = meta.referencesCtes;
     if (!refs?.length) continue;
     for (const toName of refs) {
-      const targetId = sqlCteSymbolId(row.file_path, toName);
+      const targetId = resolveCteTargetSymbolId(store, row.file_path, toName);
+      if (!targetId) continue;
       pending.push({ source: row.symbol_id, target: targetId });
       symbolIdStrs.add(row.symbol_id);
       symbolIdStrs.add(targetId);

@@ -2,7 +2,9 @@ import type { RawSymbol } from '../../../../plugin-api/types.js';
 import {
   buildCteSymbolMetadata,
   buildSqlFileSymbolMetadata,
+  buildSqlFileUnitMetadata,
   sqlCteSymbolId,
+  sqlFileUnitSymbolId,
 } from './sql-index-metadata.js';
 import type { SqlSpikeParseResult } from './spike-parse.js';
 
@@ -27,7 +29,7 @@ export function buildCteSymbolsFromSpike(
   for (const cte of spike.ctes) {
     const cteMeta = buildCteSymbolMetadata(cte);
     out.push({
-      symbolId: sqlCteSymbolId(filePath, cte.name),
+      symbolId: sqlCteSymbolId(filePath, cte.name, cte.lineStart, cte.defIndex),
       name: cte.name,
       kind: 'variable',
       fqn: cte.name,
@@ -43,6 +45,34 @@ export function buildCteSymbolsFromSpike(
   }
 
   return out;
+}
+
+/** Standalone SELECT / DDL-only files: file-level symbol so sql_reads can run without CTEs. */
+export function buildSqlFileUnitSymbolFromSpike(
+  filePath: string,
+  source: string,
+  spike: SqlSpikeParseResult,
+  opts?: { extractor?: 'tree-sitter-sql' | 'regex-fallback'; notes?: string },
+): RawSymbol | null {
+  if (spike.ctes.length > 0) return null;
+  if (spike.relationRefs.length === 0 && spike.status === 'failed') return null;
+  const extractor = opts?.extractor ?? 'tree-sitter-sql';
+  const fileMeta = mergeFileMeta(spike, extractor, opts?.notes);
+  const lineEnd = source.split('\n').length;
+  return {
+    symbolId: sqlFileUnitSymbolId(filePath),
+    name: '__sql',
+    kind: 'module',
+    fqn: filePath,
+    byteStart: 0,
+    byteEnd: source.length,
+    lineStart: 1,
+    lineEnd,
+    metadata: {
+      ...fileMeta,
+      ...buildSqlFileUnitMetadata(),
+    },
+  };
 }
 
 export function annotateSymbolsWithFileMeta(

@@ -6,12 +6,13 @@ export interface ExtractedCte {
   lineEnd: number;
   byteStart: number;
   byteEnd: number;
-  /** Other CTE names referenced in this CTE body (same file). */
+  /** Other CTE names referenced in FROM/JOIN (same file). */
   referencesCtes: string[];
+  /** Disambiguates repeated CTE names in one file (symbol id suffix). */
+  defIndex: number;
 }
 
 export interface ExtractedRelationRef {
-  /** Best-effort text (may include __tpl_* placeholders). */
   text: string;
   lineStart: number;
 }
@@ -26,13 +27,15 @@ function lineEndOf(node: Node): number {
 
 export function extractCtesFromTree(root: Node): ExtractedCte[] {
   const out: ExtractedCte[] = [];
-  /** Symbol IDs are `path::name#variable` — duplicate CTE names in one file collapse to one symbol. */
-  const seenNames = new Set<string>();
+  const nameCounts = new Map<string, number>();
+
   const walk = (node: Node) => {
     if (node.type === 'cte') {
       const id = node.children.find((c) => c.type === 'identifier');
-      if (id && !seenNames.has(id.text)) {
-        seenNames.add(id.text);
+      if (id) {
+        const prev = nameCounts.get(id.text) ?? 0;
+        const defIndex = prev;
+        nameCounts.set(id.text, prev + 1);
         out.push({
           name: id.text,
           lineStart: lineStartOf(id),
@@ -40,6 +43,7 @@ export function extractCtesFromTree(root: Node): ExtractedCte[] {
           byteStart: id.startIndex,
           byteEnd: node.endIndex,
           referencesCtes: [],
+          defIndex,
         });
       }
     }
@@ -53,26 +57,28 @@ export function extractCtesFromTree(root: Node): ExtractedCte[] {
 function attachCteReferences(root: Node, ctes: ExtractedCte[]): void {
   if (ctes.length === 0) return;
   const names = new Set(ctes.map((c) => c.name));
-  const cteNodes = new Map<string, Node>();
+  const cteNodes: Node[] = [];
 
   const walk = (node: Node) => {
     if (node.type === 'cte') {
       const id = node.children.find((c) => c.type === 'identifier');
-      if (id && names.has(id.text) && !cteNodes.has(id.text)) {
-        cteNodes.set(id.text, node);
-      }
+      if (id) cteNodes.push(node);
     }
     for (const child of node.children) walk(child);
   };
   walk(root);
 
-  for (const cte of ctes) {
-    const node = cteNodes.get(cte.name);
+  for (let i = 0; i < ctes.length; i++) {
+    const cte = ctes[i]!;
+    const node = cteNodes[i];
     if (!node) continue;
     const refs = new Set<string>();
     const walkRefs = (n: Node) => {
-      if (n.type === 'identifier' && names.has(n.text) && n.text !== cte.name) {
-        refs.add(n.text);
+      if (n.type === 'object_reference') {
+        const text = n.text.trim();
+        if (text && !text.includes('.') && names.has(text) && text !== cte.name) {
+          refs.add(text);
+        }
       }
       for (const child of n.children) walkRefs(child);
     };

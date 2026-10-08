@@ -33,6 +33,11 @@ export interface SqlCteSymbolMetadata {
   lineStart: number;
   lineEnd: number;
   referencesCtes: string[];
+  defIndex?: number;
+}
+
+export interface SqlFileUnitMetadata {
+  sqlKind: 'file';
 }
 
 export interface SqlFileSymbolMetadata {
@@ -51,9 +56,21 @@ export interface SqlFileSymbolMetadata {
   notes?: string;
 }
 
-/** Stable CTE symbol id (compat with v3.34.6 regex indexer). */
-export function sqlCteSymbolId(filePath: string, cteName: string): string {
+/** Stable CTE symbol id (compat with v3.34.6 regex indexer). Repeated names use `@line`. */
+export function sqlCteSymbolId(
+  filePath: string,
+  cteName: string,
+  lineStart?: number,
+  defIndex?: number,
+): string {
+  if (defIndex != null && defIndex > 0 && lineStart != null) {
+    return `${filePath}::${cteName}@${lineStart}#variable`;
+  }
   return `${filePath}::${cteName}#variable`;
+}
+
+export function sqlFileUnitSymbolId(filePath: string): string {
+  return `${filePath}::__sql#module`;
 }
 
 export function relationRefConfidence(text: string): SqlRelationConfidence {
@@ -85,7 +102,12 @@ export function buildCteSymbolMetadata(cte: ExtractedCte): SqlCteSymbolMetadata 
     lineStart: cte.lineStart,
     lineEnd: cte.lineEnd,
     referencesCtes: cte.referencesCtes,
+    defIndex: cte.defIndex,
   };
+}
+
+export function buildSqlFileUnitMetadata(): SqlFileUnitMetadata {
+  return { sqlKind: 'file' };
 }
 
 export function buildSqlFileSymbolMetadata(

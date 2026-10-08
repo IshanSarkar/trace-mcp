@@ -62,7 +62,7 @@
   "engines": {
     "node": ">=22.0.0"
   },
-  "packageManager": "pnpm@12.8.1",
+  "packageManager": "pnpm@10.33.0",
   "license": "MIT",
   "author": "Nikolai Vysotskyi",
   "repository": {

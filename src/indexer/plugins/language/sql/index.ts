@@ -9,7 +9,11 @@ import type {
   PluginManifest,
   RawSymbol,
 } from '../../../../plugin-api/types.js';
-import { annotateSymbolsWithFileMeta, buildCteSymbolsFromSpike } from './build-ast-symbols.js';
+import {
+  annotateSymbolsWithFileMeta,
+  buildCteSymbolsFromSpike,
+  buildSqlFileUnitSymbolFromSpike,
+} from './build-ast-symbols.js';
 import { extractSqlDdlSymbolsRegex, extractSqlSymbolsRegex } from './sql-regex-config.js';
 import { spikeParseSqlSource } from './spike-parse.js';
 
@@ -66,6 +70,8 @@ export const SqlLanguagePlugin = class implements LanguagePlugin {
       );
     }
     merged.push(...buildCteSymbolsFromSpike(filePath, spike));
+    const fileUnit = buildSqlFileUnitSymbolFromSpike(filePath, source, spike);
+    if (fileUnit) merged.push(fileUnit);
 
     const seen = new Set<string>();
     const symbols = merged.filter((s) => {

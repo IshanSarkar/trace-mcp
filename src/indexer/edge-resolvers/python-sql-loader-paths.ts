@@ -4,6 +4,7 @@
  */
 
 import path from 'node:path';
+import { isOffsetInPythonCommentOrString } from './python-literal-mask.js';
 
 export const PYTHON_SQL_LOADER_CALLEES = [
   'read_sql_file',
@@ -179,6 +180,8 @@ export function extractPythonSqlLoadRefs(source: string, pyFileRel: string): Pyt
 
   const loaderRe = new RegExp(`\\b(${LOADER_CALLEE_PATTERN})\\s*\\(([^)]*)`, 'g');
   for (const m of source.matchAll(loaderRe)) {
+    const at = m.index ?? 0;
+    if (isOffsetInPythonCommentOrString(source, at)) continue;
     const callee = m[1];
     const args = m[2];
     if (!callee || args == null) continue;
@@ -195,6 +198,7 @@ export function extractPythonSqlLoadRefs(source: string, pyFileRel: string): Pyt
 
   const helperRe = /\b_load_extract_df\s*\(\s*([A-Z][A-Z0-9_]*)\s*[,)]/g;
   for (const m of source.matchAll(helperRe)) {
+    if (isOffsetInPythonCommentOrString(source, m.index ?? 0)) continue;
     const id = m[1];
     if (!id) continue;
     const sqlPath = resolveIdentifier(id, constants);
@@ -208,6 +212,8 @@ export function extractPythonSqlLoadRefs(source: string, pyFileRel: string): Pyt
 
   const litRe = /(?<![fF])['"]([^'"]+\.sql)['"]/g;
   for (const m of source.matchAll(litRe)) {
+    const at = m.index ?? 0;
+    if (isOffsetInPythonCommentOrString(source, at)) continue;
     const sqlPath = m[1];
     if (!sqlPath || !isStaticSqlPathLiteral(sqlPath)) continue;
     if (!sqlPath.includes('/')) continue;

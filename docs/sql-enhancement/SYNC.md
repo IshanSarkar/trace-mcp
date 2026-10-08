@@ -41,6 +41,19 @@ When `TRACE_SQL_INDEX_PROJECT` points at a repo with `.cursor/trace-sql-sync.jso
 
 Phase 4 resolvers: `sql-cte-refs.ts`, `sql-reads.ts`, `loads-sql.ts` (+ SQL relation phantoms; subproject reconcile keeps `__phantom__` rows).
 
+## PR #1482 review follow-ups (addressed in branch)
+
+| Maintainer item | Fix |
+|-----------------|-----|
+| Preprocess span drift | `sql-source-map.ts` maps AST byte/lines back to original SQL |
+| Plain `SELECT` sql_reads | `__sql#module` file-unit symbol when no CTEs |
+| False `sql_cte_ref` | CTE deps only from `object_reference` (FROM/JOIN), not SELECT columns |
+| Duplicate CTE names | All definitions indexed; symbol id `name@line` when `defIndex > 0` |
+| Python `loads_sql` in comments/strings | Skip matches where `isOffsetInPythonCommentOrString` |
+| pnpm 12 migration | Reverted to pnpm 10 / upstream lockfile in SQL PR |
+
+**Indexing cost (fill after local benchmark):** record `index --force` wall time, peak RSS, and edge counts (`sql_cte_ref`, `sql_reads`, `loads_sql`) on a representative project before/after Phase 4 resolvers.
+
 ## What's next (no more phased product work in scope)
 
 **Nothing is required** to finish the SQL indexing product you scoped (Phases 0–4). Optional follow-ups only if you need them:

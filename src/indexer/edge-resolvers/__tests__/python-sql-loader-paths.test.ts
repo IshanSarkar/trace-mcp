@@ -19,6 +19,26 @@ def run():
     ).toBe(true);
   });
 
+  it('ignores loader calls inside comments', () => {
+    const src = `
+# read_sql_file("etl/commented.sql")
+def run():
+    pass
+`;
+    const refs = extractPythonSqlLoadRefs(src, 'python/etl_runner.py');
+    expect(refs).toHaveLength(0);
+  });
+
+  it('ignores .sql paths inside string doc literals', () => {
+    const src = `
+DOC = """
+Example: read_sql_file("etl/doc_only.sql")
+"""
+`;
+    const refs = extractPythonSqlLoadRefs(src, 'python/etl_runner.py');
+    expect(refs).toHaveLength(0);
+  });
+
   it('captures qualified string literals (and loader calls)', () => {
     const src = 'render_sql_file("ledger/payment_ledger.sql")';
     const refs = extractPythonSqlLoadRefs(src, 'python/etl_runner.py');

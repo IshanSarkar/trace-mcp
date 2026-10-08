@@ -55,4 +55,31 @@ describe('sql_reads resolver', () => {
     expect(names).not.toContain('scoped');
     expect(names).not.toContain('emp_age');
   });
+
+  it('plain_select: standalone SELECT gets sql_reads via file unit symbol', async () => {
+    const rel = 'standalone/plain_select.sql';
+    const harness = createTestHarness(plugin);
+    await harness.indexFile(rel, fs.readFileSync(fixtureFile(rel)!, 'utf8'));
+
+    const fileId = harness.getFileId(rel);
+    expect(fileId).toBeDefined();
+    harness.store.createNode('file', fileId!);
+
+    resolveSqlReadEdges({ store: harness.store });
+
+    const reads = countEdgesByType(harness.store.db, 'sql_reads');
+    expect(reads).toBeGreaterThanOrEqual(1);
+
+    const relations = harness.store.db
+      .prepare(
+        `SELECT DISTINCT json_extract(s.metadata, '$.relation') AS relation
+         FROM edges e
+         JOIN edge_types t ON t.id = e.edge_type_id
+         JOIN nodes n ON n.id = e.target_node_id
+         JOIN symbols s ON s.id = n.ref_id AND n.node_type = 'symbol'
+         WHERE t.name = 'sql_reads'`,
+      )
+      .all() as Array<{ relation: string }>;
+    expect(relations.map((r) => r.relation)).toContain('app.orders');
+  });
 });

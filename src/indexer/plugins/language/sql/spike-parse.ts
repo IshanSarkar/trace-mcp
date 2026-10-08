@@ -6,6 +6,7 @@ import {
   type ExtractedRelationRef,
 } from './ast-extract.js';
 import { preprocessSqlForParse, type SqlPreprocessResult } from './preprocess.js';
+import { remapExtractedToOriginal } from './remap-extract.js';
 import { parseSqlSource } from './sql-parser.js';
 
 export type SqlParseStatus = 'ok' | 'partial' | 'failed';
@@ -21,9 +22,10 @@ export interface SqlSpikeParseResult {
 
 export async function spikeParseSqlSource(original: string): Promise<SqlSpikeParseResult> {
   const preprocess = preprocessSqlForParse(original);
+  const positionMap = preprocess.positionMap;
   let tree: Tree;
   try {
-    tree = await parseSqlSource(preprocess.source);
+    tree = await parseSqlSource(positionMap.preprocessed);
   } catch (e) {
     return {
       status: 'failed',
@@ -37,8 +39,9 @@ export async function spikeParseSqlSource(original: string): Promise<SqlSpikePar
 
   try {
     const root = tree.rootNode;
-    const ctes = extractCtesFromTree(root);
-    const relationRefs = extractRelationRefsFromTree(root);
+    const rawCtes = extractCtesFromTree(root);
+    const rawRefs = extractRelationRefsFromTree(root);
+    const { ctes, relationRefs } = remapExtractedToOriginal(positionMap, rawCtes, rawRefs);
     const hasError = root.hasError || root.type === 'ERROR';
     const rootOk = root.type === 'program' || root.type === 'statement';
 
