@@ -19,6 +19,21 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { logger } from '../logger.js';
+import { yieldToEventLoopFair } from '../utils/event-loop.js';
+
+const PACKAGE_ENTRIES_CACHE_TTL_MS = 60_000;
+const MAX_PACKAGE_ENTRIES_CACHE_ENTRIES = 20;
+
+const packageEntriesCache = new Map<string, { entries: Set<string>; computedAt: number }>();
+
+/** Evict package.json entry cache (all or per-root). */
+export function clearPackageEntriesCache(rootPath?: string): void {
+  if (rootPath) {
+    packageEntriesCache.delete(rootPath);
+  } else {
+    packageEntriesCache.clear();
+  }
+}
 
 /**
  * Walk every `package.json` under `rootPath` (skipping node_modules and
@@ -29,15 +44,63 @@ import { logger } from '../logger.js';
  * Wildcards in subpath/conditional `exports` keys or values are skipped
  * — they map to many files and can't be enumerated upfront.
  */
-export function findPackageJsonEntries(rootPath: string): Set<string> {
+export function findPackageJsonEntries(
+  rootPath: string,
+  options?: { bypassCache?: boolean; ttlMs?: number },
+): Set<string> {
+  const cached = readCachedEntries(rootPath, options);
+  if (cached) return cached;
   const entries = new Set<string>();
-  if (!rootPath || !fs.existsSync(rootPath)) return entries;
+  for (const _ of scanPackageEntries(rootPath, entries)) {
+    // Synchronous callers use the same scanner and cache contract.
+  }
+  cacheEntries(rootPath, entries);
+  return entries;
+}
+
+/** Cooperative variant for bulk indexing: no directory walk may monopolize /health. */
+export async function findPackageJsonEntriesAsync(
+  rootPath: string,
+  options?: { bypassCache?: boolean; ttlMs?: number },
+): Promise<Set<string>> {
+  const cached = readCachedEntries(rootPath, options);
+  if (cached) return cached;
+  const entries = new Set<string>();
+  let dirs = 0;
+  for (const _ of scanPackageEntries(rootPath, entries)) {
+    if (++dirs % 32 === 0) await yieldToEventLoopFair();
+  }
+  cacheEntries(rootPath, entries);
+  return entries;
+}
+
+function readCachedEntries(
+  rootPath: string,
+  options?: { bypassCache?: boolean; ttlMs?: number },
+): Set<string> | undefined {
+  const ttl = options?.ttlMs ?? PACKAGE_ENTRIES_CACHE_TTL_MS;
+  if (!options?.bypassCache) {
+    const cached = packageEntriesCache.get(rootPath);
+    if (cached && Date.now() - cached.computedAt < ttl) {
+      // LRU refresh: move to end
+      packageEntriesCache.delete(rootPath);
+      packageEntriesCache.set(rootPath, cached);
+      return cached.entries;
+    }
+  }
+  return undefined;
+}
+
+function* scanPackageEntries(rootPath: string, entries: Set<string>): Generator<void> {
+  if (!rootPath || !fs.existsSync(rootPath)) return;
 
   const visited = new Set<string>();
-  const queue: string[] = [rootPath];
+  const queue: Array<{ dir: string; depth: number }> = [{ dir: rootPath, depth: 0 }];
+  const MAX_DEPTH = 8;
 
-  while (queue.length > 0) {
-    const dir = queue.shift()!;
+  // A cursor keeps breadth-first order without Array.shift's quadratic copies.
+  for (let cursor = 0; cursor < queue.length; cursor++) {
+    const { dir, depth } = queue[cursor]!;
     if (visited.has(dir)) continue;
     visited.add(dir);
 
@@ -53,16 +116,22 @@ export function findPackageJsonEntries(rootPath: string): Set<string> {
       // Skip directories that never contain first-party source
       if (ent.isDirectory()) {
         if (
+          depth >= MAX_DEPTH ||
           name === 'node_modules' ||
           name === 'vendor' ||
           name === 'dist' ||
           name === 'build' ||
           name === '.git' ||
+          name === 'coverage' ||
+          name === 'tmp' ||
+          name === 'temp' ||
+          name === '__pycache__' ||
+          name === 'site-packages' ||
           name.startsWith('.') // .next, .turbo, .pnpm-store, etc.
         ) {
           continue;
         }
-        queue.push(path.join(dir, name));
+        queue.push({ dir: path.join(dir, name), depth: depth + 1 });
         continue;
       }
 
@@ -98,9 +167,17 @@ export function findPackageJsonEntries(rootPath: string): Set<string> {
         logger.debug({ err: e, pkgPath }, 'force-include: failed to parse package.json');
       }
     }
+    yield;
   }
+}
 
-  return entries;
+function cacheEntries(rootPath: string, entries: Set<string>): void {
+  packageEntriesCache.delete(rootPath);
+  if (packageEntriesCache.size >= MAX_PACKAGE_ENTRIES_CACHE_ENTRIES) {
+    const oldestKey = packageEntriesCache.keys().next().value;
+    if (oldestKey !== undefined) packageEntriesCache.delete(oldestKey);
+  }
+  packageEntriesCache.set(rootPath, { entries, computedAt: Date.now() });
 }
 
 /**

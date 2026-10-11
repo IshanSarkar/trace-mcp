@@ -9,10 +9,11 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { TypeScriptLanguagePlugin } from '../../../src/indexer/plugins/language/typescript/index.js';
 import { PluginRegistry } from '../../../src/plugin-api/registry.js';
+import { registerProject, unregisterProject } from '../../../src/registry.js';
 import type { ServerContext } from '../../../src/server/types.js';
 import { registerLookupTools } from '../../../src/tools/register/navigation/lookup-tools.js';
 import { createTestStore } from '../../test-utils.js';
@@ -104,5 +105,434 @@ describe('get_outline — auto-index on NOT_FOUND (TRA-4)', () => {
     expect(body.error.reason).toBe('not_found');
     expect(typeof body.error.help).toBe('string');
     expect(body.error.help.length).toBeGreaterThan(0);
+  });
+});
+
+describe('get_outline — descendant projects and root sessions (TRA-2243)', () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'trace-mcp-tra2243-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it('relays get_outline to registered descendant project when file belongs to it', async () => {
+    const parentDir = path.join(tmpDir, 'parent');
+    const childDir = path.join(parentDir, 'packages', 'child');
+    fs.mkdirSync(childDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(childDir, 'child.ts'),
+      'export function childFunc(): string { return "child"; }\n',
+    );
+    registerProject(parentDir);
+    registerProject(childDir);
+
+    try {
+      const mockRelayed = {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ path: 'child.ts', symbols: [{ name: 'childFunc' }] }),
+          },
+        ],
+        isError: false,
+      };
+      const mockRelay = {
+        listRelayTargets: () => [parentDir, childDir],
+        openProject: vi.fn(async (targetRoot: string) => {
+          if (targetRoot === childDir) {
+            return {
+              toolHandlers: new Map([['get_outline', vi.fn(async () => mockRelayed)]]),
+            };
+          }
+          return null;
+        }),
+        dispose: () => {},
+      };
+
+      const store = createTestStore();
+      store.insertFile('other.ts', 'typescript', 'h1', 1);
+
+      const ctx = {
+        store,
+        registry: new PluginRegistry(),
+        config: { root: parentDir, include: ['**/*.ts'], exclude: [], plugins: [] },
+        projectRoot: parentDir,
+        guardPath: () => null,
+        j: (v: unknown) => JSON.stringify(v),
+        jh: (_tool: string, v: unknown) => JSON.stringify(v),
+        markExplored: () => undefined,
+        decisionStore: null,
+        rankingLedger: null,
+        projectRelay: mockRelay,
+      } as unknown as ServerContext;
+
+      const { server, captured } = makeCapturingServer();
+      registerLookupTools(server as never, ctx);
+      const handler = captured.find((t) => t.name === 'get_outline')!.handler;
+
+      const res = await handler({ path: 'packages/child/child.ts' });
+      expect(res.isError).toBeFalsy();
+      const body = JSON.parse(res.content[0].text);
+      expect(body.symbols[0].name).toBe('childFunc');
+      expect(mockRelay.openProject).toHaveBeenCalledWith(childDir);
+    } finally {
+      unregisterProject(childDir);
+      unregisterProject(parentDir);
+    }
+  });
+
+  it('falls back to regex outline and hints call_project_tool when relay is not available for descendant', async () => {
+    const parentDir = path.join(tmpDir, 'parent2');
+    const childDir = path.join(parentDir, 'packages', 'child2');
+    fs.mkdirSync(childDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(childDir, 'child2.ts'),
+      'export function child2Func(): string { return "child2"; }\n',
+    );
+    registerProject(parentDir);
+    registerProject(childDir);
+
+    try {
+      const store = createTestStore();
+      store.insertFile('other.ts', 'typescript', 'h1', 1);
+
+      const ctx = {
+        store,
+        registry: new PluginRegistry(),
+        config: { root: parentDir, include: ['**/*.ts'], exclude: [], plugins: [] },
+        projectRoot: parentDir,
+        guardPath: () => null,
+        j: (v: unknown) => JSON.stringify(v),
+        jh: (_tool: string, v: unknown) => JSON.stringify(v),
+        markExplored: () => undefined,
+        decisionStore: null,
+        rankingLedger: null,
+        projectRelay: null,
+      } as unknown as ServerContext;
+
+      const { server, captured } = makeCapturingServer();
+      registerLookupTools(server as never, ctx);
+      const handler = captured.find((t) => t.name === 'get_outline')!.handler;
+
+      const res = await handler({ path: 'packages/child2/child2.ts' });
+      expect(res.isError).toBeFalsy();
+      const body = JSON.parse(res.content[0].text);
+      expect(body.symbols.some((s: { name: string }) => s.name === 'child2Func')).toBe(true);
+      expect(body._hint).toContain('call_project_tool');
+    } finally {
+      unregisterProject(childDir);
+      unregisterProject(parentDir);
+    }
+  });
+
+  it('resolves relative path to registered project when session has 0 files (TRA-2243)', async () => {
+    const projDir = path.join(tmpDir, 'reg-proj');
+    fs.mkdirSync(path.join(projDir, 'src'), { recursive: true });
+    fs.writeFileSync(path.join(projDir, 'src', 'app.ts'), 'export class AppService {}\n');
+    registerProject(projDir);
+
+    try {
+      const emptyStore = createTestStore();
+      const ctx = {
+        store: emptyStore,
+        registry: new PluginRegistry(),
+        config: { root: '/', include: [], exclude: [], plugins: [] },
+        projectRoot: '/',
+        guardPath: () => null,
+        j: (v: unknown) => JSON.stringify(v),
+        jh: (_tool: string, v: unknown) => JSON.stringify(v),
+        markExplored: () => undefined,
+        decisionStore: null,
+        rankingLedger: null,
+        projectRelay: null,
+      } as unknown as ServerContext;
+
+      const { server, captured } = makeCapturingServer();
+      registerLookupTools(server as never, ctx);
+      const handler = captured.find((t) => t.name === 'get_outline')!.handler;
+
+      const res = await handler({ path: 'reg-proj/src/app.ts' });
+      expect(res.isError).toBeFalsy();
+      const body = JSON.parse(res.content[0].text);
+      expect(body.symbols.some((s: { name: string }) => s.name === 'AppService')).toBe(true);
+      expect(body._hint).toContain('Resolved path to registered project');
+    } finally {
+      unregisterProject(projDir);
+    }
+  });
+
+  it('returns diagnostic reason and registered projects list when session is at / and path is absent', async () => {
+    const emptyStore = createTestStore();
+    const ctx = {
+      store: emptyStore,
+      registry: new PluginRegistry(),
+      config: { root: '/', include: [], exclude: [], plugins: [] },
+      projectRoot: '/',
+      guardPath: () => null,
+      j: (v: unknown) => JSON.stringify(v),
+      jh: (_tool: string, v: unknown) => JSON.stringify(v),
+      markExplored: () => undefined,
+      decisionStore: null,
+      rankingLedger: null,
+      projectRelay: null,
+    } as unknown as ServerContext;
+
+    const { server, captured } = makeCapturingServer();
+    registerLookupTools(server as never, ctx);
+    const handler = captured.find((t) => t.name === 'get_outline')!.handler;
+
+    const res = await handler({ path: 'completely/absent/file.ts' });
+    expect(res.isError).toBe(true);
+    const body = JSON.parse(res.content[0].text);
+    expect(body.reason).toBe('filesystem_root_session');
+    expect(body.message).toContain('Session is running at filesystem root');
+    expect(body.registeredProjects).toBeDefined();
+    expect(body.help).toContain('Provide an absolute file path');
+  });
+
+  it('prevents cross-project leak: ordinary project with 0 files does not match bare path from unrelated project', async () => {
+    const sessionDir = path.join(tmpDir, 'session-proj');
+    const unrelatedDir = path.join(tmpDir, 'unrelated-proj');
+    fs.mkdirSync(sessionDir, { recursive: true });
+    fs.mkdirSync(unrelatedDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(unrelatedDir, 'shared.ts'),
+      'export class SecretFromOtherProject {}\n',
+    );
+    registerProject(sessionDir);
+    registerProject(unrelatedDir);
+
+    try {
+      const emptyStore = createTestStore();
+      const ctx = {
+        store: emptyStore,
+        registry: new PluginRegistry(),
+        config: { root: sessionDir, include: ['**/*.ts'], exclude: [], plugins: [] },
+        projectRoot: sessionDir,
+        guardPath: () => null,
+        j: (v: unknown) => JSON.stringify(v),
+        jh: (_tool: string, v: unknown) => JSON.stringify(v),
+        markExplored: () => undefined,
+        decisionStore: null,
+        rankingLedger: null,
+        projectRelay: null,
+      } as unknown as ServerContext;
+
+      const { server, captured } = makeCapturingServer();
+      registerLookupTools(server as never, ctx);
+      const handler = captured.find((t) => t.name === 'get_outline')!.handler;
+
+      // Calling get_outline on session project with bare "shared.ts"
+      const res = await handler({ path: 'shared.ts' });
+      expect(res.isError).toBe(true);
+      const body = JSON.parse(res.content[0].text);
+      expect(body.error).toBe('File not found or unreadable (index is empty)');
+      expect(body.reason).toBeUndefined(); // NOT a root session
+      expect(body.symbols).toBeUndefined();
+    } finally {
+      unregisterProject(unrelatedDir);
+      unregisterProject(sessionDir);
+    }
+  });
+
+  it('prevents cross-project leak: root session does not match bare path without project prefix', async () => {
+    const unrelatedDir = path.join(tmpDir, 'unrelated-proj2');
+    fs.mkdirSync(unrelatedDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(unrelatedDir, 'shared.ts'),
+      'export class SecretFromOtherProject2 {}\n',
+    );
+    registerProject(unrelatedDir);
+
+    try {
+      const emptyStore = createTestStore();
+      const ctx = {
+        store: emptyStore,
+        registry: new PluginRegistry(),
+        config: { root: '/', include: [], exclude: [], plugins: [] },
+        projectRoot: '/',
+        guardPath: () => null,
+        j: (v: unknown) => JSON.stringify(v),
+        jh: (_tool: string, v: unknown) => JSON.stringify(v),
+        markExplored: () => undefined,
+        decisionStore: null,
+        rankingLedger: null,
+        projectRelay: null,
+      } as unknown as ServerContext;
+
+      const { server, captured } = makeCapturingServer();
+      registerLookupTools(server as never, ctx);
+      const handler = captured.find((t) => t.name === 'get_outline')!.handler;
+
+      // Bare path on root session without project prefix must fail with diagnostic
+      const resBare = await handler({ path: 'shared.ts' });
+      expect(resBare.isError).toBe(true);
+      const bodyBare = JSON.parse(resBare.content[0].text);
+      expect(bodyBare.reason).toBe('filesystem_root_session');
+      expect(bodyBare.symbols).toBeUndefined();
+
+      // Scoped path with project prefix succeeds
+      const resScoped = await handler({ path: 'unrelated-proj2/shared.ts' });
+      expect(resScoped.isError).toBeFalsy();
+      const bodyScoped = JSON.parse(resScoped.content[0].text);
+      expect(
+        bodyScoped.symbols.some((s: { name: string }) => s.name === 'SecretFromOtherProject2'),
+      ).toBe(true);
+    } finally {
+      unregisterProject(unrelatedDir);
+    }
+  });
+
+  it('resolves relative path to multi-root project container when session is at / (TRA-2327)', async () => {
+    const multiRootDir = path.join(tmpDir, 'multi-root-proj');
+    const childDir = path.join(multiRootDir, 'child-app');
+    const subDir = path.join(multiRootDir, 'sub-module');
+    fs.mkdirSync(childDir, { recursive: true });
+    fs.mkdirSync(subDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(subDir, 'feature.ts'),
+      'export function subFeature(): string { return "feature"; }\n',
+    );
+    registerProject(multiRootDir, { type: 'multi-root', children: [childDir] });
+
+    try {
+      const emptyStore = createTestStore();
+      const ctx = {
+        store: emptyStore,
+        registry: new PluginRegistry(),
+        config: { root: '/', include: [], exclude: [], plugins: [] },
+        projectRoot: '/',
+        guardPath: () => null,
+        j: (v: unknown) => JSON.stringify(v),
+        jh: (_tool: string, v: unknown) => JSON.stringify(v),
+        markExplored: () => undefined,
+        decisionStore: null,
+        rankingLedger: null,
+        projectRelay: null,
+      } as unknown as ServerContext;
+
+      const { server, captured } = makeCapturingServer();
+      registerLookupTools(server as never, ctx);
+      const handler = captured.find((t) => t.name === 'get_outline')!.handler;
+
+      // Caller at / asks for sub-module/feature.ts (relative to container multiRootDir)
+      const res = await handler({ path: 'sub-module/feature.ts' });
+      expect(res.isError).toBeFalsy();
+      const body = JSON.parse(res.content[0].text);
+      expect(body.symbols.some((s: { name: string }) => s.name === 'subFeature')).toBe(true);
+      expect(body._hint).toContain(`Resolved path to registered project '${multiRootDir}'`);
+    } finally {
+      unregisterProject(multiRootDir);
+    }
+  });
+
+  it('rejects ambiguous relative path present in multiple registered multi-root containers (TRA-2327)', async () => {
+    const projA = path.join(tmpDir, 'multi-proj-a');
+    const projB = path.join(tmpDir, 'multi-proj-b');
+    const childA = path.join(projA, 'app-a');
+    const childB = path.join(projB, 'app-b');
+    fs.mkdirSync(childA, { recursive: true });
+    fs.mkdirSync(childB, { recursive: true });
+    fs.mkdirSync(path.join(projA, 'shared'), { recursive: true });
+    fs.mkdirSync(path.join(projB, 'shared'), { recursive: true });
+    fs.writeFileSync(
+      path.join(projA, 'shared', 'utils.ts'),
+      'export function utilsA(): string { return "a"; }\n',
+    );
+    fs.writeFileSync(
+      path.join(projB, 'shared', 'utils.ts'),
+      'export function utilsB(): string { return "b"; }\n',
+    );
+    registerProject(projA, { type: 'multi-root', children: [childA] });
+    registerProject(projB, { type: 'multi-root', children: [childB] });
+
+    try {
+      const emptyStore = createTestStore();
+      const ctx = {
+        store: emptyStore,
+        registry: new PluginRegistry(),
+        config: { root: '/', include: [], exclude: [], plugins: [] },
+        projectRoot: '/',
+        guardPath: () => null,
+        j: (v: unknown) => JSON.stringify(v),
+        jh: (_tool: string, v: unknown) => JSON.stringify(v),
+        markExplored: () => undefined,
+        decisionStore: null,
+        rankingLedger: null,
+        projectRelay: null,
+      } as unknown as ServerContext;
+
+      const { server, captured } = makeCapturingServer();
+      registerLookupTools(server as never, ctx);
+      const handler = captured.find((t) => t.name === 'get_outline')!.handler;
+
+      // shared/utils.ts exists in BOTH projA and projB, so direct subpath match is ambiguous
+      const res = await handler({ path: 'shared/utils.ts' });
+      expect(res.isError).toBe(true);
+      const body = JSON.parse(res.content[0].text);
+      expect(body.reason).toBe('filesystem_root_session');
+      expect(body.symbols).toBeUndefined();
+    } finally {
+      unregisterProject(projB);
+      unregisterProject(projA);
+    }
+  });
+
+  it('rejects path traversal attempting to escape project root in root session (TRA-2327)', async () => {
+    // Sensitive file outside registered projects
+    const secretFile = path.join(tmpDir, 'sensitive-outside.ts');
+    fs.writeFileSync(secretFile, 'export const secretKey = "super-secret";\n');
+
+    const projDir = path.join(tmpDir, 'confined-proj');
+    const childDir = path.join(projDir, 'child');
+    fs.mkdirSync(childDir, { recursive: true });
+    registerProject(projDir, { type: 'multi-root', children: [childDir] });
+
+    try {
+      const emptyStore = createTestStore();
+      const ctx = {
+        store: emptyStore,
+        registry: new PluginRegistry(),
+        config: { root: '/', include: [], exclude: [], plugins: [] },
+        projectRoot: '/',
+        guardPath: () => null,
+        j: (v: unknown) => JSON.stringify(v),
+        jh: (_tool: string, v: unknown) => JSON.stringify(v),
+        markExplored: () => undefined,
+        decisionStore: null,
+        rankingLedger: null,
+        projectRelay: null,
+      } as unknown as ServerContext;
+
+      const { server, captured } = makeCapturingServer();
+      registerLookupTools(server as never, ctx);
+      const handler = captured.find((t) => t.name === 'get_outline')!.handler;
+
+      // Traversal tests attempting escape via:
+      // 1. Direct subpath / rule 3: ../../sensitive-outside.ts
+      // 2. Project basename / rule 1: confined-proj/../../sensitive-outside.ts
+      // 3. Child basename / rule 2: child/../../sensitive-outside.ts
+      // 4. Sibling dir / rule 4: child/../../sensitive-outside.ts
+      const traversalPaths = [
+        '../../sensitive-outside.ts',
+        'confined-proj/../../sensitive-outside.ts',
+        'child/../../sensitive-outside.ts',
+      ];
+
+      for (const tPath of traversalPaths) {
+        const res = await handler({ path: tPath });
+        expect(res.isError).toBe(true);
+        const body = JSON.parse(res.content[0].text);
+        // Must reject with empty index error, never resolve or outline the outside file
+        expect(body.symbols).toBeUndefined();
+        expect(body.error).toBe('File not found or unreadable (index is empty)');
+      }
+    } finally {
+      unregisterProject(projDir);
+    }
   });
 });

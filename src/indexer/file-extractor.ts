@@ -107,27 +107,119 @@ export function resetLanguagePluginFailureDedupForTests(): void {
 }
 
 /**
- * TRA-1841: per-process dedup for the `File too large, skipping` warn. A
- * live growing file (e.g. an app's append-only `.jsonl` scratchpad) trips
- * the size gate on EVERY reconcile — ~400 L40 lines for a single path in
- * one night, drowning the rest of the sweep signal. The skip itself is
- * correct; only the log volume is wrong. The first occurrence per
- * (root, path) keeps the full warn (path + size + limit); repeats go to
- * debug. Keyed by root + path so co-hosted projects sharing a relPath
- * still log independently. Mirrors the TRA-1768 dedup shape above. (Each
- * worker thread carries its own copy of this set, so a pool emits at most
- * one warn line per worker per path.)
+ * TRA-1841 / TRA-2273: per-process dedup for the `File too large, skipping` and
+ * binary skip logs. Expected skips for oversized and binary files must not pollute
+ * daemon.log with level>=40 warnings (thousands of L40 entries for ML models,
+ * datasets, icons, logs). Instead, log at debug (first occurrence includes path +
+ * size/limit; repeats go to debug marked repeat suppressed), and account for them
+ * in indexing skip counters so they are available via aggregated stats and diagnostics.
  */
 const MAX_FILE_TOO_LARGE_KEYS = 1000;
-const fileTooLargeWarned = new Set<string>();
+const fileTooLargeLogged = new Set<string>();
 
 function fileTooLargeKey(rootPath: string, relPath: string): string {
   return `${rootPath}\n${relPath}`;
 }
 
-/** Test hook — clears the per-process file-too-large dedup state between cases. */
+const MAX_BINARY_KEYS = 1000;
+const binaryLogged = new Set<string>();
+
+function binaryKey(rootPath: string, relPath: string): string {
+  return `${rootPath}\n${relPath}`;
+}
+
+/** Test hook — clears the per-process file-too-large and binary dedup state between cases. */
 export function resetFileTooLargeWarnDedupForTests(): void {
-  fileTooLargeWarned.clear();
+  fileTooLargeLogged.clear();
+  binaryLogged.clear();
+}
+
+/**
+ * TRA-2326: per-process dedup and rate limiting for repeated identical
+ * `Cannot read file` ENOENT warnings. When a disappearing file (such as
+ * an atomic ML checkpoint or volatile scratchpad) is repeatedly triggered,
+ * emitting hundreds of L40 warnings masks other signals and pollutes daemon.log.
+ * The first ENOENT logs full warn; subsequent identical ENOENTs go to debug,
+ * with a warn summary every N occurrences. Non-ENOENT read errors (e.g. EACCES)
+ * always log warn without suppression.
+ */
+const CANNOT_READ_ENOENT_SUMMARY_EVERY = 50;
+const MAX_CANNOT_READ_ENOENT_KEYS = 1000;
+const cannotReadEnoentCounts = new Map<string, { count: number }>();
+
+function cannotReadEnoentKey(rootPath: string, relPath: string): string {
+  return `${rootPath}\n${relPath}`;
+}
+
+/** Test hook — clears the per-process Cannot read file ENOENT dedup state between cases. */
+export function resetCannotReadEnoentDedupForTests(): void {
+  cannotReadEnoentCounts.clear();
+}
+
+function logCannotReadFile(
+  rootPath: string,
+  relPath: string,
+  errno: NodeJS.ErrnoException | undefined,
+  err: unknown,
+): void {
+  const code = errno?.code;
+  const errorMsg = err instanceof Error ? err.message : String(err);
+
+  // Preserve immediate warnings for non-ENOENT errors (EACCES, etc.)
+  if (code !== 'ENOENT') {
+    logger.warn(
+      {
+        file: relPath,
+        rootPath,
+        code,
+        error: errorMsg,
+      },
+      'Cannot read file',
+    );
+    return;
+  }
+
+  const key = cannotReadEnoentKey(rootPath, relPath);
+  const seen = cannotReadEnoentCounts.get(key);
+  if (!seen) {
+    if (cannotReadEnoentCounts.size >= MAX_CANNOT_READ_ENOENT_KEYS) cannotReadEnoentCounts.clear();
+    cannotReadEnoentCounts.set(key, { count: 1 });
+    logger.warn(
+      {
+        file: relPath,
+        rootPath,
+        code,
+        error: errorMsg,
+      },
+      'Cannot read file',
+    );
+    return;
+  }
+
+  seen.count += 1;
+  if (seen.count % CANNOT_READ_ENOENT_SUMMARY_EVERY === 0) {
+    logger.warn(
+      {
+        file: relPath,
+        rootPath,
+        code,
+        repeatCount: seen.count,
+        error: errorMsg,
+      },
+      `Cannot read file ${seen.count} times with ENOENT (summary, details at debug)`,
+    );
+    return;
+  }
+
+  logger.debug(
+    {
+      file: relPath,
+      rootPath,
+      code,
+      repeatCount: seen.count,
+    },
+    'Cannot read file (repeat suppressed)',
+  );
 }
 
 function logFileTooLargeOnce(
@@ -138,13 +230,24 @@ function logFileTooLargeOnce(
   message = 'File too large, skipping',
 ): void {
   const key = fileTooLargeKey(rootPath, relPath);
-  if (fileTooLargeWarned.has(key)) {
-    logger.debug({ file: relPath, size }, `${message} (repeat suppressed)`);
+  if (fileTooLargeLogged.has(key)) {
+    logger.debug({ file: relPath, rootPath, size }, `${message} (repeat suppressed)`);
     return;
   }
-  if (fileTooLargeWarned.size >= MAX_FILE_TOO_LARGE_KEYS) fileTooLargeWarned.clear();
-  fileTooLargeWarned.add(key);
-  logger.warn({ file: relPath, size, limit }, message);
+  if (fileTooLargeLogged.size >= MAX_FILE_TOO_LARGE_KEYS) fileTooLargeLogged.clear();
+  fileTooLargeLogged.add(key);
+  logger.debug({ file: relPath, rootPath, size, limit }, message);
+}
+
+function logBinaryOnce(rootPath: string, relPath: string): void {
+  const key = binaryKey(rootPath, relPath);
+  if (binaryLogged.has(key)) {
+    logger.debug({ file: relPath, rootPath }, 'Binary file detected, skipping (repeat suppressed)');
+    return;
+  }
+  if (binaryLogged.size >= MAX_BINARY_KEYS) binaryLogged.clear();
+  binaryLogged.add(key);
+  logger.debug({ file: relPath, rootPath }, 'Binary file detected, skipping');
 }
 
 /**
@@ -337,7 +440,7 @@ export class FileExtractor {
           fileSize,
           isForceIncluded ? 5 * 1024 * 1024 : DEFAULT_MAX_FILE_SIZE,
         );
-        return { kind: 'error' };
+        return { kind: 'skipped', reason: 'oversize' };
       }
     }
 
@@ -367,25 +470,17 @@ export class FileExtractor {
       // TRA-1715: the bare `{ file }` record was undiagnosable — 3317 of them
       // with no root and no cause. Carry the root plus the errno code and
       // message (ENOENT vs EACCES decides the response) so the daemon log
-      // alone answers which project lost which file and why. Strings, not
-      // the raw Error: a stack per unreadable file would flood the log when
-      // a whole root vanishes mid-run.
-      logger.warn(
-        {
-          file: relPath,
-          rootPath,
-          code: errno?.code,
-          error: err instanceof Error ? err.message : String(err),
-        },
-        'Cannot read file',
-      );
+      // alone answers which project lost which file and why.
+      // TRA-2326: rate-limit repeated identical ENOENTs for vanishing files
+      // so ML checkpoint races or scratch files do not flood daemon.log.
+      logCannotReadFile(rootPath, relPath, errno, err);
       return { kind: 'error' };
     }
 
     // Reject binary files (null-byte in first 8 KB)
     if (isBinaryBuffer(content)) {
-      logger.warn({ file: relPath }, 'Binary file detected, skipping');
-      return { kind: 'skipped' };
+      logBinaryOnce(rootPath, relPath);
+      return { kind: 'skipped', reason: 'binary' };
     }
 
     // Post-read size gate (TOCTOU companion of the stat precheck above):
@@ -398,7 +493,7 @@ export class FileExtractor {
       const sizeCheck = validateFileSize(content.length);
       if (sizeCheck.isErr()) {
         logFileTooLargeOnce(rootPath, relPath, content.length, DEFAULT_MAX_FILE_SIZE);
-        return { kind: 'error' };
+        return { kind: 'skipped', reason: 'oversize' };
       }
     } else if (content.length > 5 * 1024 * 1024) {
       // Above 5MB even a declared entry point is more likely a bundled
@@ -411,7 +506,7 @@ export class FileExtractor {
         5 * 1024 * 1024,
         'force-included package entry exceeds 5 MB hard ceiling — skipping',
       );
-      return { kind: 'error' };
+      return { kind: 'skipped', reason: 'oversize' };
     }
 
     // mtime drifted but content might be identical (formatter-on-save, git

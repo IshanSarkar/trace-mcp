@@ -35,7 +35,7 @@
 import fs from 'node:fs';
 import { logger } from '../logger.js';
 import { DEFAULT_MAX_FILE_SIZE, isBinaryBuffer } from '../utils/security.js';
-import { findPackageJsonEntries } from './package-entries.js';
+import { clearPackageEntriesCache, findPackageJsonEntries } from './package-entries.js';
 
 export type UnindexableReason = 'oversize' | 'binary';
 
@@ -51,10 +51,6 @@ const BINARY_PROBE_BYTES = 8192;
 const MAX_ROOTS = 64;
 const MAX_ENTRIES_PER_ROOT = 256;
 
-/** `package.json` entry sets go stale fast (a new `main` must take effect). */
-const FORCE_INCLUDE_TTL_MS = 60_000;
-const MAX_FORCE_INCLUDE_ROOTS = 64;
-
 /** Bound on distinct warn keys; beyond it the set resets (DoS-safe). */
 const MAX_WARN_KEYS = 1000;
 
@@ -66,9 +62,6 @@ interface Verdict {
 
 /** rootPath → relPosix → last unindexable verdict. */
 const verdicts = new Map<string, Map<string, Verdict>>();
-
-/** rootPath → cached `package.json` entry set. */
-const forceIncludeCache = new Map<string, { entries: Set<string>; computedAt: number }>();
 
 const warned = new Set<string>();
 
@@ -85,12 +78,12 @@ function logOnce(
 ): void {
   const key = verdictKey(rootPath, relPosix, reason);
   if (warned.has(key)) {
-    logger.debug({ file: relPosix }, `${message} (repeat suppressed)`);
+    logger.debug({ file: relPosix, rootPath }, `${message} (repeat suppressed)`);
     return;
   }
   if (warned.size >= MAX_WARN_KEYS) warned.clear();
   warned.add(key);
-  logger.warn(meta, message);
+  logger.debug(meta, message);
 }
 
 function recordVerdict(rootPath: string, relPosix: string, verdict: Verdict): void {
@@ -122,24 +115,12 @@ function dropVerdict(rootPath: string, relPosix: string): void {
 }
 
 /**
- * Package entry set for `rootPath`, memoized. The underlying walk touches
- * every directory, so it runs at most once per TTL per root — and only when
- * an actually-oversized file needs the force-include decision. Normal-size
- * files never pay for it.
+ * Package entry set for `rootPath`. findPackageJsonEntries handles caching,
+ * TTL, and invalidation on package.json changes so this never holds a stale
+ * entry set. Normal-size files never pay for it.
  */
 function getForceIncludeSet(rootPath: string): ReadonlySet<string> {
-  const now = Date.now();
-  const cached = forceIncludeCache.get(rootPath);
-  if (cached && now - cached.computedAt < FORCE_INCLUDE_TTL_MS) {
-    return cached.entries;
-  }
-  const entries = findPackageJsonEntries(rootPath);
-  if (forceIncludeCache.size >= MAX_FORCE_INCLUDE_ROOTS) {
-    const lru = forceIncludeCache.keys().next().value;
-    if (lru !== undefined && lru !== rootPath) forceIncludeCache.delete(lru);
-  }
-  forceIncludeCache.set(rootPath, { entries, computedAt: now });
-  return entries;
+  return findPackageJsonEntries(rootPath);
 }
 
 function probeBinary(absPath: string, size: number): boolean | null {
@@ -226,10 +207,80 @@ export function checkUnindexableSkip(check: UnindexableCheck): UnindexableReason
   return 'binary';
 }
 
+export interface UnindexableSkipStats {
+  roots: number;
+  totalEntries: number;
+  byReason: {
+    binary: number;
+    oversize: number;
+  };
+}
+
+export interface UnindexableVerdictInfo {
+  relPath: string;
+  reason: UnindexableReason;
+  size: number;
+  mtimeMs: number;
+}
+
+/**
+ * Diagnostics accessor: inspect aggregated counts of unindexable skip verdicts.
+ */
+export function getUnindexableSkipStats(rootPath?: string): UnindexableSkipStats {
+  let binary = 0;
+  let oversize = 0;
+  let total = 0;
+  if (rootPath) {
+    const bucket = verdicts.get(rootPath);
+    if (bucket) {
+      for (const v of bucket.values()) {
+        total++;
+        if (v.reason === 'binary') binary++;
+        else if (v.reason === 'oversize') oversize++;
+      }
+    }
+    return {
+      roots: bucket ? 1 : 0,
+      totalEntries: total,
+      byReason: { binary, oversize },
+    };
+  }
+  for (const bucket of verdicts.values()) {
+    for (const v of bucket.values()) {
+      total++;
+      if (v.reason === 'binary') binary++;
+      else if (v.reason === 'oversize') oversize++;
+    }
+  }
+  return {
+    roots: verdicts.size,
+    totalEntries: total,
+    byReason: { binary, oversize },
+  };
+}
+
+/**
+ * Diagnostics accessor: returns list of unindexable file verdicts recorded for a root.
+ */
+export function getUnindexableVerdicts(rootPath: string): UnindexableVerdictInfo[] {
+  const bucket = verdicts.get(rootPath);
+  if (!bucket) return [];
+  const result: UnindexableVerdictInfo[] = [];
+  for (const [relPath, v] of bucket.entries()) {
+    result.push({
+      relPath,
+      reason: v.reason,
+      size: v.size,
+      mtimeMs: v.mtimeMs,
+    });
+  }
+  return result;
+}
+
 /** Test hook — clears verdicts, warn gates, and the entry-set cache. */
 export function resetUnindexableSkipCacheForTests(): void {
   verdicts.clear();
-  forceIncludeCache.clear();
+  clearPackageEntriesCache();
   warned.clear();
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "trace-mcp",
-  "version": "3.34.7",
+  "version": "3.36.3",
   "mcpName": "io.github.nikolai-vysotskyi/trace-mcp",
   "description": "Framework-aware code intelligence MCP server — 88 framework integrations, 81 languages, 72.7% fewer input tokens to review a pull request, comprehension at parity",
   "type": "module",
@@ -124,7 +124,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.14",
+    "@biomejs/biome": "2.5.15",
     "@conventional-commits/parser": "0.4.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.3",
@@ -134,7 +134,7 @@
     "fast-check": "^4.6.0",
     "gpt-tokenizer": "^4.0.0",
     "jsdom": "^30.0.1",
-    "lint-staged": "17.5.1",
+    "lint-staged": "17.6.0",
     "simple-git-hooks": "2.14.0",
     "tsup": "^8.4.0",
     "tsx": "^4.23.13",
@@ -184,7 +184,8 @@
       "postcss": ">=8.5.23",
       "nanoid": ">=3.3.17",
       "proxy-addr": ">=2.0.8",
-      "source-map-js": ">=1.2.2"
+      "source-map-js": ">=1.2.2",
+      "tinypool": ">=2.1.2"
     },
     "auditConfig": {
       "ignoreGhsas": [

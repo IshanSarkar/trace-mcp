@@ -13,7 +13,7 @@ import { SummarizationPipeline } from '../ai/summarization-pipeline.js';
 import type { TraceMcpConfig } from '../config.js';
 import { loadConfig, loadGlobalConfigRaw } from '../config.js';
 import { initializeDatabase } from '../db/schema.js';
-import { isCorruptDbError, repairIndex } from '../db/repair.js';
+import { isCorruptDbError, isSqliteBusyError, repairIndex } from '../db/repair.js';
 import { Store } from '../db/store.js';
 import { deleteDbFamily } from '../utils/db-family.js';
 import { announceDbHolder, releaseDbHoldersForRoot } from '../db-holders.js';
@@ -171,6 +171,7 @@ function managedMapKey(projects: Map<string, ManagedProject>, root: string): str
  * not hold the event loop open for the remainder of the timeout.
  */
 async function waitWithTimeout(promise: Promise<unknown>, timeoutMs: number): Promise<boolean> {
+  if (!promise || typeof promise.then !== 'function') return true;
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     const settled = promise.then(
@@ -418,6 +419,9 @@ export class ProjectManager {
     projectRoot: string,
     opts?: { watch?: boolean; persist?: boolean },
   ): Promise<ManagedProject> {
+    if (!fs.existsSync(projectRoot)) {
+      throw new Error(`Project directory does not exist: ${projectRoot}`);
+    }
     // Read-mostly mode (a registered subproject served on-demand): index once,
     // no fs watcher, no registry.json / config-file writes. Stays in-memory for
     // the daemon's lifetime but is never restored as a watched project on the
@@ -713,6 +717,11 @@ export class ProjectManager {
     // stopping mark behind — the project is servable again from here.
     clearProjectStopping(projectRoot);
 
+    if (!fs.existsSync(projectRoot)) {
+      await this.removeProject(projectRoot);
+      throw new Error(`Project directory was deleted during setup: ${projectRoot}`);
+    }
+
     // Start indexing in background, gated by the shared semaphore so adding
     // N projects at once doesn't fan out to N concurrent indexAll runs.
     managed.status = 'indexing';
@@ -872,6 +881,26 @@ export class ProjectManager {
                   );
                 }
               },
+            });
+            return;
+          }
+          if (isSqliteBusyError(err)) {
+            // TRA-2257: SQLite busy / database locked during initial reindex
+            // (e.g. concurrent indexer, overlapping daemon startup, or WAL checkpoint).
+            // Attempt bounded retry with backoff. If it resolves, clears pendingReindexForVersion.
+            // If the lock persists, leaves status='error' and the error diagnosable.
+            logger.warn(
+              { projectRoot, error: serializeError(err) },
+              'Initial indexing hit database lock (SQLITE_BUSY) — retrying with bounded backoff.',
+            );
+            await this.recoverBusyInitialIndex(managed, projectRoot, {
+              finishRecovery,
+              originalError: err,
+              retryIndex: () =>
+                this.indexAllLimit!(() =>
+                  pipeline.indexAll(needsForcedReindex, { signal: indexAbortController.signal }),
+                ),
+              signal: indexAbortController.signal,
             });
             return;
           }
@@ -1118,23 +1147,52 @@ export class ProjectManager {
             // historical answer is suspect for exactly this window.
             // TRA-1017: same stop signal as the initial index — a rescan
             // racing a shutdown must not start an uncancellable run.
-            const run = () => {
+            const run = (force = false) => {
               logger.info(
                 {
                   projectRoot,
                   reason: 'watcher-dropped-events',
                   discovery: 'full-walk',
-                  forced: false,
+                  forced: force,
                 },
                 'Project indexAll starting',
               );
-              return pipeline.indexAll(false, {
+              return pipeline.indexAll(force, {
                 discovery: 'full-walk',
                 signal: indexAbortController.signal,
               });
             };
             const limit = this.indexAllLimit;
-            await (limit ? limit(run) : run());
+            const boundedRun = (force = false) => (limit ? limit(() => run(force)) : run(force));
+            try {
+              try {
+                await boundedRun();
+              } catch (err) {
+                if (!isForeignKeyError(err)) throw err;
+                // A dropped-event walk must repair the same stale symbol rows
+                // that the initial-index path repairs. Otherwise FileWatcher
+                // only logs the failure and leaves a stale project advertised
+                // as ready until another drop happens.
+                logger.warn(
+                  { projectRoot, error: String(err) },
+                  'Dropped-event rescan hit FOREIGN KEY violation — retrying with force=true',
+                );
+                await boundedRun(true);
+              }
+              if (
+                managed.status === 'error' &&
+                managed.error?.startsWith('Dropped-event rescan failed:')
+              ) {
+                managed.status = 'ready';
+                managed.error = undefined;
+              }
+            } catch (err) {
+              if (!(err instanceof IndexAbortedError)) {
+                managed.status = 'error';
+                managed.error = `Dropped-event rescan failed: ${String(err)}`;
+              }
+              throw err;
+            }
           },
         },
       );
@@ -1352,6 +1410,80 @@ export class ProjectManager {
         return;
       }
     }
+  }
+
+  /**
+   * Bounded retry ladder for initial indexing failures caused by transient
+   * database locks (SQLITE_BUSY / database is locked, TRA-2257). If the lock
+   * clears during backoff, completes recovery and clears pendingReindexForVersion.
+   * If the lock is permanent, leaves the error diagnosable in managed.error
+   * and managed.status='error'.
+   */
+  private async recoverBusyInitialIndex(
+    managed: ManagedProject,
+    projectRoot: string,
+    opts: {
+      finishRecovery: (via: string) => Promise<void>;
+      originalError: unknown;
+      retryIndex: () => Promise<unknown>;
+      signal?: AbortSignal;
+      maxRetries?: number;
+      backoffMs?: number[];
+    },
+  ): Promise<void> {
+    const maxRetries = opts.maxRetries ?? 2;
+    const backoff = opts.backoffMs ?? [250, 750];
+    let lastErr: unknown = opts.originalError;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      if (opts.signal?.aborted) {
+        logger.info({ projectRoot }, 'Busy-lock recovery aborted by project stop (non-fatal)');
+        return;
+      }
+      const delay = backoff[attempt - 1] ?? 1000;
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, delay);
+        if (opts.signal) {
+          opts.signal.addEventListener(
+            'abort',
+            () => {
+              clearTimeout(timer);
+              resolve();
+            },
+            { once: true },
+          );
+        }
+      });
+      if (opts.signal?.aborted) {
+        logger.info({ projectRoot }, 'Busy-lock recovery aborted by project stop (non-fatal)');
+        return;
+      }
+      try {
+        await opts.retryIndex();
+        await opts.finishRecovery(`busy-lock recovery (attempt ${attempt})`);
+        return;
+      } catch (retryErr) {
+        if (retryErr instanceof IndexAbortedError) {
+          logger.info({ projectRoot }, 'Busy-lock recovery aborted by project stop (non-fatal)');
+          return;
+        }
+        lastErr = retryErr;
+        if (!isSqliteBusyError(retryErr)) {
+          break;
+        }
+      }
+    }
+
+    managed.status = 'error';
+    managed.error = `Initial indexing hit database lock that did not resolve: ${String(lastErr)}`;
+    logger.error(
+      {
+        error: serializeError(lastErr),
+        projectRoot,
+        originalError: String(opts.originalError),
+      },
+      'Initial indexing busy-lock recovery also failed — giving up (no further retry)',
+    );
   }
 
   /**
@@ -2076,13 +2208,30 @@ export class ProjectManager {
    */
   startIdleUnloadSweep(
     idleMs: number,
-    opts?: { intervalMs?: number; maxLoaded?: number; onUnloaded?: (roots: string[]) => void },
+    opts?: {
+      intervalMs?: number;
+      maxLoaded?: number;
+      evictDeleted?: boolean;
+      onUnloaded?: (roots: string[]) => void;
+    },
   ): void {
     this.stopIdleUnloadSweep();
     const maxLoaded = opts?.maxLoaded ?? 0;
     if (idleMs <= 0 && maxLoaded <= 0) return;
     this.idleUnloadTimer = setInterval(
       () => {
+        if (opts?.evictDeleted) {
+          this.evictDeletedProjects()
+            .then((evicted) => {
+              if (evicted.length > 0) opts?.onUnloaded?.(evicted);
+            })
+            .catch((err) => {
+              logger.warn(
+                { err: serializeError(err) },
+                'Periodic evictDeletedProjects failed (non-fatal)',
+              );
+            });
+        }
         this.unloadIdleProjects(idleMs, maxLoaded)
           .then((roots) => {
             if (roots.length > 0) opts?.onUnloaded?.(roots);
@@ -2121,9 +2270,52 @@ export class ProjectManager {
     logger.info('ProjectManager shutdown complete');
   }
 
+  /**
+   * Scan registered and resident projects for deleted or dangerous folders.
+   * Evicts them from memory, removes database and sidecar artifacts,
+   * unregisters them from registry.json, and restarts ancestor watchers.
+   * Preserves projects on unmounted volumes (where the parent directory is also missing).
+   *
+   * Returns the list of evicted project roots.
+   */
+  async evictDeletedProjects(): Promise<string[]> {
+    const registered = listProjects();
+    const candidateRoots = new Set<string>(registered.map((e) => e.root));
+    for (const managed of this.projects.values()) {
+      candidateRoots.add(managed.root);
+    }
+
+    const evicted: string[] = [];
+    for (const root of candidateRoots) {
+      const dangerReason = isDangerousProjectRoot(root);
+      if (dangerReason) {
+        logger.warn({ root, reason: dangerReason }, 'Removing dangerous project from registry');
+        try {
+          await this.removeProject(root);
+          evicted.push(root);
+        } catch (err) {
+          logger.warn({ root, err: serializeError(err) }, 'Failed to evict dangerous project');
+        }
+        continue;
+      }
+      if (!fs.existsSync(root) && fs.existsSync(path.dirname(root))) {
+        logger.warn(
+          { root },
+          'Removing project with missing folder from registry (parent dir exists — looks like deletion, not unmount)',
+        );
+        try {
+          await this.removeProject(root);
+          evicted.push(root);
+        } catch (err) {
+          logger.warn({ root, err: serializeError(err) }, 'Failed to evict deleted project');
+        }
+      }
+    }
+    return evicted;
+  }
+
   /** Load all registered projects and start them. */
   async loadAllRegistered(): Promise<void> {
-    const allEntries = listProjects();
     // Self-heal: evict registry rows that would block startup or cause
     // "Project not found" 404s at runtime:
     //  - dangerous roots (/, $HOME, system dirs) — typically from an MCP client
@@ -2133,27 +2325,8 @@ export class ProjectManager {
     //    /Volumes/USB/foo when /Volumes/USB itself is also gone): we only
     //    prune when the immediate parent directory is still there, which is
     //    the signature of a user deletion vs. a transient mount.
-    const entries = [];
-    for (const entry of allEntries) {
-      const dangerReason = isDangerousProjectRoot(entry.root);
-      if (dangerReason) {
-        logger.warn(
-          { root: entry.root, reason: dangerReason },
-          'Removing dangerous project from registry',
-        );
-        unregisterProject(entry.root);
-        continue;
-      }
-      if (!fs.existsSync(entry.root) && fs.existsSync(path.dirname(entry.root))) {
-        logger.warn(
-          { root: entry.root },
-          'Removing project with missing folder from registry (parent dir exists — looks like deletion, not unmount)',
-        );
-        unregisterProject(entry.root);
-        continue;
-      }
-      entries.push(entry);
-    }
+    const evicted = new Set(await this.evictDeletedProjects());
+    const entries = listProjects().filter((e) => !evicted.has(e.root));
     // Overlapping roots (a container folder registered alongside projects
     // inside it) double-index and double-watch the same files — observed in
     // the field as a 2-3× multiplier on every watcher-driven reindex. The

@@ -48,8 +48,9 @@ import {
 import { extractAndPersist as extractAndPersistImpl } from './extract-and-persist.js';
 import { buildMultiRootWorkspaces, detectWorkspaces, type WorkspaceInfo } from './monorepo.js';
 import type { PipelineState } from './pipeline-state.js';
-import { buildProjectContext } from './project-context.js';
+import { buildProjectContext, findScanDirectoriesAsync } from './project-context.js';
 import { checkUnindexableSkip } from './unindexable-skip-cache.js';
+import { clearPackageEntriesCache } from './package-entries.js';
 // P02 Task DAG migration: 3 passes are scheduled through a TaskDag instead
 // of being called imperatively from `runPipeline`. The Task wrappers live in
 // `src/pipeline/tasks/*` and delegate to the existing private methods on
@@ -122,6 +123,10 @@ export interface IndexingResult {
    * incremental drift, not the synchronous initial pass).
    */
   changedFileIds?: number[];
+  /** TRA-2273: Aggregated count of files skipped due to binary content. */
+  skippedBinary?: number;
+  /** TRA-2273: Aggregated count of files skipped due to exceeding file size cap. */
+  skippedOversize?: number;
 }
 
 /**
@@ -511,6 +516,7 @@ export class IndexingPipeline {
   private workspaces: WorkspaceInfo[] = [];
   private _lock: Promise<unknown> = Promise.resolve();
   private _projectContext: ProjectContext | undefined;
+  private _projectContextDirs: string[] | undefined;
   /**
    * TRA-1543: workspace→plugin detection, shared by registration, extraction
    * and resolution within a run (was detected 3× per run) and reused across
@@ -541,6 +547,8 @@ export class IndexingPipeline {
   private _lastDeletedSymbolNames: Map<string, Set<number>> = new Map();
   /** TRA-1541: whether the last Pass 1 took the FTS rebuild path (no ANALYZE). Read by indexFiles. */
   private _lastUsedFtsRebuild = false;
+  /** TRA-2282: count of files indexed since the last ANALYZE run. */
+  private _filesIndexedSinceAnalyze = 0;
   private _isIncremental = false;
   /** Set by dispose(); pending deferred work must bail instead of touching a closed DB. */
   private _disposed = false;
@@ -654,11 +662,12 @@ export class IndexingPipeline {
       //     would be a false positive that automated quality gates would
       //     misinterpret as a regression.
       const skipShrinkCheck = force === true || this._postprocessLevel === 'none';
+      this._projectContextDirs = await findScanDirectoriesAsync(this.rootPath);
       if (this.config.children?.length) {
         this.workspaces = buildMultiRootWorkspaces(this.rootPath, this.config.children);
         logger.info({ workspaces: this.workspaces.map((w) => w.name) }, 'Multi-root workspaces');
       } else {
-        this.workspaces = detectWorkspaces(this.rootPath);
+        this.workspaces = detectWorkspaces(this.rootPath, this._projectContextDirs);
         if (this.workspaces.length > 0) {
           logger.info({ workspaces: this.workspaces.map((w) => w.name) }, 'Detected workspaces');
         }
@@ -802,6 +811,9 @@ export class IndexingPipeline {
       // that skipped bulk mode (overlapping indexer) never ran the
       // disableBulkMode ANALYZE, so it joins the throttled ANALYZE budget
       // like any other non-bulk walk.
+      if (r.indexed > 0) {
+        this._filesIndexedSinceAnalyze += r.indexed;
+      }
       if (!bulkEngaged) {
         this.maybeAnalyze();
       } else {
@@ -892,7 +904,12 @@ export class IndexingPipeline {
     // gates (they can change between runs) and drop entries that resolve
     // outside the root or no longer exist (mis-rooted git output under a
     // non-default `status.relativePaths`, or a file deleted after listing).
-    const changed = this.filterIndexablePaths(discovery.changed).filter((rel) => {
+    const {
+      relPaths: filteredChanged,
+      skippedBinary: discSkippedBinary,
+      skippedOversize: discSkippedOversize,
+    } = this.filterIndexablePaths(discovery.changed);
+    const changed = filteredChanged.filter((rel) => {
       try {
         return fs.statSync(path.resolve(this.rootPath, rel)).isFile();
       } catch {
@@ -906,6 +923,7 @@ export class IndexingPipeline {
       const check = validatePath(rel, this.rootPath);
       return check.isOk();
     });
+    const discSkipped = discSkippedBinary + discSkippedOversize;
     if (changed.length === 0 && deleted.length === 0) {
       // Trust-but-verify: an empty watcher answer is only as fresh as the
       // snapshot write that bounds it. A snapshot that raced ahead of a
@@ -957,9 +975,11 @@ export class IndexingPipeline {
       invalidatePageRankCache();
       invalidateSearchCache(this.store.db);
       return {
-        totalFiles: 0,
+        totalFiles: discSkipped,
         indexed: 0,
-        skipped: 0,
+        skipped: discSkipped,
+        ...(discSkippedBinary > 0 ? { skippedBinary: discSkippedBinary } : {}),
+        ...(discSkippedOversize > 0 ? { skippedOversize: discSkippedOversize } : {}),
         errors: 0,
         durationMs: Date.now() - startMs,
         incremental: true,
@@ -978,6 +998,19 @@ export class IndexingPipeline {
     throwIfIndexAborted(signal, this.rootPath);
     if (deleted.length > 0) this.deleteFiles(deleted);
     const r = await this.runPipeline(changed, false, startMs, signal);
+    if (r.indexed > 0) {
+      this._filesIndexedSinceAnalyze += r.indexed;
+    }
+    if (discSkipped > 0) {
+      r.totalFiles += discSkipped;
+      r.skipped += discSkipped;
+      if (discSkippedBinary > 0) {
+        r.skippedBinary = (r.skippedBinary ?? 0) + discSkippedBinary;
+      }
+      if (discSkippedOversize > 0) {
+        r.skippedOversize = (r.skippedOversize ?? 0) + discSkippedOversize;
+      }
+    }
     await this.afterDiscoveryRun(snapshotPath);
     logger.info(
       { source: discovery.source, changed: changed.length, deleted: deleted.length },
@@ -1030,11 +1063,16 @@ export class IndexingPipeline {
   }
 
   /**
-   * TRA-1543: run ANALYZE unless one completed within ANALYZE_THROTTLE_MS.
-   * The indexAll walk path used to pay ~24 ms per run; planner statistics go
-   * stale gracefully, so a 10-minute budget is plenty. Non-fatal by contract.
+   * TRA-1543 / TRA-2282: run ANALYZE unless one completed within ANALYZE_THROTTLE_MS.
+   * If sqlite_stat1 cardinality is severely divergent (e.g. recorded file count in stat1
+   * is tiny while actual file count grew significantly), bypass the throttle to prevent
+   * catastrophic query plans.
+   *
+   * To prevent synchronous sqlite_stat1 divergence queries from stalling routine
+   * 1-file incremental saves, divergence checking is only performed when at least
+   * 50 files have been indexed since the last ANALYZE.
    */
-  private maybeAnalyze(): void {
+  private maybeAnalyze(force?: boolean): void {
     let last: number | null = null;
     try {
       const raw = this.store.getRepoMetadata(META_LAST_ANALYZE_MS);
@@ -1045,9 +1083,21 @@ export class IndexingPipeline {
     } catch {
       /* best-effort — a metadata miss just means "analyze now" */
     }
-    if (last != null && Date.now() - last < ANALYZE_THROTTLE_MS) {
+    const withinThrottle = !force && last != null && Date.now() - last < ANALYZE_THROTTLE_MS;
+    if (withinThrottle && this._filesIndexedSinceAnalyze < 50) {
+      logger.debug(
+        { lastAnalyzeMs: last, filesSinceAnalyze: this._filesIndexedSinceAnalyze },
+        'ANALYZE throttled — recent enough',
+      );
+      return;
+    }
+    const divergent = !force && withinThrottle && this.isStatDivergent();
+    if (withinThrottle && !divergent) {
       logger.debug({ lastAnalyzeMs: last }, 'ANALYZE throttled — recent enough');
       return;
+    }
+    if (divergent) {
+      logger.debug('ANALYZE throttle bypassed — sqlite_stat1 cardinality divergent');
     }
     try {
       this.store.db.exec('ANALYZE');
@@ -1058,8 +1108,31 @@ export class IndexingPipeline {
     this.stampAnalyzeComplete();
   }
 
+  /** TRA-2282: detect when sqlite_stat1 row counts severely lag reality */
+  private isStatDivergent(): boolean {
+    try {
+      const hasStat = this.store.db
+        .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='sqlite_stat1'")
+        .get();
+      if (!hasStat) return false;
+      const statRow = this.store.db
+        .prepare("SELECT stat FROM sqlite_stat1 WHERE tbl='files' LIMIT 1")
+        .get() as { stat: string } | undefined;
+      if (!statRow) return false;
+      const statCount = Number.parseInt(statRow.stat.split(' ')[0] ?? '', 10);
+      if (!Number.isFinite(statCount)) return false;
+      const actualCount = (
+        this.store.db.prepare('SELECT count(*) as c FROM files').get() as { c: number }
+      ).c;
+      return actualCount >= 50 && actualCount >= statCount * 3;
+    } catch {
+      return false;
+    }
+  }
+
   /** Record a completed ANALYZE (bulk or throttled-walk path) for the throttle. */
   private stampAnalyzeComplete(): void {
+    this._filesIndexedSinceAnalyze = 0;
     try {
       this.store.setRepoMetadata(META_LAST_ANALYZE_MS, String(Date.now()));
     } catch {
@@ -1197,9 +1270,11 @@ export class IndexingPipeline {
     for (let i = 0; i < allStale.length; i += RECONCILE_DELETE_CHUNK) {
       if (i > 0) await yieldToEventLoopFair();
       const slice = allStale.slice(i, i + RECONCILE_DELETE_CHUNK);
-      this.store.db.transaction(() => {
-        for (const id of slice) this.store.deleteFile(id);
-      })();
+      this.store.db
+        .transaction(() => {
+          for (const id of slice) this.store.deleteFile(id);
+        })
+        .immediate();
     }
     logger.info(
       {
@@ -1252,22 +1327,28 @@ export class IndexingPipeline {
     // and its WASM trees are freed instead of lingering to LRU eviction.
     for (const fp of filePaths) {
       const rel = path.isAbsolute(fp) ? path.relative(this.rootPath, fp) : fp;
-      invalidateTreeCacheFile(this.rootPath, rel.split(path.sep).join('/'));
-    }
-    this.store.db.transaction(() => {
-      for (const fp of filePaths) {
-        const rel = path.isAbsolute(fp) ? path.relative(this.rootPath, fp) : fp;
-        // Store paths are always posix-separated (collectFiles() via
-        // fast-glob) — an unconverted backslash on Windows misses the row
-        // entirely, silently no-op'ing the delete (TRA-1045).
-        const relPath = rel.split(path.sep).join('/');
-        const file = this.store.getFile(relPath);
-        if (file) {
-          this.store.deleteFile(file.id);
-          logger.info({ file: relPath }, 'Deleted file from index');
-        }
+      const relPosix = rel.split(path.sep).join('/');
+      invalidateTreeCacheFile(this.rootPath, relPosix);
+      if (relPosix === 'package.json' || relPosix.endsWith('/package.json')) {
+        clearPackageEntriesCache(this.rootPath);
       }
-    })();
+    }
+    this.store.db
+      .transaction(() => {
+        for (const fp of filePaths) {
+          const rel = path.isAbsolute(fp) ? path.relative(this.rootPath, fp) : fp;
+          // Store paths are always posix-separated (collectFiles() via
+          // fast-glob) — an unconverted backslash on Windows misses the row
+          // entirely, silently no-op'ing the delete (TRA-1045).
+          const relPath = rel.split(path.sep).join('/');
+          const file = this.store.getFile(relPath);
+          if (file) {
+            this.store.deleteFile(file.id);
+            logger.info({ file: relPath }, 'Deleted file from index');
+          }
+        }
+      })
+      .immediate();
   }
 
   /**
@@ -1283,7 +1364,11 @@ export class IndexingPipeline {
    * filesystem (one stat per path, plus at most one 8 KB head read for the
    * binary verdict) but never the database.
    */
-  private filterIndexablePaths(filePaths: string[]): string[] {
+  private filterIndexablePaths(filePaths: string[]): {
+    relPaths: string[];
+    skippedBinary: number;
+    skippedOversize: number;
+  } {
     // Same exclude gate collectFiles() applies via fast-glob. Without it,
     // event-driven entry points index runtime churn the full pipeline would
     // never touch — e.g. Laravel storage/framework/sessions blobs arriving on
@@ -1298,6 +1383,8 @@ export class IndexingPipeline {
       : undefined;
     const gitignore = this.gitignoreMatcher();
     const relPaths: string[] = [];
+    let skippedBinary = 0;
+    let skippedOversize = 0;
     for (const fp of filePaths) {
       const rel = path.isAbsolute(fp) ? path.relative(this.rootPath, fp) : fp;
       const check = validatePath(rel, this.rootPath);
@@ -1371,7 +1458,11 @@ export class IndexingPipeline {
           size: entryStat.size,
           mtimeMs: entryStat.mtimeMs,
         });
-        if (unindexable) continue;
+        if (unindexable) {
+          if (unindexable === 'binary') skippedBinary++;
+          else if (unindexable === 'oversize') skippedOversize++;
+          continue;
+        }
       }
       // Store paths are always posix-separated (collectFiles() via
       // fast-glob) — pushing `rel` instead of `relPosix` inserted a phantom
@@ -1379,7 +1470,7 @@ export class IndexingPipeline {
       // breaking every downstream mtime/existing-row lookup (TRA-1045).
       relPaths.push(relPosix);
     }
-    return relPaths;
+    return { relPaths, skippedBinary, skippedOversize };
   }
 
   async indexFiles(
@@ -1387,7 +1478,8 @@ export class IndexingPipeline {
     opts: { postprocess?: PostprocessLevel; signal?: AbortSignal } = {},
   ): Promise<IndexingResult> {
     const enqueuedAt = Date.now();
-    const relPaths = this.filterIndexablePaths(filePaths);
+    const { relPaths, skippedBinary, skippedOversize } = this.filterIndexablePaths(filePaths);
+    const skippedUnindexable = skippedBinary + skippedOversize;
 
     // TRA-935: nothing survived the filters, so this run cannot change a
     // single row. Return before touching `_lock` — running the pipeline
@@ -1398,9 +1490,11 @@ export class IndexingPipeline {
     // lock-queue wait, which is why elapsedMs read as hours.
     if (relPaths.length === 0) {
       return {
-        totalFiles: 0,
+        totalFiles: skippedUnindexable,
         indexed: 0,
-        skipped: 0,
+        skipped: skippedUnindexable,
+        ...(skippedBinary > 0 ? { skippedBinary } : {}),
+        ...(skippedOversize > 0 ? { skippedOversize } : {}),
         errors: 0,
         durationMs: Date.now() - enqueuedAt,
         incremental: true,
@@ -1433,24 +1527,31 @@ export class IndexingPipeline {
       // as reindex latency.
       const start = Date.now();
       const r = await this.runPipeline(relPaths, false, start, opts.signal);
+      if (skippedUnindexable > 0) {
+        r.totalFiles += skippedUnindexable;
+        r.skipped += skippedUnindexable;
+        if (skippedBinary > 0) {
+          r.skippedBinary = (r.skippedBinary ?? 0) + skippedBinary;
+        }
+        if (skippedOversize > 0) {
+          r.skippedOversize = (r.skippedOversize ?? 0) + skippedOversize;
+        }
+      }
       // The watcher/hook path only ever sees the events it was handed. Kick a
       // debounced coverage check so a project whose on-disk shape changed
       // drastically converges without an explicit forced reindex (TRA-231).
-      if (r.indexed > 0) this.scheduleCoverageReconcile();
-      // TRA-1541 ANALYZE discipline: indexAll refreshes planner statistics at
-      // the end of every run, but this incremental path never did. Runs that
-      // took the trigger-drop + rebuild path (no ANALYZE there, unlike
-      // disableBulkMode) leave sqlite_stat1 describing the pre-burst graph
-      // until the next full reindex — refresh here for exactly those runs.
-      // Gated on the rebuild flag itself, not on indexed counts: a run with
-      // many skipped/errored candidates still rebuilds. Non-fatal by contract.
+      if (r.indexed > 0) {
+        this._filesIndexedSinceAnalyze += r.indexed;
+        this.scheduleCoverageReconcile();
+      }
+      // TRA-1541 / TRA-2282 ANALYZE discipline: indexAll refreshes planner statistics at
+      // the end of every run. For indexFiles, refresh planner statistics if FTS was
+      // rebuilt, or if files were indexed and stats are divergent or throttle elapsed.
       if (this._lastUsedFtsRebuild) {
         this._lastUsedFtsRebuild = false;
-        try {
-          this.store.db.exec('ANALYZE');
-        } catch (err) {
-          logger.debug({ err }, 'ANALYZE failed after indexFiles (non-fatal)');
-        }
+        this.maybeAnalyze(true);
+      } else if (r.indexed > 0) {
+        this.maybeAnalyze();
       }
       return r;
     });
@@ -1639,6 +1740,7 @@ export class IndexingPipeline {
     });
 
     this._projectContext = undefined;
+    if (this._isIncremental) this._projectContextDirs = undefined;
     // TRA-1543: drop the workspace-plugin detection unless the current scope
     // provably cannot change it (incremental run, same workspaces, no
     // manifest touched — see canReuseWorkspacePlugins). A dropped map is
@@ -2284,7 +2386,7 @@ export class IndexingPipeline {
 
   private buildProjectContext(): ProjectContext {
     if (!this._projectContext) {
-      this._projectContext = buildProjectContext(this.rootPath);
+      this._projectContext = buildProjectContext(this.rootPath, this._projectContextDirs);
     }
     return this._projectContext;
   }
@@ -2339,9 +2441,11 @@ export class IndexingPipeline {
     const insert = this.store.db.prepare(
       'INSERT OR IGNORE INTO edge_types (name, category, directed, description) VALUES (?, ?, 1, ?)',
     );
-    this.store.db.transaction(() => {
-      for (const et of pending) insert.run(et.name, et.category, et.description);
-    })();
+    this.store.db
+      .transaction(() => {
+        for (const et of pending) insert.run(et.name, et.category, et.description);
+      })
+      .immediate();
   }
 
   /**

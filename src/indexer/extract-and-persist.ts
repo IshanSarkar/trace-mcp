@@ -10,7 +10,7 @@ import { EdgeResolver } from './edge-resolver.js';
 import type { ExtractPool, ExtractRequest } from './extract-pool.js';
 import { logFrameworkExtractStats, resetFrameworkExtractStats } from '../plugin-api/executor.js';
 import { selectChangedFiles } from './change-prefilter.js';
-import { findPackageJsonEntries } from './package-entries.js';
+import { clearPackageEntriesCache, findPackageJsonEntriesAsync } from './package-entries.js';
 import { FileExtractor } from './file-extractor.js';
 import { FilePersister } from './file-persister.js';
 import type { WorkspaceInfo } from './monorepo.js';
@@ -25,6 +25,8 @@ export interface ExtractAndPersistResult {
   indexed: number;
   skipped: number;
   errors: number;
+  skippedBinary?: number;
+  skippedOversize?: number;
 }
 
 /** Inputs `extractAndPersist` needs, extracted out of `IndexingPipeline` so the
@@ -171,7 +173,11 @@ export async function extractAndPersist(
   // indexed regardless of file-size cap. Without this, lodash-class
   // monolithic libraries (single-file UMD/IIFE declared as `main`) drop
   // out of the index and every published method looks dead.
-  const forceIncludePaths = findPackageJsonEntries(rootPath);
+  if (relPaths.some((p) => p === 'package.json' || p.endsWith('/package.json'))) {
+    clearPackageEntriesCache(rootPath);
+  }
+  const forceIncludePaths =
+    candidates.length > 0 ? await findPackageJsonEntriesAsync(rootPath) : new Set<string>();
 
   const extractor = new FileExtractor({
     store,
@@ -271,6 +277,11 @@ export async function extractAndPersist(
               } as ExtractRequest);
               if (r.kind === 'skipped') {
                 result.skipped++;
+                if (r.reason === 'binary') {
+                  result.skippedBinary = (result.skippedBinary ?? 0) + 1;
+                } else if (r.reason === 'oversize') {
+                  result.skippedOversize = (result.skippedOversize ?? 0) + 1;
+                }
                 continue;
               }
               if (r.kind === 'mtime_updated') {
@@ -305,6 +316,11 @@ export async function extractAndPersist(
           const ext = await extractor.extract(relPath, fileForce(relPath));
           if (ext.kind === 'skipped') {
             result.skipped++;
+            if (ext.reason === 'binary') {
+              result.skippedBinary = (result.skippedBinary ?? 0) + 1;
+            } else if (ext.reason === 'oversize') {
+              result.skippedOversize = (result.skippedOversize ?? 0) + 1;
+            }
             continue;
           }
           if (ext.kind === 'mtime_updated') {

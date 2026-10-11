@@ -23,10 +23,12 @@ import {
 import { installDaemonExitBreadcrumb, noteDaemonShutdownReason } from './daemon/exit-breadcrumb.js';
 import {
   logUncleanStopDiagnosis,
+  readRecentOomCrashes,
   readRecentStallAlerts,
   STALL_ALERTS_FILENAME,
   summarizeStallAlerts,
 } from './daemon/unclean-stop.js';
+import { startHeapGuard } from './daemon/heap-guard.js';
 import {
   printTelemetryNoticeOnce,
   readDaemonReliabilityCounters,
@@ -91,7 +93,12 @@ import type { TraceMcpConfig } from './config.js';
 import { loadConfig, loadGlobalConfigRaw, validateConfigUpdate } from './config.js';
 import { saveGlobalSettingsJsonc } from './config-jsonc.js';
 import { isDaemonRunning } from './daemon/client.js';
-import { describeIndexFileOutcome, dispatchIndexFile } from './cli/index-file.js';
+import {
+  describeIndexFileOutcome,
+  dispatchIndexFile,
+  indexFilePathForProject,
+  resolveIndexFileProjectRoot,
+} from './cli/index-file.js';
 import { buildHealthPayload, withMissingRoots } from './daemon/health-payload.js';
 import { buildApiProjectsList } from './daemon/api-projects-payload.js';
 import { DaemonIdleMonitor } from './daemon/idle-monitor.js';
@@ -166,6 +173,7 @@ import {
   updateLastIndexed,
 } from './registry.js';
 import { isKnownSubproject, resolveDeepestKnownRoot } from './subproject/resolve.js';
+import { getWorktreeDelta, resolveWorktreeLink, summarizeWorktreeDelta } from './worktree-delta.js';
 import {
   buildProjectNotFoundError,
   buildResolutionFailureError,
@@ -1200,6 +1208,8 @@ program
       fullSurface: boolean,
       /** The preset the client asked for, when it sent one (TRA-951). */
       clientPreset: string | undefined,
+      /** Linked worktree the stdio proxy routed to this canonical project, if any. */
+      worktreeHint?: string,
     ): Promise<StreamableHTTPServerTransport | null> {
       const managed = projectManager.getProject(projectRoot);
       if (!managed) return null;
@@ -1252,6 +1262,7 @@ program
         // applies its own preset client-side (ProxyBackend).
         serveFullSurface: fullSurface,
         sessionPreset: clientPreset,
+        worktreeRoot: worktreeHint,
       };
       const handle = createServer(
         managed.store,
@@ -1608,6 +1619,9 @@ program
         // the surface itself.
         const fullSurface = url.searchParams.get('surface') === 'full';
         const clientPreset = url.searchParams.get('preset') ?? undefined;
+        // Sent by a stdio proxy that routed a linked worktree to this canonical
+        // project; lets the session flag results for files the branch changed.
+        const worktreeHint = url.searchParams.get('worktree') ?? undefined;
 
         // Resolve to the deepest KNOWN root: a registered subproject
         // (the/fair/fair-front) wins over its container ancestor (the) so the
@@ -1648,7 +1662,12 @@ program
           } else if (req.method === 'POST' && isInitializeRequest(parsedBody)) {
             // New session: create transport + server
             transport =
-              (await createSessionTransport(projectRoot, fullSurface, clientPreset)) ?? undefined;
+              (await createSessionTransport(
+                projectRoot,
+                fullSurface,
+                clientPreset,
+                worktreeHint,
+              )) ?? undefined;
             createdTransport = transport;
             if (!transport) {
               // Auto-register the project on first MCP connect when the path
@@ -1711,8 +1730,12 @@ program
                           `here; undo with \`trace-mcp remove ${projectRoot}\` (#936)`,
                   );
                   transport =
-                    (await createSessionTransport(projectRoot, fullSurface, clientPreset)) ??
-                    undefined;
+                    (await createSessionTransport(
+                      projectRoot,
+                      fullSurface,
+                      clientPreset,
+                      worktreeHint,
+                    )) ?? undefined;
                   createdTransport = transport;
                 } catch (err) {
                   logger.warn(
@@ -2243,6 +2266,43 @@ program
             }),
           );
         }
+        return;
+      }
+
+      // REST API: files a linked git worktree changed relative to the canonical
+      // checkout's index (the checkout a worktree session is served from).
+      // `?project=` is the worktree root; the canonical checkout must be a
+      // registered project. A main checkout answers `is_linked_worktree: false`.
+      if (req.method === 'GET' && url.pathname === '/api/projects/worktree') {
+        const worktreeRoot = url.searchParams.get('project');
+        if (!worktreeRoot) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing ?project= query param' }));
+          return;
+        }
+        const link = resolveWorktreeLink(worktreeRoot);
+        if (!link) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ is_linked_worktree: false }));
+          return;
+        }
+        if (!getProject(link.canonicalRoot)) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(
+            JSON.stringify({
+              error: `Canonical checkout "${path.basename(link.canonicalRoot)}" isn't registered with this daemon.`,
+            }),
+          );
+          return;
+        }
+        const delta = await getWorktreeDelta(link);
+        if (!delta) {
+          res.writeHead(503, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'git could not compute the worktree delta' }));
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(summarizeWorktreeDelta(delta)));
         return;
       }
 
@@ -3665,6 +3725,9 @@ program
     // "daemon dead". Started in the listen() callback below, stopped here.
     let lagMonitor: EventLoopLagMonitor | null = null;
     let stallWatchdog: StallWatchdog | null = null;
+    // TRA-2056: heap-pressure guard timer — stopped here so shutdown never
+    // re-triggers a restart mid-drain.
+    let stopHeapGuard: (() => void) | null = null;
     const shutdown = async (reason?: string) => {
       // Re-entrancy guard: a SIGTERM delivered while the event loop was starved
       // by an indexing run only gets *processed* at the next yield, and a second
@@ -3802,6 +3865,12 @@ program
       clearInterval(clientSweep);
       clearInterval(journalSilenceCheck);
       try {
+        stopHeapGuard?.();
+      } catch {
+        /* best-effort */
+      }
+      stopHeapGuard = null;
+      try {
         stopActivityWatchdog?.();
       } catch {
         /* best-effort */
@@ -3916,6 +3985,7 @@ program
         : 8;
     projectManager.startIdleUnloadSweep(configuredIdleUnloadMinutes * 60_000, {
       maxLoaded: configuredMaxLoadedProjects,
+      evictDeleted: true,
       onUnloaded: (roots) => {
         for (const root of roots) {
           // Same cleanup as the DELETE endpoint: without it the progress
@@ -3967,6 +4037,21 @@ program
         };
       },
     });
+    // Heap-pressure guard (TRA-2056): a V8 OOM aborts mid-request with no JS
+    // handler, so warn early and restart gracefully (drain via shutdown(),
+    // letting launchd respawn) instead of dying by SIGABRT at the ceiling.
+    // Disabled with TRACE_MCP_HEAP_GUARD=0.
+    if (process.env.TRACE_MCP_HEAP_GUARD !== '0') {
+      stopHeapGuard = startHeapGuard({
+        getContext: () => ({
+          projectsLoaded: projectManager.listProjects().length,
+          reindexInFlight: countReindexingProjects(),
+        }),
+        onRestart: () => {
+          void shutdown('heap-pressure');
+        },
+      });
+    }
     // Track activity: wrap the client/session/SSE mutation points in-place via
     // a ticker that re-evaluates on every /health check (cheap, idempotent).
     // Plus explicit hook below on key mutations.
@@ -4111,6 +4196,9 @@ program
           daemonUncleanStops: counters.uncleanStops,
           launchdExit: getLaunchdLastExit(),
           stallSummary: summarizeStallAlerts(readRecentStallAlerts()),
+          // TRA-2056: a V8 heap OOM aborts via SIGABRT with no JS handler —
+          // the .ips crash report is the only post-mortem besides vitals.
+          oomCrash: readRecentOomCrashes()[0] ?? null,
         });
       }
       // Self-heal: readDaemonPid() unlinks the file whenever it names a dead
@@ -4487,7 +4575,7 @@ program
 
     let projectRoot: string;
     try {
-      projectRoot = findProjectRoot(path.dirname(resolvedFile));
+      projectRoot = resolveIndexFileProjectRoot(resolvedFile);
     } catch {
       process.exit(0); // not inside a known project — skip silently
     }
@@ -4522,7 +4610,7 @@ program
 
         const pipeline = new IndexingPipeline(store, registry, config, projectRoot);
         try {
-          await pipeline.indexFiles([resolvedFile]);
+          await pipeline.indexFiles([indexFilePathForProject(resolvedFile, projectRoot)]);
         } finally {
           await pipeline.dispose();
           db.close();

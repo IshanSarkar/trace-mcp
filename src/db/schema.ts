@@ -329,6 +329,7 @@ CREATE TABLE IF NOT EXISTS symbol_heritage (
     PRIMARY KEY (symbol_id, parent_name, kind)
 );
 CREATE INDEX IF NOT EXISTS idx_symbol_heritage_parent ON symbol_heritage(parent_name);
+CREATE INDEX IF NOT EXISTS idx_files_language ON files(language);
 -- idx_files_workspace and idx_edges_cross_ws created in migration v9
 
 -- ============================================================
@@ -1917,13 +1918,10 @@ const MIGRATIONS: Record<number, (db: Database.Database) => void> = {
     logger.info({ heritageEdges: backfilled }, 'Migration 34: backfilled symbol_heritage');
   },
   35: (db) => {
-    // SQL graph edges (Phase 4): register types added to SEED_EDGE_TYPES after v34.
-    const insert = db.prepare(
-      'INSERT OR IGNORE INTO edge_types (name, category, directed, description) VALUES (?, ?, 1, ?)',
-    );
-    for (const et of SEED_EDGE_TYPES) {
-      insert.run(et.name, et.category, et.description);
-    }
+    // TRA-2282: index files(language) so edge resolvers filtering by
+    // language don't table-scan files or trick the optimizer into a full
+    // Cartesian product when sqlite_stat1 is skewed or stale.
+    db.exec('CREATE INDEX IF NOT EXISTS idx_files_language ON files(language)');
   },
 };
 
