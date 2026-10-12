@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 
+## [3.36.6](https://github.com/nikolai-vysotskyi/trace-mcp/compare/v3.36.5...v3.36.6) (2026-10-11)
+
+
+### Bug Fixes
+
+* **indexer:** time-slice Vue framework resolution (TRA-2352) ([#1559](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1559)) ([1afc33d](https://github.com/nikolai-vysotskyi/trace-mcp/commit/1afc33df7d7f25258839d78de7e1721dee14e4a5))
+
+## [3.36.5](https://github.com/nikolai-vysotskyi/trace-mcp/compare/v3.36.4...v3.36.5) (2026-10-11)
+
+
+### Bug Fixes
+
+* **gc:** report freed bytes for orphan index sweep (TRA-1650) ([#1556](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1556)) ([8488bec](https://github.com/nikolai-vysotskyi/trace-mcp/commit/8488bece3cc11127552448d298a8fbe36e131421))
+
+## [3.36.4](https://github.com/nikolai-vysotskyi/trace-mcp/compare/v3.36.3...v3.36.4) (2026-10-11)
+
+
+### Bug Fixes
+
+* **app:** retry transient update checks and add background safety net (TRA-2104) ([#1550](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1550)) ([07f57dd](https://github.com/nikolai-vysotskyi/trace-mcp/commit/07f57dddb8e6fa326853dc8f59e94c82bc1eac56))
+* **indexer:** time-slice framework edge insertion in storeRawEdges (TRA-2334) ([#1555](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1555)) ([79f7e9c](https://github.com/nikolai-vysotskyi/trace-mcp/commit/79f7e9c8729b959cb0f21df53e316777ca668451))
+
 ## [3.36.3](https://github.com/nikolai-vysotskyi/trace-mcp/compare/v3.36.2...v3.36.3) (2026-10-10)
 
 
