@@ -1,3 +1,7 @@
+---
+noindex: true
+---
+
 # SQL enhancement — repo sync
 
 ## Public vs private corpora

@@ -1,3 +1,7 @@
+---
+noindex: true
+---
+
 # Phase 3 prep — handle known work before indexer wiring
 
 Phase 2 proved tree-sitter-sql on the corpus. This document locks **contracts and inventories** so Phase 3 integration does not rediscover the same gaps.

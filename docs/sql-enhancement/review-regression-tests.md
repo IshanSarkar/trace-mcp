@@ -1,3 +1,7 @@
+---
+noindex: true
+---
+
 # PR #1482 — regression tests (review feedback)
 
 Maps maintainer review items to **automated** coverage in `npm run test:sql-corpus` (CI when workflows are approved on fork PRs).

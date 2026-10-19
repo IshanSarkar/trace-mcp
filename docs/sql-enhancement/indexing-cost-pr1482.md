@@ -1,3 +1,7 @@
+---
+noindex: true
+---
+
 # Indexing cost — Phase 4 SQL resolvers (PR #1482)
 
 Methodology for maintainer review: one **full** `index --force` on a representative **Python + warehouse SQL** monorepo (not committed to OSS; numbers below are from a private benchmark run on **2026-10-08**). Compare against **v3.34.6** regex-only SQL on the same machine/repo shape.

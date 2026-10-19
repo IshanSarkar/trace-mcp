@@ -1,3 +1,7 @@
+---
+noindex: true
+---
+
 # Phase 0 evidence (v3.34.6)
 
 Evidence class: **CONFIRMED** unless marked **OBSERVED**.

@@ -1,3 +1,7 @@
+---
+noindex: true
+---
+
 # SQL indexing — coverage roadmap (living)
 
 Goal: **include everything we can justify with evidence**, keep **fallback** for the rest, and **never pretend** full understanding when `parse_status` is `partial` or `fallback`.

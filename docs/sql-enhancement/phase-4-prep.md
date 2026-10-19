@@ -1,3 +1,7 @@
+---
+noindex: true
+---
+
 # Phase 4 — SQL graph edges
 
 **Status:** Phase 4 SQL graph edges implemented (`sql_cte_ref`, `sql_reads`, `loads_sql`).

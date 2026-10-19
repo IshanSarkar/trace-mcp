@@ -1,3 +1,7 @@
+---
+noindex: true
+---
+
 # Phase 2 complete — parser spike (v3.34.6)
 
 ## Decision
@@ -47,7 +51,7 @@ npm run test:sql-corpus
 npm run sql-corpus:spike
 ```
 
-Full JSON: `docs/sql-enhancement/phase-2-spike-report.json`.
+Full spike JSON is produced locally by `npm run sql-corpus:spike` (output path is env-specific; not committed to OSS).
 
 ## Next (Phase 3)
 
