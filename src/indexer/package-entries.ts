@@ -21,10 +21,51 @@ import path from 'node:path';
 import { logger } from '../logger.js';
 import { yieldToEventLoopFair } from '../utils/event-loop.js';
 
-const PACKAGE_ENTRIES_CACHE_TTL_MS = 60_000;
+const PACKAGE_ENTRIES_CACHE_TTL_MS = 1_800_000; // 30 minutes (invalidated on package.json change)
 const MAX_PACKAGE_ENTRIES_CACHE_ENTRIES = 20;
 
-const packageEntriesCache = new Map<string, { entries: Set<string>; computedAt: number }>();
+export const PACKAGE_SCAN_SKIP_DIRS = new Set([
+  'node_modules',
+  'vendor',
+  'dist',
+  'build',
+  '.git',
+  'coverage',
+  'tmp',
+  'temp',
+  '__pycache__',
+  'site-packages',
+  'scratchpad',
+  'storage',
+  'runs',
+  'checkpoints',
+  'dataset',
+  'datasets',
+  'out',
+  '.output',
+  'target',
+  'bin',
+  'obj',
+  // Browser runtime caches (TRA-2500)
+  'Cache_Data',
+  'Code Cache',
+  'GPUCache',
+  'GPUPersistentCache',
+  'DawnGraphiteCache',
+  'DawnWebGPUCache',
+  'GraphiteDawnCache',
+  'ShaderCache',
+  'GrShaderCache',
+  'cache2',
+  'startupCache',
+  'jumpListCache',
+  'WebKitCache',
+]);
+
+const packageEntriesCache = new Map<
+  string,
+  { entries: Set<string>; packagePaths: Set<string>; computedAt: number }
+>();
 
 /** Evict package.json entry cache (all or per-root). */
 export function clearPackageEntriesCache(rootPath?: string): void {
@@ -33,6 +74,38 @@ export function clearPackageEntriesCache(rootPath?: string): void {
   } else {
     packageEntriesCache.clear();
   }
+}
+
+/** Evict when a removed tree contained a manifest seen by the cached scan. */
+export function clearPackageEntriesCacheForDeletedPath(rootPath: string, relPath: string): void {
+  const cached = packageEntriesCache.get(rootPath);
+  if (!cached) return;
+  let end = relPath.length;
+  while (end > 0 && relPath.charCodeAt(end - 1) === 47 /* '/' */) {
+    end--;
+  }
+  const prefix = `${relPath.slice(0, end)}/`;
+  for (const pkg of cached.packagePaths) {
+    if (pkg === relPath || pkg.startsWith(prefix)) {
+      packageEntriesCache.delete(rootPath);
+      return;
+    }
+  }
+}
+
+export interface PackageEntriesOptions {
+  bypassCache?: boolean;
+  ttlMs?: number;
+  maxDepth?: number;
+  skipDirs?: Set<string>;
+}
+
+/** Check if cached entries exist without triggering a directory walk. */
+export function readCachedPackageEntries(
+  rootPath: string,
+  options?: PackageEntriesOptions,
+): Set<string> | undefined {
+  return readCachedEntries(rootPath, options);
 }
 
 /**
@@ -46,37 +119,39 @@ export function clearPackageEntriesCache(rootPath?: string): void {
  */
 export function findPackageJsonEntries(
   rootPath: string,
-  options?: { bypassCache?: boolean; ttlMs?: number },
+  options?: PackageEntriesOptions,
 ): Set<string> {
   const cached = readCachedEntries(rootPath, options);
   if (cached) return cached;
   const entries = new Set<string>();
-  for (const _ of scanPackageEntries(rootPath, entries)) {
+  const packagePaths = new Set<string>();
+  for (const _ of scanPackageEntries(rootPath, entries, packagePaths, options)) {
     // Synchronous callers use the same scanner and cache contract.
   }
-  cacheEntries(rootPath, entries);
+  cacheEntries(rootPath, entries, packagePaths);
   return entries;
 }
 
 /** Cooperative variant for bulk indexing: no directory walk may monopolize /health. */
 export async function findPackageJsonEntriesAsync(
   rootPath: string,
-  options?: { bypassCache?: boolean; ttlMs?: number },
+  options?: PackageEntriesOptions,
 ): Promise<Set<string>> {
   const cached = readCachedEntries(rootPath, options);
   if (cached) return cached;
   const entries = new Set<string>();
+  const packagePaths = new Set<string>();
   let dirs = 0;
-  for (const _ of scanPackageEntries(rootPath, entries)) {
+  for (const _ of scanPackageEntries(rootPath, entries, packagePaths, options)) {
     if (++dirs % 32 === 0) await yieldToEventLoopFair();
   }
-  cacheEntries(rootPath, entries);
+  cacheEntries(rootPath, entries, packagePaths);
   return entries;
 }
 
 function readCachedEntries(
   rootPath: string,
-  options?: { bypassCache?: boolean; ttlMs?: number },
+  options?: PackageEntriesOptions,
 ): Set<string> | undefined {
   const ttl = options?.ttlMs ?? PACKAGE_ENTRIES_CACHE_TTL_MS;
   if (!options?.bypassCache) {
@@ -91,12 +166,18 @@ function readCachedEntries(
   return undefined;
 }
 
-function* scanPackageEntries(rootPath: string, entries: Set<string>): Generator<void> {
+function* scanPackageEntries(
+  rootPath: string,
+  entries: Set<string>,
+  packagePaths: Set<string>,
+  options?: PackageEntriesOptions,
+): Generator<void> {
   if (!rootPath || !fs.existsSync(rootPath)) return;
 
   const visited = new Set<string>();
   const queue: Array<{ dir: string; depth: number }> = [{ dir: rootPath, depth: 0 }];
-  const MAX_DEPTH = 8;
+  const MAX_DEPTH = options?.maxDepth ?? 5;
+  const skipDirs = options?.skipDirs ?? PACKAGE_SCAN_SKIP_DIRS;
 
   // A cursor keeps breadth-first order without Array.shift's quadratic copies.
   for (let cursor = 0; cursor < queue.length; cursor++) {
@@ -117,16 +198,7 @@ function* scanPackageEntries(rootPath: string, entries: Set<string>): Generator<
       if (ent.isDirectory()) {
         if (
           depth >= MAX_DEPTH ||
-          name === 'node_modules' ||
-          name === 'vendor' ||
-          name === 'dist' ||
-          name === 'build' ||
-          name === '.git' ||
-          name === 'coverage' ||
-          name === 'tmp' ||
-          name === 'temp' ||
-          name === '__pycache__' ||
-          name === 'site-packages' ||
+          skipDirs.has(name) ||
           name.startsWith('.') // .next, .turbo, .pnpm-store, etc.
         ) {
           continue;
@@ -138,6 +210,7 @@ function* scanPackageEntries(rootPath: string, entries: Set<string>): Generator<
       if (!ent.isFile() || name !== 'package.json') continue;
 
       const pkgPath = path.join(dir, name);
+      packagePaths.add(path.relative(rootPath, pkgPath).replace(/\\/g, '/'));
       try {
         const raw = fs.readFileSync(pkgPath, 'utf-8');
         const pkg = JSON.parse(raw);
@@ -171,13 +244,13 @@ function* scanPackageEntries(rootPath: string, entries: Set<string>): Generator<
   }
 }
 
-function cacheEntries(rootPath: string, entries: Set<string>): void {
+function cacheEntries(rootPath: string, entries: Set<string>, packagePaths: Set<string>): void {
   packageEntriesCache.delete(rootPath);
   if (packageEntriesCache.size >= MAX_PACKAGE_ENTRIES_CACHE_ENTRIES) {
     const oldestKey = packageEntriesCache.keys().next().value;
     if (oldestKey !== undefined) packageEntriesCache.delete(oldestKey);
   }
-  packageEntriesCache.set(rootPath, { entries, computedAt: Date.now() });
+  packageEntriesCache.set(rootPath, { entries, packagePaths, computedAt: Date.now() });
 }
 
 /**

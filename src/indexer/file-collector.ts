@@ -8,6 +8,7 @@ import { isHotChurnPath } from '../utils/hot-churn.js';
 import type { GitignoreMatcher } from '../utils/gitignore.js';
 import type { TraceignoreMatcher } from '../utils/traceignore.js';
 import type { WorkspaceInfo } from './monorepo.js';
+import { yieldToEventLoopFair } from '../utils/event-loop.js';
 
 /** Inputs `collectFiles` needs, extracted out of `IndexingPipeline` so the
  *  glob+filter logic can be unit tested and read without the surrounding
@@ -90,15 +91,24 @@ export async function collectFiles(params: FileCollectorParams): Promise<Collect
   // tree, so only re-anchor the directory-rooted ones.
   if (workspaces.length > 0 && rootedPatterns.length > 0) {
     const wsPatterns = workspaces.flatMap((ws) => rootedPatterns.map((p) => `${ws.path}/${p}`));
-    const wsEntries = await fg(wsPatterns, {
-      cwd: rootPath,
-      ignore,
-      dot: false,
-      absolute: false,
-      onlyFiles: true,
-      suppressErrors: true,
-      followSymbolicLinks: config.follow_symlinks,
-    });
+    // TRA-2524: On 100+ workspaces, thousands of glob patterns in a single batch
+    // hold the event loop for seconds. Chunk patterns into slices of 128 with fair yields.
+    const CHUNK_PATTERNS = 128;
+    const wsEntries: string[] = [];
+    for (let i = 0; i < wsPatterns.length; i += CHUNK_PATTERNS) {
+      if (i > 0) await yieldToEventLoopFair();
+      const chunk = wsPatterns.slice(i, i + CHUNK_PATTERNS);
+      const batch = await fg(chunk, {
+        cwd: rootPath,
+        ignore,
+        dot: false,
+        absolute: false,
+        onlyFiles: true,
+        suppressErrors: true,
+        followSymbolicLinks: config.follow_symlinks,
+      });
+      wsEntries.push(...batch);
+    }
     if (wsEntries.length > 0) {
       const merged = new Set(entries);
       for (const e of wsEntries) merged.add(e);
@@ -115,12 +125,21 @@ export async function collectFiles(params: FileCollectorParams): Promise<Collect
   // top-level README) can make non-zero even while every rooted pattern
   // missed completely, silently skipping this fallback and leaving the index
   // stuck at whatever the global patterns happened to touch.
+  let deepTruncated = false;
+  let deepFound = 0;
+
   if (rootedPatterns.length > 0) {
     const isRootedMatch = picomatch(rootedPatterns, { dot: true });
     const rootedMatched = entries.some((e) => isRootedMatch(e));
     if (!rootedMatched) {
       const deepPatterns = rootedPatterns.map((p) => `**/${p}`);
-      const deepEntries = await fg(deepPatterns, {
+      // TRA-2380: Bounded traversal for deep monorepo / subproject fallback.
+      // Unbounded fg() walks deep node_modules, build caches, and nested trees,
+      // collecting >120k files and holding the CPU for 6+ seconds.
+      // 1. Pass deep: 5 — subprojects in umbrella checkouts rarely live deeper than 5 directory levels.
+      // 2. Stream and break once entries reach maxFiles so fast-glob does not waste CPU.
+      const deepEntries: string[] = [];
+      const deepStream = fg.stream(deepPatterns, {
         cwd: rootPath,
         ignore,
         dot: false,
@@ -128,7 +147,21 @@ export async function collectFiles(params: FileCollectorParams): Promise<Collect
         onlyFiles: true,
         suppressErrors: true,
         followSymbolicLinks: config.follow_symlinks,
+        deep: 5,
       });
+
+      for await (const entry of deepStream) {
+        deepFound++;
+        if (deepFound % 256 === 0) await yieldToEventLoopFair();
+        if (deepEntries.length < maxFiles) {
+          deepEntries.push(entry as string);
+        } else {
+          deepTruncated = true;
+          (deepStream as NodeJS.EventEmitter & { destroy?: () => void }).destroy?.();
+          break;
+        }
+      }
+
       if (deepEntries.length > 0) {
         logger.info(
           { count: deepEntries.length, root: rootPath },
@@ -165,15 +198,15 @@ export async function collectFiles(params: FileCollectorParams): Promise<Collect
   // pointlessly refreshes on every tick.
   entries = entries.filter((e) => !isHotChurnPath(e));
 
-  if (entries.length > maxFiles) {
+  if (entries.length > maxFiles || deepTruncated) {
     logger.warn(
-      { projectRoot: rootPath, found: entries.length, limit: maxFiles },
+      { projectRoot: rootPath, found: deepTruncated ? deepFound : entries.length, limit: maxFiles },
       'File count exceeds limit — truncating. Increase security.max_files to index more.',
     );
     return {
       files: entries.slice(0, maxFiles),
       truncated: true,
-      found: entries.length,
+      found: deepTruncated ? deepFound : entries.length,
       limit: maxFiles,
     };
   }

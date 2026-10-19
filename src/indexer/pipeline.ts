@@ -50,7 +50,10 @@ import { buildMultiRootWorkspaces, detectWorkspaces, type WorkspaceInfo } from '
 import type { PipelineState } from './pipeline-state.js';
 import { buildProjectContext, findScanDirectoriesAsync } from './project-context.js';
 import { checkUnindexableSkip } from './unindexable-skip-cache.js';
-import { clearPackageEntriesCache } from './package-entries.js';
+import {
+  clearPackageEntriesCache,
+  clearPackageEntriesCacheForDeletedPath,
+} from './package-entries.js';
 // P02 Task DAG migration: 3 passes are scheduled through a TaskDag instead
 // of being called imperatively from `runPipeline`. The Task wrappers live in
 // `src/pipeline/tasks/*` and delegate to the existing private methods on
@@ -398,9 +401,9 @@ export interface ReconcilableFileRow {
  *     end of every env pass — see TRA-2067 (GH#1450). The exemption here only
  *     protects env files the collector still owns.
  *
- * Refuses to act on a scope it cannot trust — an empty walk (glob failure,
- * unreadable root) or one truncated at `security.max_files`, where "not in
- * scope" only means "past the cap".
+ * An empty walk cannot establish scope. On a truncated walk, an out-of-scope
+ * row is removed only when its path is confirmed absent from disk; it may
+ * otherwise be past `security.max_files`.
  */
 export function selectOutOfScopeFiles(args: {
   files: ReconcilableFileRow[];
@@ -408,16 +411,19 @@ export function selectOutOfScopeFiles(args: {
   inScope: string[];
   /** True when the walk hit `security.max_files` and was cut short. */
   truncated: boolean;
+  /** Disk check for rows beyond a truncated walk; omit to keep all such rows. */
+  fileExists?: (relPath: string) => boolean;
 }): number[] {
-  const { files, inScope, truncated } = args;
-  if (truncated || inScope.length === 0) return [];
+  const { files, inScope, truncated, fileExists } = args;
+  if (inScope.length === 0 || (truncated && !fileExists)) return [];
   const keep = new Set(inScope.map((p) => p.split(path.sep).join('/')));
   return files
     .filter(
       (f) =>
         !keep.has(f.path.split(path.sep).join('/')) &&
         f.language !== 'env' &&
-        !PHANTOM_CONTENT_HASHES.has(f.content_hash ?? ''),
+        !PHANTOM_CONTENT_HASHES.has(f.content_hash ?? '') &&
+        (!truncated || !fileExists?.(f.path)),
     )
     .map((f) => f.id);
 }
@@ -699,6 +705,7 @@ export class IndexingPipeline {
         const fast = await this.tryIncrementalDiscovery(start, opts.signal);
         if (fast) return fast;
       }
+      await yieldToEventLoopFair();
       const collected = await this.collectFiles();
       // TRA-1017: bail before touching the index when a stop arrived during
       // the walk — reconcileScope below deletes rows, so aborting after it
@@ -722,6 +729,7 @@ export class IndexingPipeline {
       // the intended outcome here, not the parser regression `checkShrink`
       // hunts for. Repairing an index that was 93% stale would otherwise raise
       // a shrink warning on the very run that fixed it.
+      await yieldToEventLoopFair();
       await this.reconcileScope(filePaths, collected.truncated);
       const before = skipShrinkCheck ? null : this.captureSizeSnapshot();
       // Bulk-load mode (synchronous=OFF, foreign_keys=OFF) only for genuine
@@ -1100,7 +1108,10 @@ export class IndexingPipeline {
       logger.debug('ANALYZE throttle bypassed — sqlite_stat1 cardinality divergent');
     }
     try {
-      this.store.db.exec('ANALYZE');
+      // TRA-2433: analyze only core relational tables with indexes. Plain ANALYZE
+      // scans all FTS5 virtual shadow tables (symbols_fts_*, symbols_name_tri_*),
+      // blocking the event loop for 5+ seconds in a single synchronous step.
+      this.store.db.exec('ANALYZE files; ANALYZE symbols; ANALYZE edges; ANALYZE nodes;');
     } catch (err) {
       logger.debug({ err }, 'ANALYZE failed after indexAll (non-fatal)');
       return;
@@ -1234,6 +1245,18 @@ export class IndexingPipeline {
       // count misfires exactly at the cap (a walk that found precisely
       // maxFiles files is whole, not cut) and hides the pre-cap total.
       truncated,
+      fileExists: (relPath) => {
+        const absolutePath = path.isAbsolute(relPath) ? relPath : path.join(this.rootPath, relPath);
+        try {
+          fs.statSync(absolutePath);
+          return true;
+        } catch (err) {
+          // Only a confirmed missing path is safe to prune. An inaccessible
+          // volume or file must keep its index row for a later retry.
+          const code = (err as NodeJS.ErrnoException)?.code;
+          return code !== 'ENOENT' && code !== 'ENOTDIR';
+        }
+      },
     });
     // TRA-2067 (GH#1450): `selectOutOfScopeFiles` exempts `language 'env'`
     // rows, so an env file added to `ignore.patterns` / `.traceignore`,
@@ -1322,33 +1345,59 @@ export class IndexingPipeline {
       );
       return;
     }
+    const filesToDelete = new Map<number, { id: number; path: string }>();
+    for (const fp of filePaths) {
+      const rel = path.isAbsolute(fp) ? path.relative(this.rootPath, fp) : fp;
+      const relPath = rel.split(path.sep).join('/');
+      if (validatePath(relPath, this.rootPath).isErr() || relPath === '.') continue;
+      // Preserve cache invalidation for a delete event even when the file was
+      // never indexed (package discovery can still have cached its manifest).
+      invalidateTreeCacheFile(this.rootPath, relPath);
+      if (relPath === 'package.json' || relPath.endsWith('/package.json')) {
+        clearPackageEntriesCache(this.rootPath);
+      }
+      clearPackageEntriesCacheForDeletedPath(this.rootPath, relPath);
+      const exact = this.store.getFile(relPath);
+      if (exact) filesToDelete.set(exact.id, exact);
+      // Parcel/FSEvents may report only the directory when a whole tree is
+      // removed. The index stores files, not directories, so an exact lookup
+      // alone leaves every descendant and its symbols searchable forever.
+      // A still-present directory can be a stale delete event after a rename
+      // or quick recreation; leave it for normal file events/full reconcile.
+      let mayHaveLostDescendants = false;
+      try {
+        mayHaveLostDescendants = !fs.statSync(path.resolve(this.rootPath, relPath)).isDirectory();
+      } catch (err) {
+        const code = (err as NodeJS.ErrnoException).code;
+        mayHaveLostDescendants = code === 'ENOENT' || code === 'ENOTDIR';
+      }
+      if (mayHaveLostDescendants) {
+        for (const file of this.store.getFilesUnderPath(relPath)) {
+          filesToDelete.set(file.id, file);
+        }
+      }
+    }
     // TRA-1577: drop per-file tree-sitter cache entries alongside the DB rows
     // so a deleted path can't serve a stale incremental base on re-creation,
     // and its WASM trees are freed instead of lingering to LRU eviction.
-    for (const fp of filePaths) {
-      const rel = path.isAbsolute(fp) ? path.relative(this.rootPath, fp) : fp;
-      const relPosix = rel.split(path.sep).join('/');
-      invalidateTreeCacheFile(this.rootPath, relPosix);
-      if (relPosix === 'package.json' || relPosix.endsWith('/package.json')) {
+    for (const file of filesToDelete.values()) {
+      invalidateTreeCacheFile(this.rootPath, file.path);
+      if (file.path === 'package.json' || file.path.endsWith('/package.json')) {
         clearPackageEntriesCache(this.rootPath);
       }
     }
     this.store.db
       .transaction(() => {
-        for (const fp of filePaths) {
-          const rel = path.isAbsolute(fp) ? path.relative(this.rootPath, fp) : fp;
-          // Store paths are always posix-separated (collectFiles() via
-          // fast-glob) — an unconverted backslash on Windows misses the row
-          // entirely, silently no-op'ing the delete (TRA-1045).
-          const relPath = rel.split(path.sep).join('/');
-          const file = this.store.getFile(relPath);
-          if (file) {
-            this.store.deleteFile(file.id);
-            logger.info({ file: relPath }, 'Deleted file from index');
-          }
+        for (const file of filesToDelete.values()) {
+          this.store.deleteFile(file.id);
         }
       })
       .immediate();
+    if (filesToDelete.size > 0) {
+      invalidatePageRankCache();
+      invalidateSearchCache(this.store.db);
+      logger.info({ count: filesToDelete.size }, 'Deleted files from index');
+    }
   }
 
   /**
@@ -2303,12 +2352,14 @@ export class IndexingPipeline {
       ) {
         return;
       }
+      // TRA-2433: stamp the check timestamp so consecutive watcher events
+      // don't repeat the expensive collectFiles() disk walk every minute.
+      this._lastCoverageReconcileMs = Date.now();
       const onDisk = (await this.collectFiles()).files.length;
       if (this._disposed) return;
       const indexed = this.store.getStats().totalFiles;
       const gap = onDisk - indexed;
       if (gap < IndexingPipeline.COVERAGE_DRIFT_MIN_FILES) return;
-      this._lastCoverageReconcileMs = Date.now();
       logger.info(
         { root: this.rootPath, onDisk, indexed, gap },
         'Coverage drift detected — running a full hash-gated reindex',
@@ -2429,7 +2480,7 @@ export class IndexingPipeline {
     if (activeResult.isOk()) registerSchema(activeResult.value);
 
     // Workspace-level plugins (may detect frameworks not visible at root)
-    const wsPluginsByPath = this.getWorkspaceFrameworkPlugins();
+    const wsPluginsByPath = await this.ensureWorkspaceFrameworkPlugins();
     for (const ws of this.workspaces) {
       registerSchema(wsPluginsByPath.get(ws.path) ?? []);
     }
@@ -2446,6 +2497,45 @@ export class IndexingPipeline {
         for (const et of pending) insert.run(et.name, et.category, et.description);
       })
       .immediate();
+  }
+
+  /**
+   * TRA-2524: Async workspace framework plugin detection that yields periodically
+   * (every 16 workspaces) so monorepos with 100+ workspaces do not block the event
+   * loop during startup or reindexing.
+   */
+  private async ensureWorkspaceFrameworkPlugins(): Promise<Map<string, FrameworkPlugin[]>> {
+    const sig = this.workspaceSignature();
+    if (this._wsFrameworkPlugins && this._wsFrameworkPluginsKey === sig) {
+      return this._wsFrameworkPlugins;
+    }
+    if (!this._wsPluginsForceRedetect) {
+      const persisted = this.loadPersistedWorkspacePlugins(sig);
+      if (persisted) {
+        this._wsFrameworkPlugins = persisted;
+        this._wsFrameworkPluginsKey = sig;
+        return persisted;
+      }
+    }
+    this._wsPluginsForceRedetect = false;
+    const m = new Map<string, FrameworkPlugin[]>();
+    const allPlugins = this.registry.getAllFrameworkPlugins();
+    for (let i = 0; i < this.workspaces.length; i++) {
+      if (i > 0 && i % 16 === 0) {
+        await yieldToEventLoopFair();
+      }
+      const ws = this.workspaces[i];
+      const wsRoot = path.join(this.rootPath, ws.path);
+      const wsCtx = buildProjectContext(wsRoot);
+      m.set(
+        ws.path,
+        allPlugins.filter((p) => p.detect(wsCtx)),
+      );
+    }
+    this._wsFrameworkPlugins = m;
+    this._wsFrameworkPluginsKey = sig;
+    this.persistWorkspacePlugins(m);
+    return m;
   }
 
   /**
@@ -2669,8 +2759,10 @@ export class IndexingPipeline {
    * Above this batch size, we drop FTS5 triggers, bulk-insert, then rebuild
    * the FTS index from scratch. Below it, per-row trigger fires are cheaper
    * than scanning all symbols for a rebuild.
+   * TRA-2433: raised from 50 to 500 so medium batches (e.g. 100-400 files)
+   * use incremental triggers (~50ms) rather than full table scans (7+ seconds).
    */
-  private static readonly FTS_REBUILD_THRESHOLD = 50;
+  private static readonly FTS_REBUILD_THRESHOLD = 500;
 
   /**
    * Spawn a worker pool only when extracting at least this many files —

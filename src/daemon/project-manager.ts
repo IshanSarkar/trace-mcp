@@ -31,6 +31,7 @@ import { BackgroundLspEnricher } from '../lsp/background-enricher.js';
 import { getReindexStats } from './reindex-stats.js';
 import {
   clearProjectStopping,
+  isProjectStopping,
   markProjectStopping,
   REINDEX_DRAIN_TIMEOUT_MS,
   waitForReindexDrain,
@@ -60,6 +61,7 @@ import { SubprojectManager } from '../subproject/manager.js';
 import { TopologyStore } from '../topology/topology-db.js';
 import { trailingDebounce } from '../util/debounce.js';
 import { selectEagerLoadRoots } from './eager-load.js';
+import { yieldToEventLoopFair } from '../utils/event-loop.js';
 import { serializeError } from './log-error.js';
 import {
   removeProjectArtifacts,
@@ -255,6 +257,13 @@ export interface ManagedProject {
    * directory cleanup, and the daemon-wide forced exit remains the backstop.
    */
   initialIndexPromise?: Promise<void>;
+  /**
+   * TRA-2438: count of watcher reindex batches aborted during teardown /
+   * shutdown. Aggregated so an in-flight queue of N aborted batches emits
+   * exactly one summary line instead of 2N L40 warnings.
+   */
+  abortedWatcherBatches?: number;
+  abortedWatcherFiles?: number;
 }
 
 /**
@@ -396,6 +405,25 @@ export class ProjectManager {
     }
   }
 
+  /**
+   * The daemon-wide extract pool, created on first use. For indexers that are
+   * not managed projects (a linked worktree's branch index) so they do not
+   * spawn worker threads of their own.
+   */
+  getSharedExtractPool(config: TraceMcpConfig): ExtractPool | null {
+    this.ensureShared(config);
+    return this.sharedPool;
+  }
+
+  /** Drop the shared extract pool's per-root caches for `root`. Never throws. */
+  dropSharedPoolRoot(root: string): void {
+    try {
+      this.sharedPool?.dropProject(root);
+    } catch (err) {
+      logger.warn({ error: err, root }, 'sharedPool.dropProject failed (non-fatal)');
+    }
+  }
+
   /** Set up and start indexing for a single project. */
   async addProject(
     projectRoot: string,
@@ -504,6 +532,8 @@ export class ProjectManager {
       // machines unless the operator pinned `full`.
       memoryProfile: config.index_memory_profile ?? 'auto',
     } as const;
+    // TRA-2442: yield fairly so DB open / WAL replay doesn't starve pending /health
+    await yieldToEventLoopFair();
     let db: Database.Database;
     try {
       db = initializeDatabase(dbPath, dbOpenOpts);
@@ -1013,18 +1043,28 @@ export class ProjectManager {
             const batchAborted =
               watchErr !== undefined && watchErr !== null && watchErr instanceof IndexAbortedError;
             if (batchAborted) {
-              logger.warn(
-                {
-                  event: 'reindex-file',
-                  project: projectRoot,
-                  pathSource: 'watcher',
-                  fileCount: toIndex.length,
-                  indexed: 0,
-                  elapsedMs,
-                  err: String(watchErr),
-                },
-                'reindex-file batch aborted (non-fatal — root stopped or vanished mid-batch)',
-              );
+              // TRA-2438: during project stop / shutdown, do not emit one L40 line
+              // per aborted batch (field case: 582 batches → 1164 L40 lines). Aggregate
+              // aborted batches on the managed project and log a single summary upon drain;
+              // mid-flight aborts when not stopping still log the single warn summary.
+              const isStopping = isProjectStopping(projectRoot);
+              if (isStopping) {
+                managed.abortedWatcherBatches = (managed.abortedWatcherBatches ?? 0) + 1;
+                managed.abortedWatcherFiles = (managed.abortedWatcherFiles ?? 0) + toIndex.length;
+              } else {
+                logger.warn(
+                  {
+                    event: 'reindex-file',
+                    project: projectRoot,
+                    pathSource: 'watcher',
+                    fileCount: toIndex.length,
+                    indexed: 0,
+                    elapsedMs,
+                    err: String(watchErr),
+                  },
+                  'reindex-file batch aborted (non-fatal — root stopped or vanished mid-batch)',
+                );
+              }
             }
             for (const p of toIndex) {
               const relPosix = toRel(p);
@@ -1771,6 +1811,20 @@ export class ProjectManager {
         );
       }
     }
+    // TRA-2438: aggregated summary of all watcher batches aborted during teardown.
+    // Replaces N per-batch warn lines with a single L40 summary line.
+    if (managed.abortedWatcherBatches && managed.abortedWatcherBatches > 0) {
+      logger.warn(
+        {
+          event: 'reindex-file',
+          project: root,
+          pathSource: 'watcher',
+          abortedBatches: managed.abortedWatcherBatches,
+          fileCount: managed.abortedWatcherFiles ?? 0,
+        },
+        'reindex-file watcher queue aborted on shutdown (non-fatal — root stopped)',
+      );
+    }
     // A drained handler ends by re-arming debouncedSummarize/debouncedEmbed and
     // scheduling LSP enrichment (see the onChanges tail in addProject), and
     // `trailingDebounce` mints a fresh AbortController when it is scheduled
@@ -2357,7 +2411,12 @@ export class ProjectManager {
     // produce a thundering herd of disk I/O at boot. Cap parallel setup at 2.
     const addLimit = pLimit(2);
     const results = await Promise.allSettled(
-      eager.map((entry) => addLimit(() => this.addProject(entry.root))),
+      eager.map((entry) =>
+        addLimit(async () => {
+          await yieldToEventLoopFair();
+          return this.addProject(entry.root);
+        }),
+      ),
     );
     for (let i = 0; i < results.length; i++) {
       if (results[i].status === 'rejected') {

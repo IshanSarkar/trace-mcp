@@ -27,6 +27,8 @@
  * between create and atomic rename (199+ `Cannot read file ENOENT` on a live
  * daemon). Narrowed to `.npz.tmp` or `.onnx.data.tmp` (or ML checkpoint tmp)
  * under whole `artifacts` or `checkpoints` directory segments.
+ * TRA-2479: `.pt.tmp` and `.pth.tmp` checkpoint swaps also occur under
+ * `runs`, `train`, and `ocr_train`; drop them before the read attempt.
  *
  * They are engine scratch, never source — the same argument TRA-1943
  * applies to SQLite sidecars — so every indexing entry point drops them
@@ -41,8 +43,8 @@
  * set. Best-effort only: on some platforms/backends parcel does not apply
  * glob ignores to live events, so the JS-level `isHotChurnPath` filter
  * below stays the authoritative guard (this list also snapshots at
- * subscribe-time). Globs mirror the predicate's narrowed shapes so the
- * two lists cannot silently diverge in scope.
+ * subscribe-time). Claude Code's pid/hex suffix is omitted here: native
+ * globs cannot express its narrow shape without also hiding real sources.
  */
 export const HOT_CHURN_NATIVE_IGNORE_GLOBS = [
   '**/gateway.heartbeat',
@@ -60,10 +62,64 @@ export const HOT_CHURN_NATIVE_IGNORE_GLOBS = [
   '**/artifacts/**/*.onnx.data.tmp',
   '**/checkpoints/**/*.npz.tmp',
   '**/checkpoints/**/*.onnx.data.tmp',
+  // TRA-2479: temporary PyTorch weights in training runs and checkpoints.
+  '**/runs/**/*.pt.tmp',
+  '**/runs/**/*.pth.tmp',
+  '**/artifacts/**/*.pt.tmp',
+  '**/artifacts/**/*.pth.tmp',
+  '**/checkpoints/**/*.pt.tmp',
+  '**/checkpoints/**/*.pth.tmp',
+  '**/train/**/*.pt.tmp',
+  '**/train/**/*.pth.tmp',
+  '**/ocr_train/**/*.pt.tmp',
+  '**/ocr_train/**/*.pth.tmp',
+  // TRA-2456: training logs churn continuously on every batch/epoch.
+  '**/runs/**/*.log',
+  '**/train/**/*.log',
+  '**/ocr_train/**/*.log',
+  // TRA-2500: browser runtime cache directories (Chromium, Firefox, WebKit profile caches in project trees).
+  '**/Cache_Data/**',
+  '**/Code Cache/**',
+  '**/GPUCache/**',
+  '**/GPUPersistentCache/**',
+  '**/DawnGraphiteCache/**',
+  '**/DawnWebGPUCache/**',
+  '**/GraphiteDawnCache/**',
+  '**/ShaderCache/**',
+  '**/GrShaderCache/**',
+  '**/Service Worker/CacheStorage/**',
+  '**/Service Worker/ScriptCache/**',
+  '**/cache2/**',
+  '**/startupCache/**',
+  '**/jumpListCache/**',
+  '**/WebKitCache/**',
 ] as const;
 
 /** Basenames that are always runtime churn, wherever they live. */
 const HOT_CHURN_BASENAMES = new Set(['gateway.heartbeat', '.tick.lock']);
+const ML_WEIGHT_DIRECTORIES = new Set(['runs', 'artifacts', 'checkpoints', 'train', 'ocr_train']);
+const BROWSER_CACHE_SEGMENTS = new Set([
+  'cache_data',
+  'code cache',
+  'gpucache',
+  'gpupersistentcache',
+  'dawngraphitecache',
+  'dawnwebgpucache',
+  'graphitedawncache',
+  'shadercache',
+  'grshadercache',
+  'cache2',
+  'startupcache',
+  'jumplistcache',
+  'webkitcache',
+]);
+
+/** Target of a Claude Code atomic-write sibling, or undefined for other paths. */
+export function atomicWriteTargetPath(p: string): string | undefined {
+  const base = p.split(/[\\/]/).at(-1) ?? '';
+  const match = /^(.+\.[^.\\/]+)\.tmp\.\d+\.[0-9a-f]{8,}$/i.exec(base);
+  return match ? p.slice(0, -base.length) + match[1] : undefined;
+}
 
 /**
  * Whether a project-relative (or absolute) path is a hot-churn
@@ -76,10 +132,28 @@ export function isHotChurnPath(p: string): boolean {
   if (segments.length === 0) return false;
   const base = segments[segments.length - 1].toLowerCase();
   if (HOT_CHURN_BASENAMES.has(base)) return true;
+  // Claude Code writes source edits through a uniquely named sibling and
+  // renames it over the target. Drop the sibling before watcher debounce.
+  if (atomicWriteTargetPath(p) !== undefined) return true;
+
+  // TRA-2500: browser runtime cache directories (Chromium, Firefox, WebKit).
+  const parents = segments.slice(0, -1).map((s) => s.toLowerCase());
+  if (parents.some((s) => BROWSER_CACHE_SEGMENTS.has(s)) || BROWSER_CACHE_SEGMENTS.has(base)) {
+    return true;
+  }
+  if (
+    parents.includes('service worker') &&
+    (parents.includes('cachestorage') ||
+      parents.includes('scriptcache') ||
+      base === 'cachestorage' ||
+      base === 'scriptcache')
+  ) {
+    return true;
+  }
+
   // `cron/ticker_*`: agent tick markers — the parent segment must be
   // exactly `cron`, not a substring like `cronjobs`.
   if (base.startsWith('ticker_')) {
-    const parents = segments.slice(0, -1).map((s) => s.toLowerCase());
     if (parents.includes('cron')) return true;
   }
   // TRA-2031: atomic-write tmp siblings (`cron/.hb_*.tmp`,
@@ -113,6 +187,20 @@ export function isHotChurnPath(p: string): boolean {
   if (base.endsWith('.npz.tmp') || base.endsWith('.onnx.data.tmp')) {
     const parents = segments.slice(0, -1).map((s) => s.toLowerCase());
     if (parents.includes('artifacts') || parents.includes('checkpoints')) return true;
+  }
+
+  // Training checkpoints are often written to a temporary sibling before
+  // rename. Skip only known training directories, including the observed
+  // `ocr_train` layout, so arbitrary user `.tmp` files remain indexable.
+  if (base.endsWith('.pt.tmp') || base.endsWith('.pth.tmp')) {
+    const parents = segments.slice(0, -1).map((s) => s.toLowerCase());
+    if (parents.some((s) => ML_WEIGHT_DIRECTORIES.has(s))) return true;
+  }
+
+  // TRA-2456: append-only training logs churn continuously during model training runs.
+  if (base.endsWith('.log')) {
+    const parents = segments.slice(0, -1).map((s) => s.toLowerCase());
+    if (parents.some((s) => ML_WEIGHT_DIRECTORIES.has(s))) return true;
   }
 
   return false;

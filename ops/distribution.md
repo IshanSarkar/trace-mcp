@@ -61,7 +61,7 @@ Rules for keeping it honest:
 | [aaif-goose/goose](https://github.com/aaif-goose/goose) extension directory | **No — refused, and the directory itself is retired** | — | [Issue #11763](https://github.com/aaif-goose/goose/issues/11763) was **closed** 2026-09-02 by `alexhancock` (collaborator): "We aren't taking new submissions for the extensions directory." The reason is not about us — [discussion #10830](https://github.com/aaif-goose/goose/discussions/10830) retires goose's own registry in favour of the official MCP registry and the `server.json` format: "New contributions to the goose registry are halted. Please don't open PRs adding servers; we won't be merging them." The finished branch `nikolai-vysotskyi/goose:add-trace-mcp` was therefore **never opened as a PR** — the issues-first hold in the previous version of this row is what kept us from opening a PR into a closed door. **Do not re-submit and do not push back.** goose says the registry entry will appear in their doc pages automatically once their `server.json` support lands, and we are already in that registry (row above), so this door is covered without further work | 2026-09-04 |
 | [0xNyk/awesome-hermes-agent](https://github.com/0xNyk/awesome-hermes-agent) | **Submitted 2026-09-06, awaiting triage** | — | [Issue #395](https://github.com/0xNyk/awesome-hermes-agent/issues/395), category `Tools & Utilities`, next to `llmtrim` and `rtk-hermes`. 5,574★, pushed 2026-09-02, `NOASSERTION` licence, no payment and no ownership badge. **PRs are forbidden in writing** — `CONTRIBUTING.md`: "Please do not open a PR directly to add a resource"; the route is the `resource-submission.yml` issue form, which we reproduced field by field (`gh` cannot render the form, so the body mirrors its headings). Closing an issue there means *listing*, not refusal — `ai-usage-monitor` (#362, closed 2026-08-28) is in the README today. Triage is batched: four closed 2026-09-02, five 2026-08-28. The submission discloses three things on purpose, because the list has a trust-boundary section: the `shell-hooks-allowlist.json` write on standard/max installs, the missing uninstall path for the `pre_tool_call` hook, and that the Hermes surfaces are tested against the documented schema but never against a live install (`agentburn` disclosed the same and was accepted). **We filed this twice.** Two runs on 2026-09-06 opened #394 (10:10Z) and #395 (10:14Z) with the same resource, and this table carried a row for each without either run noticing the other. #394 was closed as a duplicate on 2026-09-06 with a one-line note naming the cause; #395 is the live submission. See the pre-submission check added under the rules at the top of this file. **Do not re-submit and do not ping before 2026-09-20**. Tracked in TRA-1010 | 2026-09-06 |
 | [QuesmaOrg/awesome-ai-tokenomics](https://github.com/QuesmaOrg/awesome-ai-tokenomics) | **Yes** — merged 2026-09-04 | Line 112 of the README, Optimize → Context Engineering, plus the same line in `research/optimize.md` | [PR #53](https://github.com/QuesmaOrg/awesome-ai-tokenomics/pull/53) approved and merged by `bkotrys` (165★ list) after two rounds. **Two corrections came out of his review and both hold outside this listing.** (1) He read `src/analytics/benchmark.ts` and called the entry's "prints per-task token cost with and without the index" a measured claim the code does not support: both sides come from `estimateTokens()` over character counts and the trace-mcp side is a hardcoded fraction per scenario (0.05–0.45). The clause was dropped, not qualified. Do not describe that command as a measurement anywhere else either. (2) **Stop citing npm downloads.** ~40/day through July and most of August, then 1,300–2,000/day on Aug 27–30 — the same four days we published 31 releases. That is mirrors and CI. What convinced him instead was the issue tracker: 15 distinct external accounts filing behavioural reports. Entry format for reference: README line + `research/optimize.md` + a `research/manifest.json` record with `verified_on` / `stale_after`; their `scripts/lint_readme.sh` fails the build on any em-dash in tracked markdown and on a superlative list (`de facto`, `go-to`, `widely used`, `the leading`, …). Self-submission is allowed but needs a disclosure, checkable primary sources, and an independent adoption signal that is not stars | 2026-09-04 |
-| [hesreallyhim/awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) | **Submitted 2026-09-18, awaiting triage** — [issue #2871](https://github.com/hesreallyhim/awesome-claude-code/issues/2871) | Display Name `trace-mcp`, category `Providers, Runtime & Integration Infrastructure`, description from TRA-633 (graph-first, no sales language) | Filed by Nikolai himself through the web issue form — the human-only gate the previous version of this row described (CONTRIBUTING forbids `gh` CLI submissions, three checkboxes are personal attestations). Bot validation passed on filing. Their CONTRIBUTING warns a recommendation guarantees nothing and refusal is routine — if refused, record the reason in TRA-633 and do not return. Do not ping. Tracked in TRA-633 | 2026-09-18 |
+| [hesreallyhim/awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) | **No — closed 2026-10-15** ([issue #2871](https://github.com/hesreallyhim/awesome-claude-code/issues/2871)) | Display Name `trace-mcp`, category `Providers, Runtime & Integration Infrastructure` | Closed 2026-10-15T06:38Z by maintainer `hesreallyhim` with `state_reason: not_planned` during catalog backlog sweep. Recorded as rejected; per CONTRIBUTING and standing no-ping rule, do not ping, do not re-submit. Tracked in TRA-633 | 2026-10-15 |
 | [natsukium/mcp-servers-nix](https://github.com/natsukium/mcp-servers-nix) | **No — asked 2026-09-06**, [issue #606](https://github.com/natsukium/mcp-servers-nix/issues/606) | — | An **install path, not a listing**: a package there is `nix run` / `nix profile` plus a module that writes the server into an agent's config, so the arrivals objection to directory rows does not apply. `serena` is already packaged and the maintainer's bot bumps it almost daily (PRs #595–#605 in two weeks), so one merged package is a maintained channel rather than a one-off row. 297★, Apache-2.0, pushed daily, 11 packages in `pkgs/official/` (ours would go there — that directory is for upstream authors). Package requests by issue are accepted (#128 closed, #575 open) — but #575 has sat unanswered since 2026-08-14, so do not read silence as refusal. **Found only because `numtide/llm-agents.nix` (1,902★) routes MCP servers here in its own issue template.** **Two of the four packaging obstacles we assumed were already solved in their tree, and reading it beat guessing:** `pkgs/official/mastra` is built on `fetchPnpmDeps` + `pnpmConfigHook` + `pnpm_10`, so pnpm is not a blocker (we are a single package, no workspace); and all three of our `postinstall` scripts are irrelevant under `--ignore-scripts`, which is their default, since each exits 0, has an env kill-switch, and `trace-mcp serve` reads nothing they write. The one real cost is four native deps — `better-sqlite3` (node-gyp) plus `@ast-grep/napi`, `@parcel/watcher`, `oxc-resolver` (prebuilt `.node` in optional deps). We asked rather than sending a derivation because there is no Nix on the machine, so `hash` and `fetchPnpmDeps.hash` cannot be computed and nothing could be tested. **If the answer is "send a PR", that is engineering work with a Nix install and gets its own issue — not a promise in their thread.** No reply before 2026-09-20, and then one reminder at most. Tracked in TRA-1012 | 2026-09-06 |
 | [hashgraph-online/awesome-codex-plugins](https://github.com/hashgraph-online/awesome-codex-plugins) | **No — declined by us** | — | Same org that merged us into `awesome-ai-plugins`, and we do ship a Codex plugin, so this looks like the obvious next door. It is not. There the scanner action was *advisory* and we were merged without it; here CONTRIBUTING step 1 is "Set up scanner CI in your plugin repo (required) … This is not optional. We verify this during review" — `hashgraph-online/ai-plugin-scanner-action@v1` committed into our workflows, plus `pipx install plugin-scanner` run locally. Both are the thing we already refused. **Closed unless their gate changes** | 2026-09-01 |
 | [cursor.directory](https://cursor.directory) (`pontusab/directories`) | **No** | — | Repo holds no listing data ("All content is submitted through the website"); submission is `cursor.directory/plugins/new` behind GitHub or Google sign-in, so it is human-only like Smithery. Worth knowing anyway: they auto-detect components from a repo following the [Open Plugins](https://open-plugins.com) spec, and the MCP hook is a **`.mcp.json` at the repo root**. Ours lived only at `.claude-plugin/.mcp.json`. **2026-09-02 (TRA-634):** repo root now carries `plugin.json` + `mcp.json` per the Agent Plugins v1.0.0 spec, re-read at source that day (`agent-plugins.org/plugin-builders/specification`: manifest at `plugin.json`, MCP config at `mcp.json`, both at plugin root); `skills/*/SKILL.md` already matched. **Not verified that Cursor's scanner accepts it** — the only way to check is to feed it the repo through the logged-in form, and their own README still names a dotted `.mcp.json` and no `plugin.json`, so spec and scanner may disagree. We did not add a root `.mcp.json`: Claude Code reads that path as project-scoped MCP config, so it would change behaviour for anyone who clones the repo. Next step is Nikolai submitting, then reading back what the scanner detected | 2026-09-02 |
@@ -119,6 +119,16 @@ Rules for keeping it honest:
 | [jfjordanfarr/Live-Documentation](https://github.com/jfjordanfarr/Live-Documentation) | **Yes — third-party research survey, we did not submit it** (MIT, active 2026-10-08) | Independent architecture research document `AI-Agent-Workspace/Research/2026-10-08-headless-use-cases.md` surveying code intelligence tools for AI agents. Cites `trace-mcp` (mcpservers.org) under "Agents reading a codebase's structure" alongside `codebase-graph`, `Codebase Memory MCP`, and `CodeGraph`: describes trace-mcp as "(68 languages, impact analysis)". Analyzes architectural trade-off between live MCP servers and reviewable committed docs-as-code | Independent survey, nothing to submit and do not ping. Discovered by `scripts/mention-sweep.sh` 2026-10-09 | 2026-10-09 |
 | [lza6/Armor-piercing-system-prompts](https://github.com/lza6/Armor-piercing-system-prompts) | **Yes — third-party packaging, we did not write it and did not submit it** (4★, 2 forks, pushed 2026-10-08) | Aggregated Chinese Claude Code agent skills repository. Packages 4 complete `trace-mcp` skills: `05-技能与代理开发/trace-mcp/SKILL.md` (code navigation routing over 182 tools), `07-后端与架构/trace-mcp-codemod/SKILL.md` (bulk mechanical codemods), `04-安全渗透/trace-mcp-pre-commit/SKILL.md`, and `07-后端与架构/trace-mcp-refactoring/SKILL.md`. Formulates concrete rules mandating trace-mcp tools over Read/Grep/Glob/Bash for agents | Nothing to submit and do not ping. Value is distribution evidence in agent prompt/skill collections in the wild. Discovered by `scripts/mention-sweep.sh` 2026-10-12 | 2026-10-12 |
 | [wkoch/xrai](https://github.com/wkoch/xrai) | **Yes — third-party technical study & benchmark evaluation, we did not submit it** (0★, active 2026-10-11) | In-depth technical architecture study `docs/ESTUDO-COMPARATIVO.md` ("Oito referências para o xrai", 2026-10-11) evaluating `trace-mcp` v3.36.4 alongside 7 code graph tools (Graft, codebase-memory-mcp, code-review-graph, jcodemunch, tokensave, ProjectAtlas, codegraph-mcp). Analyzes `trace-mcp`'s 81 language plugins matrix, SCIP ingestion (`src/scip/ingest.ts`), `get_task_context` budget assembly (`src/scoring/structured-assembly.ts`), session deduplication, and the PR review benchmark methodology (72.7% token reduction) and post-mortem (`docs/perf/pr-context-loss-classes.md`) | In-depth architectural evaluation and academic/engineering citation, nothing to submit and do not ping. Discovered by `scripts/mention-sweep.sh` 2026-10-12 | 2026-10-12 |
+| [h0rn3t/Graft](https://github.com/h0rn3t/Graft) | **Yes — third-party benchmark & research citation, we did not submit it** (4★, active 2026-10-12) | Independent code intelligence research document `RESEARCH.md` surveying agent tools. Cites `trace-mcp` as: "Honest PR-review bench: −72.7% input tokens, but false positives 0.58 → 0.80 | A model for honest reporting" alongside jCodeMunch, codedb, fff, pgr, tokensave | Independent engineering evaluation & citation, nothing to submit and do not ping. Discovered by `scripts/mention-sweep.sh` 2026-10-13 | 2026-10-13 |
+| [wkoch/goCraft](https://github.com/wkoch/goCraft) | **Yes — third-party user adoption, we did not submit it** (active 2026-10-12) | Desktop agent development & commit logs (`docs/conversas/2026-10-11.md`). In commit session rules, explicitly preserves `.trace-mcp/install-date` and `.trace-mcp/guard-mode` as local installation state across commit iterations | Independent practitioner usage in the wild. Nothing to submit and do not ping. Discovered by `scripts/mention-sweep.sh` 2026-10-13 | 2026-10-13 |
+| [azhri1990/ACODE_ROUTE](https://github.com/azhri1990/ACODE_ROUTE) | **Yes — third-party curated personal collection, we did not submit it** (0★, 0 forks, created 2026-10-14) | `CATALOG.md` ("My AI Box", 1,107 items collected) lists `- nikolai-vysotskyi/trace-mcp — https://github.com/nikolai-vysotskyi/trace-mcp` under curated developer tools | Curated personal AI reference directory. Nothing to submit and do not ping. Discovered by `scripts/mention-sweep.sh` 2026-10-14 | 2026-10-14 |
+| [sayef/comind](https://github.com/sayef/comind) | **Yes — third-party architectural citation & prior art reference, we did not submit it** (0★, active 2026-10-16) | Architecture design document `docs/design/ledger.md` ("Comind Ledger — design plan") surveying agent memory and decision record systems. Under "Decision records", cites `trace-mcp` alongside ADR/MADR and Lore trailers, and references `trace-mcp decision memory: https://trace-mcp.com/decision-memory.html` | Architectural design reference and citation, nothing to submit and do not ping. Discovered by `scripts/mention-sweep.sh` 2026-10-16 | 2026-10-16 |
+| [wkoch/legacy](https://github.com/wkoch/legacy) | **Yes — third-party architectural study & adapter evaluation, we did not submit it** (0★, active 2026-10-16) | Architecture planning documents `docs/automacao-rede-e-inteligencia.md` and `docs/decisoes.md` evaluating code intelligence architectures for decentralized AI agents. Evaluates `trace-mcp` (citing https://trace-mcp.com/code-graph-mcp.html for incremental local graphs and framework-specific relationships) alongside Graft as potential adapters for logical code mapping. Recommends starting with pilot language adapters | Independent architectural evaluation, nothing to submit and do not ping. Discovered by `scripts/mention-sweep.sh` 2026-10-17 | 2026-10-17 |
+| [ProSkillsMD/proskills](https://github.com/ProSkillsMD/proskills) | **Yes — third-party catalog, auto-scouted 2026-10-10** (18★, active daily) | Automated scout filed and listed candidates for all 3 repository skills in OpenClaw skill listings: `skills/trace-mcp/SKILL.md` ([issue #8193](https://github.com/ProSkillsMD/proskills/issues/8193), status `groot:published`, verdict `review:pass`), `skills/trace-mcp-codemod/SKILL.md` ([issue #8194](https://github.com/ProSkillsMD/proskills/issues/8194)), and `skills/trace-mcp-pre-commit/SKILL.md` ([issue #8195](https://github.com/ProSkillsMD/proskills/issues/8195)). License MIT pass, static scan passed with no findings. Found via `github_topic:claude-skills` | Nothing to submit — automated deterministic scout updates on new commits to skill directories. Do not ping, no action needed. Discovered via issue audit | 2026-10-18 |
+
+
+
+
 
 ### Outreach hygiene 2026-09-25: the queue is two doors with merge-rate, everything else is held or wontfix-spend (TRA-1950)
 
@@ -3721,6 +3731,1746 @@ Audited read-only via GitHub API, nothing written outside this repository.
 - `jgravelle/jcodemunch-mcp`: 2,762★, 374 forks.
 - `continuedev/continue`: 36,196★, 5,462 forks (+2★).
 - `Aider-AI/aider`: 49,501★, 5,047 forks (+8★).
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+### Early morning pass (pass 1), 2026-10-13 (TRA-2373): mention sweep (Graft citation, goCraft local state, TRACE collision), open threads audit, competitor deep dive & architectural insights
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- `MiniMax-AI/MiniMax-Code-Plugins#54`: OPEN, updated 2026-10-09T01:18Z with Review Round 4 from `hetaoBackend` (`CHANGES_REQUESTED`). Nikolai's dedicated lane — recorded, not touched.
+- `GetBindu/awesome-claude-code-and-skills#195`: OPEN, mergeable, untouched since 2026-09-20 reminder. Standing no-ping rule holds.
+- `0xNyk/awesome-hermes-agent#395`: OPEN issue, untouched since 2026-09-20 reminder. Standing no-ping rule holds.
+- `tolkonepiu/best-of-mcp-servers#384`: OPEN, mergeable, untouched since 2026-09-26 reminder. Standing no-ping rule holds.
+- `ai-boost/awesome-harness-engineering#240`: OPEN (conflicting with maintainer self-adds). Standing wontfix-spend / no-ping rule holds.
+- `hesreallyhim/awesome-claude-code#2871`: OPEN issue, untouched since 2026-09-18 bot validation. Standing no-ping rule holds.
+- `natsukium/mcp-servers-nix#606`: OPEN issue, untouched since 2026-09-20 reminder. Standing no-ping rule holds.
+- `Dokploy/mcp#81`: OPEN, contributor `moataz-hjaiji` (2026-10-08) progressing with PR for meta-tool `dokploy-loadTools` adopting Nikolai's schema payload and client fallback architecture. No action needed.
+- `hashgraph-online/awesome-ai-plugins#182`: MERGED, listed in HOL Registry. Third-party scanner CI refused per repo security policy; claim notifications ignored.
+- Touch budget: 0 of 5 used. No outgoing pings or PRs opened.
+
+**Mention sweep (`scripts/mention-sweep.sh`):**
+- Ran both passes (`gh search code` and `gh api search/code` paired queries). Found 3 new repositories mentioning `trace-mcp`:
+  1. `h0rn3t/Graft` (4★): Code intelligence research document `RESEARCH.md` surveying agent code graph tools. Cites `trace-mcp`: *"Honest PR-review bench: −72.7% input tokens, but false positives 0.58 → 0.80 | A model for honest reporting"*. Evaluated alongside jCodeMunch, codedb, fff, pgr, tokensave. Recorded as genuine third-party benchmark citation in surfaces table and `ops/mentions-seen.txt`.
+  2. `wkoch/goCraft`: Desktop agent development & commit logs (`docs/conversas/2026-10-11.md`). In commit session rules, explicitly preserves `.trace-mcp/install-date` and `.trace-mcp/guard-mode` as local installation state across commit iterations. Recorded as genuine user adoption in surfaces table and `ops/mentions-seen.txt`.
+  3. `vaibhavidhumal4/TRACE`: Name collision — unrelated microservices architecture using internal Cloud Run service account / container name "trace-mcp" for BigQuery telemetry export (`infra/03-service-accounts.sh`, `CLAUDE.md`). Classified and silenced in `ops/mentions-seen.txt`.
+
+**Competitor intelligence & deep-dive architectural observations:**
+- `colbymchenry/codegraph`:
+  - Issue #2527 (`CLI worker pools default to cpus-1 each with no user-facing cap — index builds can saturate many-core machines`):
+    - Problem: CLI worker pools allocate `cpus - 1` workers by default with no user-facing concurrency cap or throttling knob. On large multi-core machines (e.g. 18+ logical cores), index builds saturate CPU resources (load average 38, ~1700% CPU), causing system responsiveness degradation and background daemon contention.
+    - Architectural contrast: `trace-mcp`'s daemon implements adaptive worker scaling, task concurrency caps, cooperative yielding during AST ingestion, and background process priority throttling, preventing host CPU starvation.
+  - PR #2530 (`fix(cpp): a smart pointer's held class lacking a method gets no edge only when its bases are known`):
+    - Problem: `->` calls on smart pointers (`std::unique_ptr`, `std::shared_ptr`, `std::optional`) whose held class lacks the method were dropping call-graph edges even when base classes were incomplete/unresolved in the index, leading to false-negative edge omissions.
+    - Solution: Only suppresses edges when all base classes are completely known; otherwise retains conservative reachable edge candidate.
+    - Architectural contrast: `trace-mcp` uses SCIP symbol resolution semantics where unresolved inheritance hierarchy leaves open candidate links rather than dropping reachability edges.
+  - PR #2529 (`fix(sync): an import moves to an added file that outranks the one it found`):
+    - Problem: Incremental sync failed to re-resolve extensionless imports when a higher-precedence file was added (e.g. adding `button.ts` next to existing `button.vue` where `.ts` takes precedence over `.vue`). Sync only retried imports that previously failed, locking the call graph into stale targets.
+    - Architectural contrast: `trace-mcp` maintains revision invalidation sets based on directory addition events, forcing re-resolution of extensionless import boundaries when shadow files are introduced.
+- `DeusData/codebase-memory-mcp`:
+  - PR #2613 (`fix(markdown): qualify a repeated heading's Section by its parent headings (#2586)`):
+    - Problem: Markdown Section qualified names were constructed as `module.heading_text`. Repeated heading titles (such as `## Implementation` appearing under multiple parent `# Service A` and `# Service B` sections) collided on the same qualified name, overwriting graph nodes and attaching references to the wrong parent file.
+    - Architectural contrast: `trace-mcp`'s outline and structural hierarchy builds fully qualified breadcrumb paths (`file#h1/h2/...`), guaranteeing deterministic uniqueness for identical subheadings across documentation trees.
+- `tirth8205/code-review-graph`:
+  - PR #1111 (`fix(tsconfig): anchor inherited baseUrl and paths at the config that declares them (#1110)`):
+    - Problem: `TsconfigResolver` merged `baseUrl` and `paths` from parent configs but resolved them against the child config's directory, breaking path alias lookups in monorepo layouts (Nx/Turborepo) and causing `IMPORTS_FROM` edges to miss shared libraries.
+    - Architectural contrast: `trace-mcp` resolves TSConfig `baseUrl` and `paths` relative to the exact configuration file where the property is declared before merging into composite workspace mappings.
+- `jgravelle/jcodemunch-mcp`:
+  - PR #1048 / Release v1.108.351 (`fix: creating a class counts as a call of its constructor`):
+    - Problem: Class instantiations were not linked to constructors in call-graph reachability, erroneously reporting constructors as uncalled/dead code.
+
+**Competitor pulse (as of 2026-10-13 early morning):**
+- `nikolai-vysotskyi/trace-mcp`: 191★ (+1), 24 forks.
+- `yamadashy/repomix`: 28,808★ (+2), 1,584 forks (+1).
+- `oraios/serena`: 30,209★ (+7), 2,062 forks (=).
+- `DeusData/codebase-memory-mcp`: 46,436★ (+8), 3,815 forks (=).
+- `tirth8205/code-review-graph`: 32,084★ (+2), 2,936 forks (=).
+- `colbymchenry/codegraph`: 73,823★ (+7), 4,764 forks (+1).
+- `abhigyanpatwari/GitNexus`: 47,851★ (-1), 5,195 forks (-1).
+- `jgravelle/jcodemunch-mcp`: 2,762★ (=), 375 forks (+1).
+- `continuedev/continue`: 36,201★ (+5), 5,463 forks (+1).
+- `Aider-AI/aider`: 49,503★ (+2), 5,050 forks (+3).
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+### Morning pass (pass 2), 2026-10-13 (TRA-2385): mention sweep, internal seeder classification, competitor triage (PR #2535, PR #2617, PR #2619, PR #1112, PR #1053)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- All 9 tracked external threads verified. Statuses unchanged:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (updated 2026-10-09T01:18Z with Round 4 review from hetaoBackend). Nikolai dedicated lane.
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds.
+  - ai-boost/awesome-harness-engineering#240: OPEN, standing no-ping rule holds.
+  - hesreallyhim/awesome-claude-code#2871: OPEN, standing no-ping rule holds.
+  - natsukium/mcp-servers-nix#606: OPEN, standing no-ping rule holds.
+  - Dokploy/mcp#81: OPEN, community implementation progressing.
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry.
+- Touch budget: 0 of 5 used. No outgoing pings or PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns. One new repo returned:
+  - assetfeed/assetfeed-laravel: internal reference in Nikolai portfolio / agency site seeder (database/seeders/data/site_pages.php lines citing trace-mcp MIT). Verified read-only via GitHub API. Classified as internal self-reference and recorded in ops/mentions-seen.txt.
+
+**Competitor intelligence & architectural observations:**
+- colbymchenry/codegraph:
+  - PR #2535 (fix(resolution): a workspace package import resolves to its package.json entry (#2502)):
+    - Problem: Workspace member imports (import { x } from '@acme/core' or subpaths like @acme/core/schema) only resolved if an index.* file existed at the package root directory. In standard TypeScript monorepos where package.json specifies 'main': './src/index.ts' and conditional 'exports' maps, imports without root indexes failed resolution and fell back to proximity-based name guessing, attaching calls to wrong private symbols.
+    - Solution: Reads package.json member exports mappings ('.' and subpaths) respecting condition order (types, import, default, require).
+    - Architectural contrast: trace-mcp handles workspace package entry resolution in src/indexer/package-entries.ts (enhanced in TRA-2371 / #1572), respecting TSConfig project references, paths, and package.json exports entries deterministically.
+- DeusData/codebase-memory-mcp:
+  - PR #2619 (fix(lsp): no pointer offset on an empty C# or Java definition array):
+    - Problem: Under Clang UBSan on macOS, applying zero offset to a NULL pointer (NULL + 0) in Tier-2 registry builders when indexing projects lacking C# or Java definitions triggers runtime error: applying zero offset to null pointer.
+  - PR #2617 (fix: never qsort an empty k8s vector; split the spawner deletion test):
+    - Problem: Calling qsort(NULL, 0, ...) on an empty array triggers glibc nonnull attribute runtime violation in Linux GCC UBSan builds.
+    - Architectural contrast: trace-mcp runs on Node/TypeScript with strict array bounds checks and explicit empty-slice guards, avoiding native pointer arithmetic defects.
+- tirth8205/code-review-graph:
+  - PR #1112 (fix: keep TypeScript interfaces and type aliases out of test gaps):
+    - Problem: TypeScript interface and type declarations were stored as Class nodes with no runtime body. The gap filter in changes.py treated every changed Class node as needing tests, producing false positives in code-review test-gap reports.
+    - Solution: Stores typescript_kind in metadata and excludes pure type declarations from test gap candidates.
+    - Architectural contrast: trace-mcp differentiates type-only definitions from runtime symbols during Tree-sitter / SCIP AST passes, ensuring outline and dependency graphs cleanly distinguish interface declarations from executable constructs.
+- jgravelle/jcodemunch-mcp:
+  - PR #1053 / Release v1.108.353 (fix: a C# new records the class it creates (L-170)):
+    - Problem: C# object_creation_expression (new Made(...)) was not registered as a call node type. get_dead_code_v2 found zero callers for constructors and erroneously marked active constructors as dead code.
+
+**Competitor pulse (as of 2026-10-13 morning):**
+- nikolai-vysotskyi/trace-mcp: 191* (=), 24 forks (=)
+- yamadashy/repomix: 28,810* (+2), 1,584 forks (=)
+- oraios/serena: 30,213* (+4), 2,062 forks (=)
+- DeusData/codebase-memory-mcp: 46,456* (+20), 3,819 forks (+4)
+- tirth8205/code-review-graph: 32,093* (+9), 2,937 forks (+1)
+- colbymchenry/codegraph: 73,843* (+20), 4,766 forks (+2)
+- abhigyanpatwari/GitNexus: 47,858* (+7), 5,196 forks (+1)
+- jgravelle/jcodemunch-mcp: 2,763* (+1), 375 forks (=)
+- continuedev/continue: 36,203* (+2), 5,463 forks (=)
+- Aider-AI/aider: 49,510* (+7), 5,051 forks (+1)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+### Afternoon pass, 2026-10-13 (TRA-2388): mention sweep clean, thread audit, competitor deep dive & architectural insights (PR #2150, PR #2155, PR #1055, PR #1058, PR #2533, PR #2608)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- All 9 tracked external threads verified. Statuses unchanged:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (Round 4 review from hetaoBackend in progress). Nikolai dedicated lane.
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds.
+  - ai-boost/awesome-harness-engineering#240: OPEN, standing no-ping rule holds.
+  - hesreallyhim/awesome-claude-code#2871: OPEN, standing no-ping rule holds.
+  - natsukium/mcp-servers-nix#606: OPEN, standing no-ping rule holds.
+  - Dokploy/mcp#81: OPEN, community implementation progressing.
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry.
+- Touch budget: 0 of 5 used. No outgoing pings or PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (Pass 1 modern backend + Pass 2 legacy multi-term pairs). Clean: 0 repos outside seen list.
+
+**Competitor intelligence & architectural observations:**
+- oraios/serena:
+  - PR #2150 (Confine file access to the project root for untrusted projects (checking symlinks accordingly)):
+    - Problem: `Project.is_path_in_project` checked containment purely lexically (`os.path.normpath`), so a symlink contained inside the project pointing outside passed lexical checks while leaking outside content during tool execution (`read_file`, `create_text_file`, `search_for_pattern`, `find_file`).
+    - Solution: Canonical path resolution checking `realpath` and rejecting operations escaping project root through symlinks.
+    - Architectural contrast: Identical boundary vulnerability addressed upstream in trace-mcp during MiniMax review in v3.31.4 (`tests/tools/refactor-confinement.test.ts`), enforcing strict realpath validation and refusing symlink traversal before any read/write execution.
+  - PR #2155 (Fix replace_in_files accepting stale occurrence selections):
+    - Problem: `replace_in_files` accepted a selection ID from an earlier preview after the selected file had changed on disk, silently applying the replacement to a subsequent occurrence or wrong range.
+    - Solution: Validates occurrence ID against disk content and character range before applying modifications.
+    - Architectural contrast: trace-mcp verifies file hashes / range tokens in refactoring / codemod tools (`apply_codemod`, `extract_function`) to guarantee atomicity and guard against concurrent or stale edits.
+- jgravelle/jcodemunch-mcp:
+  - PR #1058 / Release v1.108.355 (fix: a bare Ruby method call is recorded (L-172)):
+    - Problem: Ruby allows calling zero-argument methods without receivers as bare identifiers (`settings`). Tree-sitter parses these as `identifier` nodes rather than `call` nodes; parser ignored identifiers, causing `get_dead_code_v2` to classify active helper methods as dead code (`no_callers`).
+    - Solution: Inspects identifier nodes in call positions and resolves bare names against scope method definitions.
+    - Architectural contrast: trace-mcp's SCIP and AST symbol resolution pipeline resolves bare calls via lexical scope symbol tables, avoiding false-positive dead code classification.
+  - PR #1055 / Release v1.108.354 (fix: a Go generic call with one argument is recorded (L-171)):
+    - Problem: In Go grammar, a single-argument generic function call `Generic[int](1)` parses identically to a type conversion `type_conversion_expression` with a `generic_type`. The parser skipped type conversion nodes, missing generic calls and causing dead code false positives.
+    - Solution: Treats `type_conversion_expression` nodes with generic targets as call candidates.
+    - Architectural contrast: trace-mcp handles Go ASTs with comprehensive call expression and type conversion disambiguation in AST walkers.
+- colbymchenry/codegraph:
+  - PR #2533 (fix(cpp): a call on a data member of the caller's class reaches its type's method, wherever the class is declared):
+    - Problem: C++ receiver inference only scanned the caller file and matching header (`foo.cc` -> `foo.h`). Data members declared in separate class definition headers (e.g., `DBImpl` in `db_impl.h` with methods split across `db_impl_write.cc`, `db_impl_open.cc`) fell back to name guessing at 0.65/0.7 confidence.
+    - Solution: Traverses full class declaration scope across translation units.
+    - Architectural contrast: trace-mcp indexes symbols globally across the project graph, resolving member types through header indexing regardless of file boundaries.
+- DeusData/codebase-memory-mcp:
+  - PR #2608 (fix(discover): a .gitignore never hides a file git tracks):
+    - Problem: Discovery applied `.gitignore` rules blindly to every path, filtering out tracked files that matched gitignore patterns (e.g., tracked binaries or overlays).
+    - Solution: Queries `git ls-files -z` when inside a git repository before applying ignore heuristics.
+    - Architectural contrast: trace-mcp uses standard git-aware ignore logic honoring tracked files.
+
+**Competitor pulse (as of 2026-10-13 afternoon):**
+- nikolai-vysotskyi/trace-mcp: 191* (=), 24 forks (=)
+- yamadashy/repomix: 28,816* (+6), 1,584 forks (=)
+- oraios/serena: 30,222* (+9), 2,062 forks (=)
+- DeusData/codebase-memory-mcp: 46,470* (+14), 3,820 forks (+1)
+- tirth8205/code-review-graph: 32,103* (+10), 2,937 forks (=)
+- colbymchenry/codegraph: 73,875* (+32), 4,767 forks (+1)
+- abhigyanpatwari/GitNexus: 47,864* (+6), 5,195 forks (-1)
+- jgravelle/jcodemunch-mcp: 2,764* (+1), 375 forks (=)
+- continuedev/continue: 36,208* (+5), 5,464 forks (+1)
+- Aider-AI/aider: 49,522* (+12), 5,050 forks (=)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+### Early morning pass, 2026-10-14 (TRA-2397): mention sweep clean, competitor triage (colbymchenry/codegraph PR #2539-#2542, DeusData PR #2633-#2635, jgravelle PR #1066, oraios/serena PR #2159)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- All 9 tracked external threads verified. Statuses unchanged:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (updated 2026-10-09T01:18Z with Round 4 review from hetaoBackend). Nikolai dedicated lane.
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds.
+  - ai-boost/awesome-harness-engineering#240: OPEN, standing no-ping rule holds.
+  - hesreallyhim/awesome-claude-code#2871: OPEN, standing no-ping rule holds.
+  - natsukium/mcp-servers-nix#606: OPEN, standing no-ping rule holds.
+  - Dokploy/mcp#81: OPEN, community implementation progressing.
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry.
+- Touch budget: 0 of 5 used. No outgoing pings or PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Output: "No repos outside the seen list. Nothing to read." Sweep is completely clean. No additions needed to ops/mentions-seen.txt.
+
+**Competitor intelligence & architectural observations:**
+- colbymchenry/codegraph:
+  - PR #2542 (fix(cpp): a nested class defined out of line is indexed under its name, and a construction makes the class C++ finds):
+    - Problem: Out-of-line nested class/struct/union definitions (e.g. LevelDB `struct SkipList<Key, Comparator>::Node { ... }`, RocksDB `struct BlockBasedTableOptions::IndexType`) were parsed as `<anonymous>` classes in AST traversals, disconnecting member methods from outer class hierarchy.
+    - Solution: Preserves qualified parent-scope path for out-of-line class declarations when indexing symbol table.
+    - Architectural contrast: trace-mcp uses Tree-sitter AST queries with full lexical scope resolution (`src/indexer/ast/cpp.ts`), tracking nested qualification paths directly in symbol ids.
+  - PR #2541 (fix(cpp): a call to an overloaded method links to the overload its arguments fit):
+    - Problem: Method calls on typed receivers (`db->Get(ro, key, &value)`) always resolved to the first declared overload in the class rather than matching argument counts and types.
+    - Solution: Differentiates method overloads via parameter signature matching on receiver instances.
+    - Architectural contrast: trace-mcp indexes overloads with distinct symbol hashes and signatures, preserving disambiguation metadata for navigation and impact analysis.
+  - PR #2539 (fix(cpp): `->` on an absl::StatusOr reaches the class it holds; a using-declared member of a dependent base is found):
+    - Problem: Member arrow operators on smart wrapper types like `absl::StatusOr<T>` or `std::expected<T, E>` failed to unwrap to the target class `T`, dropping all downstream call-graph edges in Abseil/Protobuf codebases.
+    - Solution: Explicit unwrapping heuristic for common monadic/holder types in C++.
+    - Architectural contrast: trace-mcp SCIP/LSP indexing resolves operator overload return types and template instantiations via semantic compiler models where available, avoiding hardcoded container whitelists.
+- DeusData/codebase-memory-mcp:
+  - PR #2635 (chore(ui): drop sharp and its LGPL libvips; the license gate allows no exception):
+    - Problem: Transitive dependency `@img/sharp-wasm32` brought in LGPL-3.0-or-later libvips, failing enterprise release license gates for commercial embedding.
+    - Solution: Stripped `sharp` from graph-ui dependencies.
+    - Architectural contrast: trace-mcp maintains zero-dependency CLI/core runtime with pure MIT/Apache-2.0 dependencies, strictly avoiding LGPL/native-compilation overheads.
+  - PR #2633 (fix(cli): never wait on a stdin stream for a call complete without arguments):
+    - Problem: Commands like `cli list_projects` with no arguments hung indefinitely when stdin was an unclosed pipe (SSH sessions, `child_process.spawn` parents).
+    - Solution: Skips waiting on stdin when arguments are already supplied or schema expects no input payload.
+    - Architectural contrast: trace-mcp CLI (`src/cli/`) uses explicit non-blocking argument parsing with standard Commander.js command handlers, isolating stream I/O to JSON-RPC transports.
+- jgravelle/jcodemunch-mcp:
+  - PR #1066 (fix: a Python import written over several lines records its names (L-176)):
+    - Problem: Multi-line parenthesized imports (`from pkg import (\n a,\n b\n)`) failed regex/line-based reference scanning, causing `find_references` to report 0 callers for symbols imported in standard Black/Ruff formatted files.
+    - Solution: Multi-line AST grouping for import lists.
+    - Architectural contrast: trace-mcp uses Tree-sitter parse trees rather than regex/line scanners, inherently handling multi-line AST nodes across all supported languages.
+- oraios/serena:
+  - PR #2159 (fix(hooks): classify searches and reads run via native Bash tools):
+    - Problem: In Claude Code 2.1.117+, search and read actions invoked via the native `Bash` tool bypassed Serena's telemetry hooks, distorting tool utilization stats.
+    - Solution: Hooks parse Bash command strings (`grep`, `find`, `cat`) to categorize operations as semantic searches or reads.
+    - Architectural contrast: trace-mcp operates as a dedicated MCP server protocol endpoint; tools are invoked explicitly through structured RPC calls rather than intercepting shell commands.
+
+**Competitor pulse (as of 2026-10-14 early morning):**
+- nikolai-vysotskyi/trace-mcp: 191* (=), 24 forks (=)
+- yamadashy/repomix: 28,824* (+14), 1,584 forks (=)
+- oraios/serena: 30,232* (+19), 2,062 forks (=)
+- DeusData/codebase-memory-mcp: 46,516* (+60), 3,828 forks (+9)
+- tirth8205/code-review-graph: 32,120* (+27), 2,938 forks (+1)
+- colbymchenry/codegraph: 73,956* (+113), 4,770 forks (+4)
+- abhigyanpatwari/GitNexus: 47,871* (+13), 5,196 forks (=)
+- jgravelle/jcodemunch-mcp: 2,764* (+1), 375 forks (=)
+- continuedev/continue: 36,215* (+12), 5,465 forks (+2)
+- Aider-AI/aider: 49,528* (+18), 5,053 forks (+2)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+### Morning pass, 2026-10-14 (TRA-2408): mention sweep (azhri1990/ACODE_ROUTE), open threads audit, competitor triage (colbymchenry/codegraph PR #2540, DeusData PR #2638/#2636, jgravelle PR #1071-#1073)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- All 9 tracked external threads verified. Statuses unchanged:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (updated 2026-10-09T01:18Z with Round 4 review from hetaoBackend). Nikolai dedicated lane.
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds.
+  - ai-boost/awesome-harness-engineering#240: OPEN, standing no-ping rule holds.
+  - hesreallyhim/awesome-claude-code#2871: OPEN, standing no-ping rule holds.
+  - natsukium/mcp-servers-nix#606: OPEN, standing no-ping rule holds.
+  - Dokploy/mcp#81: OPEN, community implementation progressing (contributor moataz-hjaiji advancing dokploy-loadTools meta-tool PR).
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry.
+- Touch budget: 0 of 5 used. No outgoing pings or PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Found 1 new repository mentioning trace-mcp:
+  - `azhri1990/ACODE_ROUTE`: Curated personal collection ("My AI Box", 1,107 items collected) created 2026-10-14. `CATALOG.md` contains `- nikolai-vysotskyi/trace-mcp — https://github.com/nikolai-vysotskyi/trace-mcp`. Recorded as a genuine reference in the surfaces table and silenced in `ops/mentions-seen.txt`.
+
+**Competitor intelligence & architectural observations:**
+- colbymchenry/codegraph:
+  - PR #2540 (fix(cpp): structured bindings and function wrappers give their types to calls on them):
+    - Problem: C++ receiver type inference lacked types for (1) structured bindings (`for (auto& [cfh, iter] : cfh_iter_pairs_) iter->Valid()`), (2) `std::function` return types (`create_iterator()->Valid()`), and (3) class members formatted with the type on the line above the name. Calls on these receivers fell back to raw name matching or were dropped.
+    - Solution: Implemented `cppStructuredBindingType` for `std::pair`/`std::tuple`/maps, wrapper unwrapping (`std::function`, `absl::FunctionRef`, `absl::AnyInvocable`), and multi-line member declarator scanning.
+    - Architectural contrast: trace-mcp uses Tree-sitter AST nodes (`structured_binding_declarator`, `init_declarator`) directly in `src/indexer/ast/cpp.ts` and leverages SCIP/LSP compiler models for type resolution, avoiding regex-style line-scanning heuristics.
+- DeusData/codebase-memory-mcp:
+  - PR #2638 (fix(soak): the per-call read follows the soak's own latency ceiling):
+    - Problem: On GitHub Actions `windows-11-arm` runner, PowerShell-backed `search_code` answered in ~23s mean. A single call exceeded the harness's fixed 30s read timeout and failed the run, despite the soak harness latency check allowing 60s.
+    - Solution: Unified read timeout with `SOAK_MAX_QUERY_LATENCY_S` (60s + 30s buffer).
+    - Architectural contrast: trace-mcp has no PowerShell subprocess wrappers; CLI and MCP daemon run in native Node.js / worker threads with dedicated timeout budgets (`src/daemon/timeouts.ts`), keeping sub-100ms response times across platforms.
+  - PR #2636 (docs: update the README for CBM Lens Beta (#2383)): Documents visual codebase lens beta.
+- jgravelle/jcodemunch-mcp:
+  - PR #1073 (ci: a runner never reports its tool calls to the public savings total):
+    - Problem: Automated CI runners were reporting tool call telemetry to the public savings total, inflating claimed token savings with synthetic test traffic.
+    - Solution: Suppresses reporting tool calls when running in CI environments.
+    - Architectural contrast: trace-mcp telemetry (`src/analytics/telemetry.ts`) is strictly gated off in test/CI runs (`TRACE_MCP_TELEMETRY=0` or `NODE_ENV=test`), anonymous, opt-out, and never published as an inflated aggregate marketing counter.
+  - PR #1072 (release: v1.108.360): Web Forms attribute parsing in ASP.NET and repository schema budget enforcement.
+  - PR #1071 (release: v1.108.359): Diagnostic local reporting improvements without hardcoded path leakage.
+
+**Competitor pulse (as of 2026-10-14 morning pass):**
+- nikolai-vysotskyi/trace-mcp: 191★ (=), 24 forks (=)
+- yamadashy/repomix: 28,825★ (+1), 1,585 forks (+1)
+- oraios/serena: 30,238★ (+6), 2,063 forks (+1)
+- DeusData/codebase-memory-mcp: 46,528★ (+12), 3,831 forks (+3)
+- tirth8205/code-review-graph: 32,123★ (+3), 2,939 forks (+1)
+- colbymchenry/codegraph: 73,995★ (+39), 4,771 forks (+1)
+- abhigyanpatwari/GitNexus: 47,872★ (+1), 5,198 forks (+2)
+- jgravelle/jcodemunch-mcp: 2,767★ (+3), 375 forks (=)
+- continuedev/continue: 36,219★ (+4), 5,466 forks (+1)
+- Aider-AI/aider: 49,534★ (+6), 5,054 forks (+1)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+### Midday pass, 2026-10-14 (TRA-2411): mention sweep clean, open threads audit, competitor triage (colbymchenry/codegraph PR #2553-#2557, DeusData PR #2639, oraios/serena PR #2161/#2164)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- All 9 tracked external threads verified. Statuses unchanged:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (updated 2026-10-09T01:18Z with Round 4 review from hetaoBackend). Nikolai dedicated lane.
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds.
+  - ai-boost/awesome-harness-engineering#240: OPEN, standing no-ping rule holds.
+  - hesreallyhim/awesome-claude-code#2871: OPEN issue, standing no-ping rule holds.
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - Dokploy/mcp#81: OPEN (updated 2026-10-08T20:56:56Z, community implementation progressing with contributor moataz-hjaiji advancing dokploy-loadTools meta-tool PR).
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry.
+- Touch budget: 0 of 5 used. No outgoing pings or PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Result: Clean. Zero new repos outside `ops/mentions-seen.txt`.
+
+**Competitor intelligence & architectural observations:**
+- colbymchenry/codegraph:
+  - PR #2557 (fix(explore): tests and examples the engine knows stay out of explore's answer):
+    - Problem: `codegraph_explore` dropped low-value files using its own ad-hoc regex list that fell behind the engine's `isTestFile`. It missed C++ `foo_test.cc`, Google `foo_unittest.cc`, LLVM `unittests/`, Gradle `foo-test/`, Kotlin `jvmTest/`, and project examples/fixtures, letting unit tests crowd explore answer slots. Suffix regexes also falsely matched domain terms (`Latest.java`, `Contest.swift`, `contest.cs`).
+    - Architectural contrast: trace-mcp handles test, mock, and fixture filtering declaratively in `src/indexer/ignore.ts` and `src/indexer/path-utils.ts` without ad-hoc suffix heuristics, avoiding false positives on domain words.
+  - PR #2556 (fix(cpp): a call of a member template with explicit template arguments has the type the template returns):
+    - Problem: Member template calls with explicit template parameters (`reflection->GetRaw<RepeatedPtrField<CPPTYPE>>(msg, field)`) were denied types in `auto` declarations because `cppExpressionType` assumed callees end in the method identifier.
+    - Architectural contrast: trace-mcp uses Tree-sitter AST nodes (`template_method`, `call_expression`) and SCIP compiler definitions, parsing explicit template arguments naturally rather than relying on callee string suffix matching.
+  - PR #2555, #2554, #2553: Multiline receiver declarations, nullptr overload resolution (`std::nullptr_t` vs deleted overloads), and template argument bracket pairing.
+- DeusData/codebase-memory-mcp:
+  - PR #2639 (fix(watcher): handle UTF-8 repository and cache paths on Windows):
+    - Problem: Narrow `stat()` calls in native C watcher passed UTF-8 non-ASCII paths into the Windows ANSI CRT interface (code page 932 on Japanese Windows), causing false `watcher.root_missing` errors and pruning active graph caches after the grace period.
+    - Architectural contrast: trace-mcp uses Node.js / libuv cross-platform filesystem APIs (`uv_fs_stat` via `fs.promises`), which handle Unicode / UTF-8 paths across macOS, Linux, and Windows using wide Win32 APIs, avoiding ANSI codepage corruption.
+- jgravelle/jcodemunch-mcp:
+  - PR #1074: Docs refresh of published benchmark at v1.108.360 claiming 28.9x against grep-and-read.
+- oraios/serena:
+  - PR #2161 (Fix MCP registry manifest: pass Serena's arguments to the package, not the runtime):
+    - Problem: In `server.json`, Serena passed CLI arguments in `runtimeArguments` (`uvx`) instead of `packageArguments`. Clients appended the package spec after them, breaking server startup.
+    - Architectural contrast: trace-mcp configures `server.json` strictly to the official MCP registry schema with `runtime: npx` and properly segregated package arguments.
+  - PR #2164: Set `web_dashboard_open_on_launch` to false by default on platforms with system tray access.
+- abhigyanpatwari/GitNexus:
+  - PR #3578: Bump `@ladybugdb/core` to 0.21.2 to prevent duplicate rows after delete and re-copy.
+
+**Competitor pulse (as of 2026-10-14 midday pass):**
+- nikolai-vysotskyi/trace-mcp: 191★ (=), 24 forks (=)
+- yamadashy/repomix: 28,825★ (=), 1,588 forks (+3)
+- oraios/serena: 30,253★ (+15), 2,071 forks (+8)
+- DeusData/codebase-memory-mcp: 46,551★ (+23), 3,834 forks (+3)
+- tirth8205/code-review-graph: 32,132★ (+9), 2,944 forks (+5)
+- colbymchenry/codegraph: 74,035★ (+40), 4,779 forks (+8)
+- abhigyanpatwari/GitNexus: 47,874★ (+2), 5,198 forks (=)
+- jgravelle/jcodemunch-mcp: 2,769★ (+2), 375 forks (=)
+- continuedev/continue: 36,220★ (+1), 5,467 forks (+1)
+- Aider-AI/aider: 49,541★ (+7), 5,054 forks (=)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+### Evening pass, 2026-10-14 (TRA-2413): mention sweep clean, open threads audit, competitor triage (colbymchenry/codegraph PR #2550, DeusData PR #2638, jcodemunch PR #1075/#1076, oraios/serena PR #2162)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- All 9 tracked external threads verified. Statuses unchanged:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (updated 2026-10-09T01:18Z with Round 4 review from hetaoBackend). Nikolai dedicated lane.
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds.
+  - ai-boost/awesome-harness-engineering#240: OPEN (timestamp touch 2026-10-14T10:11:05Z from repository metadata sync, 0 maintainer comments/reviews), standing no-ping rule holds.
+  - hesreallyhim/awesome-claude-code#2871: OPEN issue, standing no-ping rule holds.
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - Dokploy/mcp#81: OPEN (updated 2026-10-08T20:56:56Z, community implementation progressing with contributor moataz-hjaiji advancing dokploy-loadTools meta-tool PR).
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry.
+- Touch budget: 0 of 5 used. No outgoing pings or PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Result: Clean. Zero new repos outside `ops/mentions-seen.txt`.
+
+**Competitor intelligence & architectural observations:**
+- colbymchenry/codegraph:
+  - PR #2550 (fix(pascal): resolve receiver chains, packages, event dispatch and nested routines):
+    - Problem: Pascal grammar could not parse `.dpk` Delphi package files, requiring a dedicated custom scanner. Event dispatch needed complex heuristic edge synthesis while avoiding counting `Assigned()`, nil comparisons, address-of expressions, or procedural assignments as function calls. Nested procedures had to be manually scoped and shadowed.
+    - Architectural contrast: trace-mcp relies on Tree-sitter grammars and SCIP indexing. By utilizing AST-level queries and SCIP definitions, trace-mcp cleanly separates syntax structure and semantic symbol definitions without hand-rolled grammar bypasses or ad-hoc heuristic edge synthesis.
+- DeusData/codebase-memory-mcp:
+  - PR #2638 (fix(soak): the per-call read follows the soak's own latency ceiling):
+    - Problem: On GitHub's Windows ARM runner, PowerShell-backed `search_code` answered in ~23s per call (mean 23.3s over 23 calls), crossing the harness's fixed 30s read timeout and failing candidate CI soak tests.
+    - Architectural contrast: trace-mcp runs entirely in-process in Node.js / libuv with an in-memory SQLite and compiled AST/SCIP cache. trace-mcp never shells out to PowerShell or bash per search query, executing code searches in single-digit milliseconds without subshell startup overhead.
+- oraios/serena:
+  - PR #2162 (fix(scala): optionally terminate orphaned Bloop daemons on stop (#1816)):
+    - Problem: Metals starts Bloop build-server daemons that daemonize themselves and re-parent to PID 1 upon shutdown, leaking RAM indefinitely. Added opt-in cleanup logic (`terminate_bloop_on_stop`) to hunt down descendant Bloop processes.
+    - Architectural contrast: trace-mcp uses self-contained Tree-sitter parsers and SCIP indexers directly in-process instead of orchestrating external heavyweight Language Servers and separate background build-server daemons that orphan and leak memory.
+- jgravelle/jcodemunch-mcp:
+  - PR #1075 (fix(summarizer): a C# or AL symbol's summary is its sentence, not the literal `<summary>` tag):
+    - Problem: XML doc comments (`/// <summary>...</summary>`) in C# and AL caused `extract_summary_from_docstring` (which assumed line 1 is a prose sentence) to return `<summary>` as the symbol summary, corrupting BM25 search relevance across all C# codebases. In addition, regex section matching exhibited quadratic behavior on unclosed hostile tags (`<param name='a'>` * 20000 took 26s).
+    - Architectural contrast: trace-mcp extracts doc comments and symbol declarations via Tree-sitter AST nodes rather than regex heuristics on raw text, avoiding quadratic backtracking and comment delimiter corruption.
+  - PR #1076: Adds `--refresh` for `claude-md` policies; tool surface remains vast at 91 tools.
+- abhigyanpatwari/GitNexus:
+  - PR #3578: Fixed duplicate rows in `@ladybugdb/core` 0.21.2 on delete and re-copy.
+
+**Competitor pulse (as of 2026-10-14 evening pass):**
+- nikolai-vysotskyi/trace-mcp: 191★ (=), 24 forks (=)
+- yamadashy/repomix: 28,828★ (+3), 1,587 forks (-1)
+- oraios/serena: 30,259★ (+6), 2,071 forks (=)
+- DeusData/codebase-memory-mcp: 46,561★ (+10), 3,835 forks (+1)
+- tirth8205/code-review-graph: 32,140★ (+8), 2,944 forks (=)
+- colbymchenry/codegraph: 74,070★ (+35), 4,779 forks (=)
+- abhigyanpatwari/GitNexus: 47,878★ (+4), 5,198 forks (=)
+- jgravelle/jcodemunch-mcp: 2,769★ (=), 375 forks (=)
+- continuedev/continue: 36,222★ (+2), 5,468 forks (+1)
+- Aider-AI/aider: 49,546★ (+5), 5,054 forks (=)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+### Late night pass, 2026-10-14 (TRA-2430): mention sweep clean, open threads audit, competitor triage (DeusData PR #2642/#2643, jcodemunch PR #1079, colbymchenry/codegraph PR #2558/#2559, oraios/serena PR #2164)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- All 9 tracked external threads verified. Statuses unchanged:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (updated 2026-10-09T01:18Z with Round 4 review from hetaoBackend). Nikolai dedicated lane.
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds.
+  - ai-boost/awesome-harness-engineering#240: OPEN (timestamp touch 2026-10-14T10:11:05Z from repository metadata sync, 0 maintainer comments/reviews), standing no-ping rule holds.
+  - hesreallyhim/awesome-claude-code#2871: OPEN issue, standing no-ping rule holds.
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - Dokploy/mcp#81: OPEN (updated 2026-10-08T20:56:56Z, community implementation progressing with contributor moataz-hjaiji advancing dokploy-loadTools meta-tool PR).
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry.
+- Touch budget: 0 of 5 used. No outgoing pings or PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Result: Clean. Zero new repos outside `ops/mentions-seen.txt`.
+
+**Competitor intelligence & architectural observations:**
+- DeusData/codebase-memory-mcp:
+  - PR #2642 (perf(mcp): fast query tools on every platform):
+    - Problem: Soak testing on Windows ARM runners failed due to 23-31s PowerShell `Select-String` subprocess scans hitting the 30s deadline. Full tool latency audit revealed 4 structural bottlenecks: `search_code` spawned grep or PowerShell pipelines with quadratic scaling on hit merging and byte-by-byte `fgetc` source reads; `query_graph` (Cypher engine) used bubble sort for `ORDER BY` (taking 41.0s on 29k rows in Django) and linear scans for `DISTINCT`/`GROUP BY`; store read tools acquired and released database file locks and stat'ed WAL files on every single statement; `list_projects` spawned 7 git subprocesses per project.
+    - Fix: In-process regex scanner, stable merge sort for Cypher `ORDER BY` (41.0s down to 62ms), hash tables for `DISTINCT`/`GROUP BY`, batch read transactions renewed every 100ms, and reducing `list_projects` to 2 git commands.
+    - Architectural contrast: trace-mcp has been built from day 1 around an in-process Node.js / libuv architecture with SQLite in memory / compiled AST / SCIP cache. We never spawn shell sub-processes per query, never execute O(N^2) bubble sorts on result sets, and keep symbol resolution and outline navigation down to single-digit milliseconds without subshell startup overhead or DB lock thrashing.
+  - PR #2643 (feat(infra): env and service joins, kustomize variants, Terraform / Terragrunt, Ansible):
+    - Expands indexing scope into infrastructure-as-code and configuration topology joins.
+- jgravelle/jcodemunch-mcp:
+  - PR #1079 (feat: the server's start-up instructions say where the index is cheaper, not to prefer it everywhere):
+    - Problem: During MCP `initialize`, the server's `instructions` told AI agents to unconditionally prefer jcodemunch's index over built-in tools (Read, Grep, Glob, Bash) and call `resolve_repo` first. The maintainer toned it down to acknowledge that small repositories favor native built-in tools. Tool surface remains broad at 91 tools.
+    - Architectural contrast: trace-mcp emphasizes concise tool surface, progressive disclosure via presets, and explicit token savings rather than tool sprawl (91 tools) or demanding exclusive precedence over native client tools in server initialization instructions.
+- colbymchenry/codegraph:
+  - PR #2558 (fix(react-router): a lazy route follows a barrel that re-exports an import):
+    - Problem: In React Router apps, lazily loaded folder barrel exports (`index.ts` importing and re-exporting components without local declarations) caused route resolution to fail completely, missing 27 route edges in real-world apps (DigiShop).
+    - Architectural contrast: trace-mcp leverages SCIP indexing and Tree-sitter AST queries where symbol definitions and import/export bindings are resolved through standard semantic graph relationships rather than brittle framework-specific heuristic barrel walkers.
+  - PR #2559 (feat(extraction): add Cangjie language support (.cj) with ArkUI-in-Cangjie and FFI bridges):
+    - Adding language support for Huawei's Cangjie programming language.
+- oraios/serena:
+  - PR #2164 (Change the default value of web_dashboard_open_on_launch to false depending on platform):
+    - Disabling automatic dashboard browser popup on launch for tray-supporting platforms; v2.0 milestone stabilized.
+
+**Competitor pulse (as of 2026-10-14 late night pass):**
+- nikolai-vysotskyi/trace-mcp: 191★ (=), 24 forks (=)
+- yamadashy/repomix: 28,832★ (+4), 1,592 forks (+5)
+- oraios/serena: 30,264★ (+5), 2,075 forks (+4)
+- DeusData/codebase-memory-mcp: 46,580★ (+19), 3,837 forks (+2)
+- tirth8205/code-review-graph: 32,149★ (+9), 2,946 forks (+2)
+- colbymchenry/codegraph: 74,088★ (+18), 4,781 forks (+2)
+- abhigyanpatwari/GitNexus: 47,879★ (+1), 5,197 forks (-1)
+- jgravelle/jcodemunch-mcp: 2,770★ (+1), 375 forks (=)
+- continuedev/continue: 36,225★ (+3), 5,468 forks (=)
+- Aider-AI/aider: 49,548★ (+2), 5,055 forks (+1)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+### Early morning pass, 2026-10-15 (TRA-2436): mention sweep clean, open threads audit, competitor triage (DeusData PR #2644, colbymchenry/codegraph PR #2560/#2561, jcodemunch PR #1080-#1083, oraios/serena PR #2164)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- All 9 tracked external threads verified. Statuses unchanged:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (updated 2026-10-09T01:18Z with Round 4 review from hetaoBackend). Nikolai dedicated lane.
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds.
+  - ai-boost/awesome-harness-engineering#240: OPEN (mergeable: false/dirty due to upstream context additions; left alone per wontfix-spend / standing no-ping rule).
+  - hesreallyhim/awesome-claude-code#2871: OPEN issue, standing no-ping rule holds.
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - Dokploy/mcp#81: OPEN (updated 2026-10-08T20:56:56Z, community implementation progressing with contributor moataz-hjaiji advancing dokploy-loadTools meta-tool PR).
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry.
+- Touch budget: 0 of 5 used. No outgoing pings or PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Result: Clean. Zero new repos outside `ops/mentions-seen.txt`.
+
+**Competitor intelligence & architectural observations:**
+- DeusData/codebase-memory-mcp:
+  - PR #2644 (feat(infra): chart identity by publisher URL, Ansible kube DEPLOYS, exact TOML/INI keys):
+    - Problem & change: Stacking on #2643 for v0.12.0 (index schema v9). External Helm charts are keyed by publisher URL (`__chart__<repository>/<name>`) for global identity across projects; Ansible `kube`/`k8s` play tasks now trace manifest variables through loops, `set_fact`, and defaults to emit `DEPLOYS` edges to the template manifests; TOML/INI keys link by exact name to component code symbols.
+    - Architectural contrast: DeusData continues extending graph cardinality into DevOps/IaC topology. While powerful for cluster deployment tracking, adding Helm chart identity and Ansible template resolution increases index schema churn (v9) and triggers full rebuilds on configuration changes. trace-mcp focuses strictly on source code semantic graphs (Tree-sitter AST, SCIP references, framework bindings like Inertia PHP→Vue and model migrations), maintaining sub-second responses and predictable footprint without cluster manifest overhead.
+- colbymchenry/codegraph:
+  - PR #2561 (fix(jsx): a .jsx component links to the file-scope values it reads, as in .js and .tsx):
+    - Problem: In `.jsx` files, identifier reads of file-scope constants (message catalogs, styling objects, lazy route tables) lacked `references` edges with `{"valueRef": true}`, causing `codegraph impact` to under-report affected files (e.g. only 1 affected instead of 3).
+    - PR #2560 (fix(sync): a lazy route relinks a page that appears below its barrel):
+      - Relinks route edges when barrel re-exports sit above or below the target page.
+    - Architectural contrast: trace-mcp uses unified Tree-sitter parsers and SCIP indexing across JS, JSX, TS, and TSX. Scope resolution for module-level identifiers is dialect-agnostic, preventing edge-omission disparities between `.jsx` and `.tsx` without bespoke per-dialect value-ref walkers or barrel-traversal heuristics.
+- jgravelle/jcodemunch-mcp:
+  - PR #1080 & #1081 (feat(sql): parse batches separately and recover named constraints / fix(sql): index T-SQL/Sybase procedures, triggers...):
+    - Adds regex-based SQL routine parsing, delimiter tracking (`$$`, `DELIMITER`, `BEGIN...END`), and representative kind ranks (procedure rank 1, trigger rank 2) for Postgres, MySQL, T-SQL, Sybase, and Oracle.
+  - PR #1082 (fix: a package named migrations is indexed; only generated migrations are skipped):
+    - Fixed an aggressive blacklist rule that skipped any package named `migrations`, restoring indexing for valid packages containing data migrations or custom logic.
+    - Architectural contrast: Hand-rolled regex routines and delimiter counters for multi-dialect SQL are notoriously fragile against nested bodies and dialect idioms. trace-mcp uses rigorous AST grammars and respects `.gitignore` rather than heuristic token masking or hardcoded directory-name bans.
+- oraios/serena:
+  - PR #2164 (Change the default value of web_dashboard_open_on_launch to false depending on platform):
+    - Refines tray and dashboard launch behavior on tray-supporting OS platforms post-v2.0.
+
+**Competitor pulse (as of 2026-10-15 early morning pass):**
+- nikolai-vysotskyi/trace-mcp: 191★ (=), 24 forks (=)
+- yamadashy/repomix: 28,837★ (+5), 1,592 forks (=)
+- oraios/serena: 30,266★ (+2), 2,075 forks (=)
+- DeusData/codebase-memory-mcp: 46,590★ (+10), 3,839 forks (+2)
+- tirth8205/code-review-graph: 32,153★ (+4), 2,946 forks (=)
+- colbymchenry/codegraph: 74,097★ (+9), 4,781 forks (=)
+- abhigyanpatwari/GitNexus: 47,882★ (+3), 5,197 forks (=)
+- jgravelle/jcodemunch-mcp: 2,771★ (+1), 375 forks (=)
+- continuedev/continue: 36,226★ (+1), 5,470 forks (+2)
+- Aider-AI/aider: 49,550★ (+2), 5,058 forks (+3)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+### Morning pass, 2026-10-15 (TRA-2446): mention sweep clean, open threads audit, competitor triage (DeusData PR #2642, colbymchenry/codegraph PR #2567/#2564, jcodemunch PR #1086, oraios/serena PR #2166, wicked-estate discovery)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- All 9 tracked external threads verified. Statuses unchanged:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (updated 2026-10-09T01:18Z with Round 4 review from hetaoBackend). Dedicated lane for Nikolai.
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds.
+  - ai-boost/awesome-harness-engineering#240: OPEN (mergeable: false/dirty due to upstream context additions; left alone per wontfix-spend / standing no-ping rule: rebase only close to a merge signal).
+  - hesreallyhim/awesome-claude-code#2871: OPEN issue, standing no-ping rule holds.
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - Dokploy/mcp#81: OPEN (updated 2026-10-08T20:56:56Z, community implementation progressing with contributor moataz-hjaiji advancing dokploy-loadTools meta-tool PR).
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry.
+- Touch budget: 0 of 5 used. No outgoing pings or PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Result: Clean. Zero new repos outside `ops/mentions-seen.txt`.
+
+**Competitor intelligence & architectural observations:**
+- DeusData/codebase-memory-mcp:
+  - PR #2642 (perf(mcp): fast query tools on every platform, merged 2026-10-14T21:56Z):
+    - Problem & change: Release soak on `windows-11-arm` revealed `search_code` took 23–31s per call (hitting 30s deadline) due to spawning PowerShell `Select-String` / POSIX `grep` pipelines. Rewrote `search_code` to scan indexed files in-process; replaced Cypher engine bubble sort with merge sort for `ORDER BY` (41s → 62ms on 29k rows in Django) and linear scan with hash tables for `DISTINCT`/`GROUP BY`; added 100ms deferred read transaction renewal on SQLite store reads to eliminate repeated db file locking and journal/WAL stat calls.
+    - Architectural contrast: DeusData continues retrofitting in-process scanning and query execution optimizations onto a legacy subprocess-spawning design. trace-mcp was designed from day one with in-process Tree-sitter AST traversal and native SQLite parameterized indexing with zero subprocess overhead during queries.
+- colbymchenry/codegraph:
+  - PR #2567 (fix(cpp): a qualified receiver type never reaches a class that only shares its last name, and rocksdb::DB is RocksDB's own, merged 2026-10-15T03:29Z):
+    - Problem: C++ receiver type resolution failed when projects use namespace macros (e.g. RocksDB's `namespace ROCKSDB_NAMESPACE` with `#define ROCKSDB_NAMESPACE rocksdb`), causing calls on `rocksdb::DB` to be judged external and drop call edges. Also lowercase external types collided with namesake project utilities (`absl::flat_hash_set` vs `util::flat_hash_set::insert`). Added `cppFindsOnlyNamesakes` and macro mapping expansion.
+  - PR #2564 (fix(react): a tag written in a comment or a string renders no JSX child, merged 2026-10-15T00:46Z):
+    - Problem: Regex scanning in `reactJsxChildEdges` (`JSX_TAG_RE`) read tag names from raw text, causing comments, JSDocs, and error strings (`<Carousel />`, XML templates) to falsely emit JSX render edges. Had to introduce `jsxCode(source)` pre-pass to blank strings and comments while preserving offsets.
+    - Architectural contrast: Hand-rolled regex scanning of JSX/TS and heuristic macro stitching in C++ repeatedly suffer from false-edge synthesis and edge drops. trace-mcp uses formal Tree-sitter grammars (where comments and string literals are distinct AST nodes that cannot be confused with JSX elements) and SCIP indexers (where Clang itself computes full symbol identities, resolving macros and namespaces natively).
+- jgravelle/jcodemunch-mcp:
+  - PR #1086 (fix: init writes hooks that run the install you ran, not the first one on PATH, merged 2026-10-15T01:19Z):
+    - Problem: `init` wrote hooks using `shutil.which("jcodemunch-mcp")`, which grabbed whatever older version was first on PATH rather than the active venv/binary, and broke under `uvx` when `uv cache clean` destroyed the hook target. Added `install_layout` resolution with absolute launch path detection.
+    - Architectural contrast: trace-mcp decouples CLI installation from execution via its dedicated control plane (`~/.trace/bin/trace` shim + `launcher.env`), ensuring deterministic resolution regardless of ephemeral cache purges or PATH ordering.
+- oraios/serena:
+  - PR #2166 (fix(php): apply Intelephense's maxMemory and maxFileSize settings, opened 2026-10-15T07:15Z):
+    - Problem: Intelephense language server crashed with JavaScript heap OOM on large PHP repositories because documented `maxMemory` and `maxFileSize` settings were passed in `initializationOptions` and ignored by Intelephense. Patch forces `--max-old-space-size` into `NODE_OPTIONS` for the child process.
+    - Architectural contrast: Illustrates the operational brittleness of LSP-wrapper architectures (running heavy external language server daemons in background subprocesses prone to memory exhaustion and protocol mismatches). trace-mcp's direct AST indexing operates with predictable, bounded memory without subprocess daemons per language.
+- Competitor discovery — mikeparcewski/wicked-estate:
+  - Surface: https://github.com/mikeparcewski/wicked-estate (Rust, MIT, v0.16.7 published on crates.io, pushed 2026-10-11).
+  - Shape: Single static binary MCP server + CLI (`wicked-estate-mcp` / `wicked-estate`) combining code graph, memory, and knowledge store. 15 modular crates, Tree-sitter AST extraction across 103 languages, SQLite/MemStore storage, personalized PageRank over CALLS/IMPORTS, and explicit provenance `{confidence, provenance, resolved_by}` per edge.
+  - Relevance: A notable Rust peer in the local-first code graph MCP ecosystem. Contrast: trace-mcp provides deep multi-language framework bindings (88 frameworks), Git diff blast-radius and PR review benchmarks (−72.7% tokens), and a lightweight Node/Electron desktop environment without requiring a Rust toolchain.
+
+**Competitor pulse (as of 2026-10-15 morning pass):**
+- nikolai-vysotskyi/trace-mcp: 192★ (+1), 24 forks (=)
+- yamadashy/repomix: 28,841★ (+4), 1,592 forks (=)
+- oraios/serena: 30,271★ (+5), 2,077 forks (+2)
+- DeusData/codebase-memory-mcp: 46,609★ (+19), 3,839 forks (=)
+- tirth8205/code-review-graph: 32,158★ (+5), 2,948 forks (+2)
+- colbymchenry/codegraph: 74,125★ (+28), 4,782 forks (+1)
+- abhigyanpatwari/GitNexus: 47,890★ (+8), 5,199 forks (+2)
+- jgravelle/jcodemunch-mcp: 2,771★ (=), 375 forks (=)
+- continuedev/continue: 36,225★ (-1), 5,472 forks (+2)
+- Aider-AI/aider: 49,555★ (+5), 5,060 forks (+2)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+### Afternoon pass, 2026-10-15 (TRA-2449): mention sweep clean, open threads audit (hesreallyhim #2871 closed), competitor triage (jcodemunch PR #1089/#1090, colbymchenry/codegraph PR #2569/#2568, oraios/serena PR #2166/#2167)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- Tracked external threads audit:
+  - hesreallyhim/awesome-claude-code#2871: CLOSED (closed 2026-10-15T06:38Z by maintainer hesreallyhim with state_reason: not_planned during catalog backlog sweep; recorded as rejected, standing no-ping rule holds, no follow-up).
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (updated 2026-10-09T01:18Z with Round 4 review from hetaoBackend). Dedicated lane for Nikolai.
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds.
+  - ai-boost/awesome-harness-engineering#240: OPEN (mergeable: false/dirty due to upstream context additions; left alone per wontfix-spend / standing no-ping rule: rebase only close to a merge signal).
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - Dokploy/mcp#81: OPEN (updated 2026-10-08T20:56:56Z, community implementation progressing with contributor moataz-hjaiji advancing dokploy-loadTools meta-tool PR).
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry.
+- Touch budget: 0 of 5 used. No outgoing pings or PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Result: Clean. Zero new repos outside `ops/mentions-seen.txt`.
+
+**Competitor intelligence & architectural observations:**
+- jgravelle/jcodemunch-mcp:
+  - PR #1089 (fix: search ranking no longer depends on whether git blame finished, or on today's date (L-188), merged 2026-10-15T06:49Z):
+    - Problem: Non-deterministic BM25 search ranking across identical checkouts. Git blame provider injected `last_author` and `last_modified` into `FileContext.search_keywords`. Two fresh indexes of the same commit yielded divergent symbol ranking scores (1,167 vs 1,232 tokens on fastapi) depending on whether `git log` completed within a 10s timeout and how far the commit sat from a sliding `2.years.ago` calendar window.
+    - Change: Opted blame out of keyword search (`properties_are_search_terms = False`), pinned blame time window to 730 days from HEAD's commit date rather than wall clock, and bumped `PARSER_GENERATION` to 24 to invalidate cached indexes.
+    - Architectural contrast: Hand-rolling custom keyword enrichment and tying search term weighting to wall-clock metadata creates reproducibility traps in benchmarking and agent token usage. trace-mcp indexes structural graph topology, AST symbols, and deterministic git revision diffs without leaking non-deterministic wall-clock or provider timeout heuristics into token scoring.
+  - PR #1090 (release: v1.108.364 - SQL procedures, triggers and constraints are indexed, and one unparseable statement no longer loses the rest of the file, merged 2026-10-15T07:32Z):
+    - Problem & change: Stored procedures and triggers in T-SQL/Sybase files indexed to nothing because derekstride tree-sitter-sql grammar collapsed `CREATE PROCEDURE`/`TRIGGER` into `ERROR` nodes. Implemented `_scan_sql_routines` fallback scanner using comment/string masking over raw bytes, fixed bracket-quoted `[dbo].[X]` parsing, and expanded `search_symbols` input schema enum.
+    - Architectural contrast: Recovering from AST parser failure by layering regex masking over error bytes adds heuristic drift. trace-mcp handles resilient parsing through Tree-sitter error recovery nodes and multi-pass semantic AST validation.
+- colbymchenry/codegraph:
+  - PR #2569 (fix(cpp): a receiver type written from the global scope is looked up there, and a far lowercase outside type reaches no namesake, merged 2026-10-15T04:59Z) & PR #2568 (merged 2026-10-15T04:21Z):
+    - Problem: C++ receiver type declarator regex stripped leading `::` (`::upb::Arena` became `upb::Arena` and bound to namespace-local `hpb::upb::Arena`). Attempting to keep `::` broke template declarations (`SkipList<...>::Iterator`), requiring a lookbehind regex rule. Lowercase outside types (`absl::flat_hash_set`, `std::string`) falsely bound to project namesakes (`util::flat_hash_set`, global `string` class).
+    - Architectural contrast: Codegraph continues patching C++ receiver and type resolution using regular expressions, lookbehinds, and namesake heuristics. In C++, template specializations, qualified scopes, and namespace aliases cannot be reliably parsed via regex. trace-mcp relies on AST structural nodes and Clang SCIP indexers that natively compute symbol identities and disambiguate global scope `::` without lookbehind hacks.
+- oraios/serena:
+  - PR #2166 (fix(php): apply Intelephense's maxMemory and maxFileSize settings, merged 2026-10-15T08:53Z):
+    - Merged fix forcing `--max-old-space-size` into `NODE_OPTIONS` to prevent Intelephense LSP child process heap OOM crashes.
+  - PR #2167 (fix(fsharp): wait for FsAutoComplete's workspace load before serving requests, opened 2026-10-15T05:05Z):
+    - Demonstrates continuing concurrency synchronization challenges when wrapping external language servers (FsAutoComplete LSP loading races with client requests).
+- DeusData/codebase-memory-mcp:
+  - PR #2648 (fix(security): allow the bare wget token the shell pass compares, updated 2026-10-15T04:43Z):
+    - Ongoing shell command string parsing and sanitization in security pass.
+
+**Competitor pulse (as of 2026-10-15 afternoon pass):**
+- nikolai-vysotskyi/trace-mcp: 192★ (=), 24 forks (=)
+- yamadashy/repomix: 28,846★ (+5), 1,592 forks (=)
+- oraios/serena: 30,277★ (+6), 2,077 forks (=)
+- DeusData/codebase-memory-mcp: 46,624★ (+15), 3,840 forks (+1)
+- tirth8205/code-review-graph: 32,160★ (+2), 2,948 forks (=)
+- colbymchenry/codegraph: 74,149★ (+24), 4,784 forks (+2)
+- abhigyanpatwari/GitNexus: 47,892★ (+2), 5,199 forks (=)
+- jgravelle/jcodemunch-mcp: 2,771★ (=), 375 forks (=)
+- continuedev/continue: 36,227★ (+2), 5,473 forks (+1)
+- Aider-AI/aider: 49,561★ (+6), 5,061 forks (+1)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+### Evening pass, 2026-10-15 (TRA-2451): mention sweep clean, open threads audit, competitor triage (jcodemunch PR #1092/#1093/#1094, serena PR #2161/#2169, codegraph PR #1508, codebase-memory-mcp PR #2639, code-review-graph PR #1079)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- Tracked external threads audit:
+  - hesreallyhim/awesome-claude-code#2871: CLOSED (closed 2026-10-15T06:38Z by maintainer hesreallyhim with state_reason: not_planned; table row updated to closed/rejected, standing no-ping rule holds, no follow-up).
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (updated 2026-10-09T01:18Z with Round 4 review from hetaoBackend). Dedicated lane for Nikolai.
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds.
+  - ai-boost/awesome-harness-engineering#240: OPEN (mergeable: false/dirty due to upstream context additions; left alone per wontfix-spend / standing no-ping rule: rebase only close to a merge signal).
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - Dokploy/mcp#81: OPEN (updated 2026-10-08T20:56:56Z, community implementation progressing with contributor moataz-hjaiji advancing dokploy-loadTools meta-tool PR).
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry.
+- Touch budget: 0 of 5 used. No outgoing pings or PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Result: Clean. Zero new repos outside `ops/mentions-seen.txt`.
+
+**Competitor intelligence & architectural observations:**
+- jgravelle/jcodemunch-mcp:
+  - PR #1092 (change: git blame is off by default, and adds no 2 properties to a file summary (L-189), merged 2026-10-15T11:49Z):
+    - Problem: Following #1089 removing blame properties from search ranking, blame output reached AI summarizer prompts and added an uninformative "2 properties" suffix to file summaries. Unconditional 10s git log execution ran per repository during indexing.
+    - Change: Defaults git_blame_enabled to false, drops property count suffix from file summaries, and documents security and stale index implications in SECURITY.md.
+    - Architectural contrast: trace-mcp uses AST and structural symbol indexing without running heavy, un-sandboxed git log commands per-file on initial indexing passes, avoiding timeout-dependent non-determinism and avoiding leaking commit metadata into agent context tokens.
+  - PR #1093 (chore: repair-munch-installs.ps1 stops every j*munch server as its first step, merged 2026-10-15T12:56Z):
+    - Problem & change: repair-munch-installs.ps1 failed when any jMunch server was running due to locked Windows executables. Added pre-emptive stop step killing all matching server processes before uninstallation.
+    - Architectural contrast: trace-mcp handles background daemon lifecycle, shutdown, and hot reload via graceful IPC signals (trace-mcp stop, daemon health ping, socket shutdown) without requiring destructive process-killing repair scripts for package upgrades.
+  - PR #1094 (test: pin the two Oracle shapes #1081 fixed; close L-191 and L-192, merged 2026-10-15T13:15Z):
+    - Problem & change: Added regression tests for Oracle function declaration shapes and trigger :NEW.x statements that previously failed symbol extraction. Recorded ledger item L-193: documented opt-out JCODEMUNCH_SHARE_SAVINGS=0 is marked deprecated and scheduled for removal in 2.0, meaning users who opted out via env var would silently start sharing again.
+    - Architectural contrast: trace-mcp telemetry is strictly anonymous, opt-out via standard config/env (TRACE_MCP_TELEMETRY=0), and never deprecates or ignores opt-out switches across major or minor releases.
+- oraios/serena:
+  - PR #2161 (Fix MCP registry manifest: pass Serena's arguments to the package, not the runtime, merged 2026-10-15T11:36Z):
+    - Problem & change: In server.json for the official MCP Registry, Serena's CLI arguments (start-mcp-server, --project-from-cwd, --context) were placed in runtimeArguments instead of packageArguments. For uvx, runtimeArguments were placed before the package name, causing clients to append identifier@version after them, which the CLI interpreted as an illegal extra positional argument and failed startup on every launch.
+    - Architectural contrast: trace-mcp maintains validated, schema-compliant server.json published via CI (publish-mcp-registry.yml) using standard node runtime arguments and separate npm package arguments.
+  - PR #2169 (fix(svelte,astro): respect ignore patterns in companion file discovery, updated 2026-10-15T12:53Z):
+    - Multi-framework companion discovery ignoring project exclusion patterns.
+- colbymchenry/codegraph:
+  - PR #1508 (feat: add SystemVerilog/Verilog, Tcl, and VHDL language support, updated 2026-10-15T13:35Z):
+    - Added hardware description language extraction (SystemVerilog, Tcl, VHDL) by vendoring tree-sitter WASM grammars.
+- DeusData/codebase-memory-mcp:
+  - PR #2639 (fix(watcher): handle UTF-8 repository and cache paths on Windows, updated 2026-10-15T13:07Z):
+    - Problem & change: Native C watcher received UTF-8 paths through an ANSI CRT interface on Windows (stat()). On systems with ANSI code page 932 (Japanese), valid repositories were classified as watcher.root_missing and falsely pruned. Switched to cbm_path_info_utf8().
+    - Architectural contrast: trace-mcp uses @parcel/watcher and Node/Rust cross-platform bindings with native UTF-8 path support across Windows, macOS, and Linux, avoiding ANSI CRT code page degradation.
+- tirth8205/code-review-graph:
+  - PR #1079 (fix(parser): extract PowerShell functions, classes, methods and command calls, updated 2026-10-15T13:34Z):
+    - Fixed discarded PowerShell declarations where grammar node names were unhandled.
+
+**Competitor pulse (as of 2026-10-15 evening pass):**
+- nikolai-vysotskyi/trace-mcp: 192★ (=), 24 forks (=)
+- yamadashy/repomix: 28,849★ (+3), 1,592 forks (=)
+- oraios/serena: 30,287★ (+10), 2,078 forks (+1)
+- DeusData/codebase-memory-mcp: 46,642★ (+18), 3,839 forks (-1)
+- tirth8205/code-review-graph: 32,163★ (+3), 2,950 forks (+2)
+- colbymchenry/codegraph: 74,166★ (+17), 4,787 forks (+3)
+- abhigyanpatwari/GitNexus: 47,895★ (+3), 5,198 forks (-1)
+- jgravelle/jcodemunch-mcp: 2,771★ (=), 375 forks (=)
+- continuedev/continue: 36,228★ (+1), 5,475 forks (+2)
+- Aider-AI/aider: 49,565★ (+4), 5,060 forks (-1)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+### Late night pass, 2026-10-15 (TRA-2453): mention sweep clean, open threads audit, competitor triage (jcodemunch PR #1095/#1096/#1098, serena PR #2171, codebase-memory-mcp PR #2648/#2650/#2651, codegraph PR #1947/#1950/#1951/#1952/#1954, code-review-graph PR #1065/#1105)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- Tracked external threads audit:
+  - hesreallyhim/awesome-claude-code#2871: CLOSED (closed 2026-10-15T06:38Z by maintainer hesreallyhim with state_reason: not_planned; table row updated to closed/rejected, standing no-ping rule holds, no follow-up).
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (updated 2026-10-09T01:18Z with Round 4 review from hetaoBackend). Dedicated lane for Nikolai.
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds (one reminder already sent 2026-09-26).
+  - ai-boost/awesome-harness-engineering#240: OPEN (mergeable: false/dirty due to upstream context additions; left alone per wontfix-spend / standing no-ping rule: rebase only close to a merge signal).
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - Dokploy/mcp#81: OPEN (updated 2026-10-08T20:56:56Z, community implementation progressing with contributor moataz-hjaiji advancing dokploy-loadTools meta-tool PR).
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry.
+- Touch budget: 0 of 5 used. No outgoing pings or PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Result: Clean. Zero new repos outside `ops/mentions-seen.txt`.
+
+**Competitor intelligence & architectural observations:**
+- jgravelle/jcodemunch-mcp:
+  - Release v1.108.365 (PR #1095, merged 2026-10-15T14:57Z):
+    - Ships git_blame_enabled: false default and drops uninformative "2 properties" suffix from file summaries, preventing 10s git log timeouts during indexing.
+  - PR #1098 (change: environment variables stay supported, and no longer warn that 2.0 removes them (L-193), merged 2026-10-15T17:39Z):
+    - Problem & change: The config loader logged "Deprecated: Using <VAR> environment variable. This will be removed in v2.0. Use config.jsonc instead." on every process startup reading JCODEMUNCH_* env vars, and documentation claimed 2.0 removal. However, JCODEMUNCH_SHARE_SAVINGS=0 is the documented opt-out for anonymous savings sharing, meaning the deprecation warning indicated that opting out would silently fail in 2.0. Maintainer confirmed no 2.0 is planned, reversed deprecation warnings entirely, inverted the test, and pinned env var support permanently in harness/retired.json (L-193).
+    - Architectural contrast: trace-mcp treats environment variables (TRACE_MCP_*, such as TRACE_MCP_TELEMETRY=0) as first-class, permanent configuration primitives. Telemetry opt-outs and core daemon parameters do not suffer from phantom major-version deprecation cycles or confusing stderr log spew in agent hook processes.
+  - PR #1096 (docs(ledger): L-194, strict mode advises rather than denies a piped shell grep, opened 2026-10-15T18:00Z):
+    - Discovered that in strict-mode arm (init --strict), steering.py only denied Bash grep as a single standalone command; piping or chaining (& or ;) turned the deny into advice, and agents nearly always piped grep while paying higher indexing costs ($1.35 vs $1.06) without gaining accuracy.
+- DeusData/codebase-memory-mcp:
+  - PR #2650 (fix(daemon): settings startup survives busy and interrupted writes, merged 2026-10-15T16:54Z):
+    - Problem & change: When daemon launched concurrently with multiple workers or CLI invocations on Windows and POSIX, _config.db (SQLite) threw SQLITE_BUSY (code 5) or hot-journal recovery lock failures during BEGIN IMMEDIATE / COMMIT, causing daemon startup (daemon start --port) to crash. Added retry/busy handlers with timeouts across settings_open, startup, UI load, cbm_config_open, and hot-journal recovery.
+    - PR #2648 (fix(security): allow the bare wget token the shell pass compares, merged 2026-10-15T16:48Z) and PR #2651 (pin ScanCode install against pluggy 1.7.0).
+    - Architectural contrast: trace-mcp uses better-sqlite3 with WAL mode and serialized transactions in Node.js, completely avoiding multi-process native C lock-recovery race conditions and ANSI/POSIX journal clashes.
+- oraios/serena:
+  - PR #2171 (Fix dashboard log updates during HTTP MCP server execution, updated 2026-10-15T14:45Z):
+    - Preserved logging handlers and levels with a scoped Uvicorn configuration wrapper and handled log cursor index zero without treating it as missing.
+- colbymchenry/codegraph:
+  - PR #1947 & #1953 (fix(resolution): library-method calls on untyped receivers need receiver evidence (Rust, Go, Python, Kotlin, Scala, C#, Java), updated 2026-10-15T17:49Z):
+    - Problem & change: For untyped method calls (e.g. x.len(), conn.Close(), d.setdefault(), Task.Run(), list.size(), Objects.hash()), CodeGraph previously bound them blindly to any project method with the same name (creating thousands of false positive edges across Rust, Go, Python, Scala, Kotlin, C#, Java). They resorted to hardcoded curated lists of standard library method names (library-methods.ts) and heuristics matching receiver word tokens.
+  - PR #1952 (fix(resolution): resolve a call to the caller's own class member before ranking same-file namesakes, updated 2026-10-15T17:47Z):
+    - Same-file tie breaking previously used line proximity without checking class hierarchy, mistakenly binding calls to sibling classes or creating self-loops.
+    - Architectural contrast: trace-mcp prioritizes precision over speculative call graph density. Rather than constructing speculative heuristic call-graph edges that require hundreds of hand-maintained stdlib name exceptions to prune, trace-mcp provides verified AST symbol definitions, exported symbols, and scope hierarchy, maintaining zero false-positive hallucinated call graphs.
+- tirth8205/code-review-graph:
+  - PR #1105 (fix: repair stale FTS on no-op updates, updated 2026-10-15T16:43Z):
+    - Prevented FTS search index from drifting out of sync when incremental graph post-processing was skipped.
+    - Architectural contrast: trace-mcp uses deterministic SQLite schema triggers and content hashing for symbols, guaranteeing that incremental indexing never causes full-text search drift.
+
+**Competitor pulse (as of 2026-10-15 late night pass):**
+- nikolai-vysotskyi/trace-mcp: 193★ (+1), 24 forks (=)
+- yamadashy/repomix: 28,849★ (=), 1,594 forks (+2)
+- oraios/serena: 30,288★ (+1), 2,078 forks (=)
+- DeusData/codebase-memory-mcp: 46,651★ (+9), 3,839 forks (=)
+- tirth8205/code-review-graph: 32,169★ (+6), 2,950 forks (=)
+- colbymchenry/codegraph: 74,182★ (+16), 4,790 forks (+3)
+- abhigyanpatwari/GitNexus: 47,899★ (+4), 5,198 forks (=)
+- jgravelle/jcodemunch-mcp: 2,773★ (+2), 375 forks (=)
+- continuedev/continue: 36,228★ (=), 5,476 forks (+1)
+- Aider-AI/aider: 49,566★ (+1), 5,061 forks (+1)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+
+### Early morning pass, 2026-10-16 (TRA-2458): mention sweep clean, open threads audit, competitor triage (jcodemunch PR #1100/#1101, codegraph PR #2598, serena PR #2172, continue PR #13386)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- Tracked external threads audit:
+  - hesreallyhim/awesome-claude-code#2871: CLOSED (closed 2026-10-15T06:38Z by maintainer hesreallyhim with state_reason: not_planned; table row updated to closed/rejected, standing no-ping rule holds, no follow-up).
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (updated 2026-10-09T01:18Z with Round 4 review from hetaoBackend). Dedicated lane for Nikolai.
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds (reminder sent 2026-09-26).
+  - ai-boost/awesome-harness-engineering#240: OPEN (mergeable: false/dirty due to upstream context additions; left alone per wontfix-spend / standing no-ping rule: rebase only close to a merge signal).
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - Dokploy/mcp#81: OPEN (updated 2026-10-08T20:56:56Z, community implementation progressing with contributor moataz-hjaiji advancing dokploy-loadTools meta-tool PR).
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry.
+- Touch budget: 0 of 5 used. No outgoing pings or PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Result: Clean. Zero new repos outside `ops/mentions-seen.txt`.
+
+**Competitor intelligence & architectural observations:**
+- jgravelle/jcodemunch-mcp:
+  - PR #1101 (feat: a session lists only its own workspace's indexes by default (repo_visibility), merged 2026-10-15T20:52Z):
+    - Problem & change: Sessions sharing an index store previously saw every repository indexed on the machine. `list_repos` leaked names and paths of other repositories (client code, internal packs, personal projects) across shared agent sessions. Introduced `repo_visibility` configuration (`"workspace"` default vs `"all"`; env `JCODEMUNCH_REPO_VISIBILITY`), hiding out-of-workspace indexes from `list_repos` and restricting ambiguous bare name resolution.
+    - Release v1.108.366 (PR #1100, merged 2026-10-15T18:53Z):
+      - Ships permanent environment variable support without 2.0 deprecation warnings.
+    - Architectural contrast: trace-mcp isolates indexes strictly per workspace root (`.trace/`) by directory path hash in SQLite. The daemon manages project boundaries natively, ensuring multi-project privacy and separation by design without requiring post-hoc visibility filtering over a global multi-repo index.
+- colbymchenry/codegraph:
+  - PR #2598 (fix(cpp): a call on a dereferenced iterator or pointer, `(*it)->Visit()`, calls the method of what it points at, merged 2026-10-15T21:58Z):
+    - Problem & change: For calls through dereferenced pointers or iterators (e.g. `(*it)->Visit()`, `(*node).Weight()`), the extractor emitted bare names without receiver types. Name-matching heuristics then mapped these calls to arbitrary classes having a method of that name with low confidence (0.4–0.7), creating false edges across unrelated classes (e.g. protobuf `FieldDescriptor` calls reaching C# `FieldGeneratorBase`). Introduced `cppDereferenced` expression typing and `matchCppDereferencedCall` to resolve against the target value's type before falling back to name heuristics.
+    - Architectural contrast: trace-mcp resolves symbols using Tree-sitter AST queries with verified syntactic scopes and language-specific definitions rather than speculative heuristic fuzzy-name matching that risks cross-class edge hallucinations.
+- oraios/serena:
+  - PR #2172 (Fix symlink handling in symbol discovery and explicit LSP requests, merged 2026-10-15T19:39Z):
+    - Problem & change: Addresses symlink traversal vulnerabilities and inconsistencies during symbol discovery (Fixes #2163). In untrusted projects, directory traversal now skips file and directory symlinks. For explicit LSP requests, path validation enforces project root containment to prevent symlink traversal outside workspace boundaries.
+    - Architectural contrast: trace-mcp's file walker enforces boundary containment, canonical path checks, and respect for `.gitignore`/`.ignore` rules by default, preventing out-of-tree symlink traversal attacks.
+- continuedev/continue:
+  - PR #13386 (fix(tools): coerce stringified argument types to schema expectations (#13350), updated 2026-10-15T21:43Z):
+    - Problem & change: Certain LLMs (such as Ollama/Qwen) emit JSON arrays, objects, booleans, and numbers as serialized JSON strings in tool call parameters. When dispatched to MCP servers validating parameters with JSON Schema/Zod, this caused `-32602: Invalid arguments` crashes. Continue implemented `coerceArgsToSchema` in its core client tool execution pipeline.
+    - Architectural contrast: trace-mcp tools handle parameter normalization and type coercion gracefully in Node.js server handlers, ensuring tool resilience even when client agents pass serialized JSON strings.
+
+**Competitor pulse (as of 2026-10-16 early morning pass):**
+- nikolai-vysotskyi/trace-mcp: 193★ (=), 24 forks (=)
+- yamadashy/repomix: 28,851★ (+2), 1,598 forks (+4)
+- oraios/serena: 30,295★ (+7), 2,083 forks (+5)
+- DeusData/codebase-memory-mcp: 46,668★ (+17), 3,840 forks (+1)
+- tirth8205/code-review-graph: 32,172★ (+3), 2,954 forks (+4)
+- colbymchenry/codegraph: 74,195★ (+13), 4,792 forks (+2)
+- abhigyanpatwari/GitNexus: 47,900★ (+1), 5,198 forks (=)
+- jgravelle/jcodemunch-mcp: 2,773★ (=), 375 forks (=)
+- continuedev/continue: 36,228★ (=), 5,477 forks (+1)
+- Aider-AI/aider: 49,569★ (+3), 5,060 forks (-1)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+
+### Morning pass, 2026-10-16 (TRA-2468): mention sweep clean, open threads audit, competitor triage (jcodemunch v1.108.368 / PR #1103-#1106, codegraph PR #2609/#2612, continue PR #13388)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- Tracked external threads audit:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (updated 2026-10-09T01:18Z with Round 4 review from hetaoBackend). Dedicated lane for Nikolai.
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds (reminder sent 2026-09-26).
+  - ai-boost/awesome-harness-engineering#240: OPEN (mergeable: false/dirty due to upstream context additions; left alone per wontfix-spend / standing no-ping rule: rebase only close to a merge signal).
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - Dokploy/mcp#81: OPEN (updated 2026-10-08T20:56:56Z, community implementation progressing with contributor moataz-hjaiji advancing dokploy-loadTools meta-tool PR).
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry.
+  - hesreallyhim/awesome-claude-code#2871: CLOSED (closed 2026-10-15T06:38Z by maintainer hesreallyhim with state_reason: not_planned; table row updated to closed/rejected, standing no-ping rule holds, no follow-up).
+- Touch budget: 0 of 5 used. No outgoing pings or PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Result: Clean. Zero new repos outside `ops/mentions-seen.txt`.
+
+**Competitor intelligence & architectural observations:**
+- jgravelle/jcodemunch-mcp:
+  - Release v1.108.368 (PR #1105, merged 2026-10-16T02:10Z; PR #1103 & #1104):
+    - Context provider budget drops (PR #1103, L-190): Context providers running under `JCODEMUNCH_PROVIDER_BUDGET_SECONDS` (such as Express route extractors) previously timed out silently on busy machines without recording partial index state, leading to non-deterministic indexing and keyword generation across incremental builds depending on CPU load. Now records cut providers and schedules them for re-run.
+    - Scanner text & static matching (PR #1104, L-195): Addressed catalog scanners (e.g. mcp.market / plugin scanners) that flag published packages by naively matching `eval`/`exec` strings in test fixtures, prompts, and docstrings.
+    - Path prefix containment (PR #1106, L-197): Drive roots (`folder + os.sep`) produced doubled slashes, breaking path containment and `.gitignore` matching.
+    - Architectural contrast: trace-mcp uses deterministic native Tree-sitter parsing without arbitrary per-file timer cutoffs that cause incomplete index state, relies on SQLite directory path hash isolation rather than fragile string path prefixes, and contains no `eval`/`exec` calls.
+- colbymchenry/codegraph:
+  - PR #2609 (fix(cpp): template explicit specialization naming, merged 2026-10-16T02:41Z): Qualified names previously split template arguments at `::` (e.g. `ReadPrimitive::TYPE_INT32>`), breaking symbol call linkage.
+  - PR #2612 (fix(cpp): free function overload resolution by argument fit, merged 2026-10-16T03:32Z): Free functions previously resolved overloads by line/file proximity rather than argument type signatures, causing wrong-overload bindings.
+  - Architectural contrast: trace-mcp relies on AST scope hierarchy and structured symbol definitions rather than textual or positional proximity heuristics.
+- continuedev/continue:
+  - PR #13388 (fix(indexing): skip directories failing listDir and evict rejected cache entries, updated 2026-10-16T03:57Z): WalkDir previously crashed on virtual or restricted filesystem schemes (e.g. SAP ABAP `adt://` or permission-denied directories) due to unhandled promise rejections in cache.
+  - Architectural contrast: trace-mcp's file walker handles permission denied and unsupported filesystem paths gracefully with per-entry error recovery, preserving indexing integrity.
+
+**Competitor pulse (as of 2026-10-16 morning pass):**
+- nikolai-vysotskyi/trace-mcp: 194★ (+1), 24 forks (=)
+- yamadashy/repomix: 28,855★ (+4), 1,598 forks (=)
+- oraios/serena: 30,303★ (+8), 2,083 forks (=)
+- DeusData/codebase-memory-mcp: 46,677★ (+9), 3,845 forks (+5)
+- tirth8205/code-review-graph: 32,178★ (+6), 2,954 forks (=)
+- colbymchenry/codegraph: 74,213★ (+18), 4,799 forks (+7)
+- abhigyanpatwari/GitNexus: 47,906★ (+6), 5,198 forks (=)
+- jgravelle/jcodemunch-mcp: 2,774★ (+1), 375 forks (=)
+- continuedev/continue: 36,232★ (+4), 5,479 forks (+2)
+- Aider-AI/aider: 49,575★ (+6), 5,061 forks (+1)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+
+### Afternoon pass, 2026-10-16 (TRA-2471): mention sweep (sayef/comind), open threads audit, competitor triage (DeusData v0.12.0 / CBM Lens Beta, jgravelle v1.108.369-370 / PR #1109, colbymchenry PR #2618, oraios PR #2172)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- Tracked external threads audit:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (updated 2026-10-09T01:18Z with Round 4 review from hetaoBackend). Dedicated lane for Nikolai.
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds (reminder sent 2026-09-26).
+  - ai-boost/awesome-harness-engineering#240: OPEN (mergeable: false/dirty due to upstream context additions; left alone per wontfix-spend / standing no-ping rule: rebase only close to a merge signal).
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - Dokploy/mcp#81: OPEN (updated 2026-10-08T20:56:56Z, community implementation progressing with contributor moataz-hjaiji advancing dokploy-loadTools meta-tool PR).
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry.
+  - hesreallyhim/awesome-claude-code#2871: CLOSED (closed 2026-10-15T06:38Z by maintainer hesreallyhim with state_reason: not_planned; table row updated to closed/rejected, standing no-ping rule holds, no follow-up).
+- Touch budget: 0 of 5 used. No outgoing pings or PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Found 1 new repository mentioning trace-mcp:
+  - `sayef/comind`: Independent deterministic code intelligence engine project for coding agents (SCIP-based, self-hosted single binary over MCP). In `docs/design/ledger.md` ("Comind Ledger — design plan", dated 2026-10-13, active pushes 2026-10-16), evaluates agent memory systems under §1 "Why this, why now"; under the "Decision records" category, explicitly cites `trace-mcp` alongside ADR/MADR and Lore trailers, and references `trace-mcp decision memory: https://trace-mcp.com/decision-memory.html`. Recorded as a genuine architectural citation in the surfaces table and silenced in `ops/mentions-seen.txt`.
+
+**Competitor intelligence & architectural observations:**
+- DeusData/codebase-memory-mcp:
+  - Milestone release **v0.12.0** published 2026-10-15T22:08Z (231 PRs merged since v0.11.0, 40 community PRs):
+    - CBM Lens Beta: Added a built-in loopback web UI (`--ui=true`) exploring code knowledge graphs by file, neighborhood, architecture, routes, hotspots, and browser-local assistant model. Subsystem ownership transferred to @BernhardJackiewicz (#2068, #1964, #2383).
+    - Documentation in graph: Markdown, rST, AsciiDoc, PDF, ADRs, diagrams, and OpenAPI specs linked strictly to functions, types, and files.
+    - Smart CI: `detect_changes` seeds graph from diff, walks dependency paths, and identifies affected tests with causal reasons.
+    - Infrastructure as Code: Kubernetes manifests, Helm, Flux/Argo CD, Compose files, Dockerfiles linking to workloads and programs.
+    - Architectural contrast: trace-mcp ships a dedicated standalone Electron desktop app (`trace-mcp-desktop`) with native OS windowing rather than embedding an HTTP web server into the CLI binary; indexes markdown and documentation via lightweight structured symbols (`non-code-scanner`) without requiring heavy graph database schemas or full rebuilds on upgrade; and consumes negligible memory compared to CBM's 46–48 MB binaries and heavy in-memory Cypher graphs.
+- jgravelle/jcodemunch-mcp:
+  - Releases v1.108.369 and v1.108.370 (PR #1109, merged 2026-10-16T08:05Z, LEDGER L-177):
+    - Import extractors: Seven import extractors (PHP group use `use App\Models\{User, Post};`, Kotlin alias `import a.b.D as E`, Scala `import a.b.{C, D}`, Haskell `import A.B (c, d)`, Dart `import 'a.dart' show C, D;`, CJS destructuring `const {a, b} = require("./m")`, and Python line continuation `import os, \`) previously dropped imported names or failed to record edges because regex readers stopped at the opening token without parsing bracketed/destructured lists.
+    - ReDoS vulnerability: CodeQL caught exponential backtracking in `_DART_CLAUSE` regex on unclosed keywords; patched with word boundary assertions (`\b`).
+    - Architectural contrast: trace-mcp uses Tree-sitter AST parsing across all supported grammars instead of bespoke regex extractors, eliminating both import syntax parser fragmentation and ReDoS vulnerabilities at the grammar level.
+- colbymchenry/codegraph:
+  - PR #2618 (fix(cpp): overload const twin resolution, merged 2026-10-16T07:20Z):
+    - Overload resolution scored `const T*` and `T*` parameters identically, picking whichever was declared first and retargeting calls in protobuf (194 calls), rocksdb (25 calls), fmt (14 calls). Introduced `cppConstTwinChoice` and scoring rules for non-const references vs values.
+    - Architectural contrast: trace-mcp focuses on fast AST symbol indexing and structural call hierarchies rather than attempting full C++ compiler overload resolution emulation via heuristic scoring tables.
+- oraios/serena:
+  - PR #2172 (fix symlink handling in symbol discovery and explicit LSP requests, merged 2026-10-15T19:39Z, fixes #2163):
+    - Untrusted projects previously traversed symlinks during symbol discovery or explicit requests, risking path traversal outside project root. Now skips file/dir symlinks in untrusted projects and enforces root containment in `LspApi`.
+    - Architectural contrast: trace-mcp enforces strict realpath root containment by default across all tools and indexers, rejecting traversal outside repository boundaries unconditionally.
+
+**Competitor pulse (as of 2026-10-16 afternoon pass):**
+- nikolai-vysotskyi/trace-mcp: 194★ (=), 24 forks (=)
+- yamadashy/repomix: 28,864★ (+9), 1,601 forks (+3)
+- oraios/serena: 30,310★ (+7), 2,088 forks (+5)
+- DeusData/codebase-memory-mcp: 46,691★ (+14), 3,846 forks (+1)
+- tirth8205/code-review-graph: 32,189★ (+11), 2,956 forks (+2)
+- colbymchenry/codegraph: 74,250★ (+37), 4,803 forks (+4)
+- abhigyanpatwari/GitNexus: 47,910★ (+4), 5,199 forks (+1)
+- jgravelle/jcodemunch-mcp: 2,774★ (=), 375 forks (=)
+- continuedev/continue: 36,232★ (=), 5,480 forks (+1)
+- Aider-AI/aider: 49,586★ (+11), 5,063 forks (+2)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+
+### Evening pass, 2026-10-16 (TRA-2473): mention sweep clean, open threads audit, competitor triage (DeusData v0.12 postinstall breakdown / dynamic import regression, jgravelle v1.108.371, colbymchenry PR #2616, GitNexus PR #3561)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- Tracked external threads audit:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (Round 4 review from hetaoBackend, dedicated lane for Nikolai).
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds (reminder sent 2026-09-26).
+  - ai-boost/awesome-harness-engineering#240: OPEN (mergeable: CONFLICTING due to upstream self-additions; left alone per wontfix-spend / standing no-ping rule: rebase only close to a merge signal).
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - Dokploy/mcp#81: OPEN (community implementation progressing with contributor moataz-hjaiji advancing dokploy-loadTools meta-tool PR).
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry.
+  - hesreallyhim/awesome-claude-code#2871: CLOSED (closed 2026-10-15T06:38Z by maintainer hesreallyhim with state_reason: not_planned; standing no-ping rule holds, no follow-up).
+- Touch budget: 0 of 5 used. No outgoing pings or unsolicited PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Sweep clean: zero new repositories outside the seen list ("No repos outside the seen list. Nothing to read.").
+
+**Ecosystem & useful repositories:**
+- `milisp/mcp-linker` (342★): Cross-client configuration manager and marketplace for Claude Code, Codex, Cursor, etc. Verified that it natively discovers and installs servers directly from the official MCP registry (`registry.modelcontextprotocol.io`), where `io.github.nikolai-vysotskyi/trace-mcp` is active and published, providing immediate one-click discoverability and installation across clients without requiring a dedicated repo submission.
+- `SenseiIssei/Sensei` (2★): Emerging self-hosted local token compaction proxy/gateway for AI tools (Claude Code, Cursor, Aider). Claims 79% token reduction via JSON/log compaction on the wire. Distinct architectural contrast: Sensei compresses raw chat logs and context buffers in-transit at the proxy level, whereas trace-mcp eliminates context waste at the root by replacing blind whole-file reads with precomputed AST maps and structural symbol queries.
+
+**Competitor intelligence & architectural observations:**
+- DeusData/codebase-memory-mcp:
+  - Post-v0.12.0 packaging regression (Issue #2657, opened 2026-10-16 by `hydroplexus`): The v0.12.0 Linux-amd64 binary expanded to 316.0 MB (driven by embedded CBM Lens loopback web UI and monolithic dependencies), exceeding the package's own `install.js` safety limit of 256 MiB (`MAX_ARCHIVE_MEMBER_BYTES = 256 * 1024 * 1024`). As a result, `npm install -g codebase-memory-mcp@0.12.0` fails completely out-of-the-box on Linux.
+  - Dynamic import regression (Issue #2659, opened 2026-10-16 by `benjaminge73` via Claude Code): Python functions called as `module.func()` where `module` was loaded via `importlib.util.spec_from_file_location` + `exec_module` are no longer traced as inbound callers in v0.11.0 and v0.12.0 (broken caller resolution for non-packaged scripts and dynamic test harnesses).
+  - Architectural contrast: trace-mcp maintains a lean architecture with fast tree-sitter AST queries, zero multi-hundred-megabyte binary downloads, zero embedded web servers, and consistent import resolution across all supported languages.
+- jgravelle/jcodemunch-mcp:
+  - Release v1.108.371 (PR #1111 / #1112, merged 2026-10-16T10:41Z / 12:23Z, LEDGER L-184):
+    - Dead-code heuristic refinement: `find_dead_code` and `check_delete_safe` heuristic advice on XML schema (`.xsd`) and WSDL files previously used extension sniffing to decide whether a repo was .NET. Bare `.fs` counted as F#, causing Maven repositories with GLSL fragment shaders (`shader.fs`) to be misclassified as .NET; `.cshtml` and `.razor` were missing from .NET evidence. Fixed to require `.fsproj`/`.fsx`/`.fsi` and added Razor/Blazor extensions.
+    - Architectural contrast: trace-mcp determines project ecosystem and build configuration from authoritative project manifests (e.g. `*.csproj`, `*.fsproj`, `pom.xml`, `package.json`) and tree-sitter AST graphs rather than filename extension heuristics.
+- colbymchenry/codegraph:
+  - PR #2616 (merged 2026-10-16T06:26Z):
+    - Added `cppLibraryElementOf` container accessor type inference for standard/project sequences and holders (`front()`, `back()`, `at()`, `top()`, `get()`, `value()`, `value_or()`) over STL containers, `std::unique_ptr`/`shared_ptr`, and RocksDB/Protobuf types to connect call chains across accessor boundaries.
+    - Architectural contrast: trace-mcp provides structural symbol definition and navigation without attempting to emulate compiler-level C++ template type deductions and accessor heuristic tables.
+- abhigyanpatwari/GitNexus:
+  - PR #3561 (merged 2026-10-16T08:02Z):
+    - Route extraction fix: Ignored Express `app.use` middleware mounts when extracting endpoints to eliminate false positive route registrations, and restricted route metadata comparisons.
+    - Architectural contrast: trace-mcp's framework detection (`src/frameworks/`) specifically isolates HTTP method handlers (`get`, `post`, `put`, `delete`) via semantic AST queries rather than treating generic middleware registrations as callable API routes.
+
+**Competitor pulse (as of 2026-10-16 evening pass):**
+- nikolai-vysotskyi/trace-mcp: 194★ (=), 24 forks (=)
+- yamadashy/repomix: 28,867★ (+3), 1,617 forks (+16)
+- oraios/serena: 30,316★ (+6), 2,103 forks (+15)
+- DeusData/codebase-memory-mcp: 46,700★ (+9), 3,847 forks (+1)
+- tirth8205/code-review-graph: 32,190★ (+1), 2,968 forks (+12)
+- colbymchenry/codegraph: 74,269★ (+19), 4,803 forks (=)
+- abhigyanpatwari/GitNexus: 47,913★ (+3), 5,198 forks (-1)
+- jgravelle/jcodemunch-mcp: 2,775★ (+1), 375 forks (=)
+- continuedev/continue: 36,232★ (=), 5,479 forks (-1)
+- Aider-AI/aider: 49,584★ (-2), 5,063 forks (=)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+
+### Late night pass, 2026-10-16 (TRA-2475): mention sweep (daniyal44/Zyphuel), open threads audit, competitor triage (DeusData packaging bypass / Java exclusion / C macro leak, GitNexus route fix & impact over-rating, CRG .cjs parser gap)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- Tracked external threads audit:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (Round 4 review from hetaoBackend, dedicated lane for Nikolai).
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds (reminder sent 2026-09-26).
+  - ai-boost/awesome-harness-engineering#240: OPEN (mergeable: CONFLICTING due to upstream self-additions; left alone per wontfix-spend / standing no-ping rule: rebase only close to a merge signal).
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - Dokploy/mcp#81: OPEN (community implementation progressing with contributor moataz-hjaiji advancing dokploy-loadTools meta-tool PR).
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry; claim declined and stays declined.
+  - hesreallyhim/awesome-claude-code#2871: CLOSED (closed 2026-10-15T06:38Z by maintainer hesreallyhim with state_reason: not_planned; standing no-ping rule holds, no follow-up).
+- Touch budget: 0 of 5 used. No outgoing pings or unsolicited PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Discovered 1 new repository mentioning trace-mcp: `daniyal44/Zyphuel`.
+  - Audited read-only via raw content: `.mcp.json` and `COMPONENTS_INDEX.md` configure `trace-mcp` (`npx -y trace-mcp@latest`) with description "Framework-aware code intelligence — semantic navigation, impact analysis, and refactoring across 87 framework integrations and 80 languages...".
+  - Origin: downstream project adoption/mirror of the `aitmpl.com` (davila7/claude-code-templates) catalog. Classified and recorded in `ops/mentions-seen.txt`.
+
+**Ecosystem & useful repositories:**
+- `daniyal44/Zyphuel`: Demonstrates downstream real-world adoption of `trace-mcp` configured in project `.mcp.json` via the `aitmpl.com` marketplace templates.
+- `GuillaumeBarnes82/env-doctor`: Open-source environment and GPU/CUDA diagnostics utility pairing a CLI with an MCP server interface, highlighting the pattern of composing specialized environment diagnostic MCPs with structural code intelligence servers like trace-mcp in agent pipelines.
+
+**Competitor intelligence & architectural observations:**
+- DeusData/codebase-memory-mcp:
+  - Packaging bypass (PR #2664, merged 2026-10-16T16:16Z): Instead of addressing binary payload bloat (where Linux-amd64 binary reached 316.0 MB and crashed npm installs by exceeding `MAX_ARCHIVE_MEMBER_BYTES = 256 MiB`), maintainers removed the archive size cap entirely from npm, PyPI, and Go wrappers.
+  - Java package exclusion defect (Issue #2661, opened 2026-10-16T15:22Z): Blanket directory exclusion heuristics treat folder segments named `target`, `tmp`, `deploy`, or `vendor` as build output directories, silently causing valid Java source packages containing those path tokens (e.g. `com.company.deploy.service`) to be omitted from the index.
+  - Macro expansion identifier leakage (Issue #2666, opened 2026-10-16T16:11Z): Identifier tokens passed into C preprocessor macros erroneously generate false USAGE edges to unrelated struct fields sharing the same identifier name.
+  - Architectural contrast: trace-mcp relies on tree-sitter AST queries with zero multi-hundred-megabyte binary downloads, anchors project boundaries to project manifests rather than blanket segment exclusion, and maintains strict lexical AST scoping for identifier references.
+- abhigyanpatwari/GitNexus:
+  - Route extraction regression fix (PR #3603, merged 2026-10-16T17:25Z): Corrected router receiver and mount path resolution after PR #3561's blanket suppression of `app.use` inadvertently discarded nested Express sub-routers.
+  - Impact over-rating (Issue #3602, opened 2026-10-16T12:04Z): `impact` marks symbols HIGH/CRITICAL with `epistemic: exact` based on file-level module imports, treating all importers of a file as direct callers of internal unexported types.
+  - Architectural contrast: trace-mcp maps granular symbol call sites and reference edges rather than equating coarse module imports with symbol dependencies.
+- tirth8205/code-review-graph:
+  - Extension gap (Issue #1117 / PR #1118, 2026-10-16): `EXTENSION_TO_LANGUAGE` lacked `.cjs`, silently dropping CommonJS JavaScript files during indexing.
+  - Architectural contrast: trace-mcp supports all CommonJS and ESM file extensions natively across 81 languages.
+- colbymchenry/codegraph:
+  - Query timeout issue (Issue #2620 / PR #2621, 2026-10-16): Explore queries repeated redundant per-term traversals on large graphs, timing out prompt hooks in Claude.
+  - Architectural contrast: trace-mcp uses indexed SQLite lookups ensuring deterministic sub-millisecond retrieval.
+- jgravelle/jcodemunch-mcp:
+  - Release v1.108.372 (PR #1114 / #1115, merged 2026-10-16T15:59Z, LEDGER L-186): Fixed policy uninstallation to preserve user-custom sections rather than overwriting existing markdown files.
+
+**Competitor pulse (as of 2026-10-16 late night pass):**
+- nikolai-vysotskyi/trace-mcp: 194★ (=), 24 forks (=)
+- yamadashy/repomix: 28,867★ (=), 1,617 forks (=)
+- oraios/serena: 30,323★ (+7), 2,104 forks (+1)
+- DeusData/codebase-memory-mcp: 46,711★ (+11), 3,848 forks (+1)
+- tirth8205/code-review-graph: 32,195★ (+5), 2,968 forks (=)
+- colbymchenry/codegraph: 74,280★ (+11), 4,803 forks (=)
+- abhigyanpatwari/GitNexus: 47,915★ (+2), 5,198 forks (=)
+- jgravelle/jcodemunch-mcp: 2,775★ (=), 375 forks (=)
+- continuedev/continue: 36,231★ (-1), 5,479 forks (=)
+- Aider-AI/aider: 49,583★ (-1), 5,064 forks (+1)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+
+
+
+
+### Early morning pass, 2026-10-17 (TRA-2481): mention sweep clean, open threads audit, competitor triage (codegraph C++ chained member leak & Rust bare-name method match, DeusData v0.12.1 smoke failures & Java HTTP limitations, GitNexus cache identity, jcodemunch v1.108.373)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- Tracked external threads audit:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (Round 4 review from hetaoBackend, dedicated lane for Nikolai).
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds (reminder sent 2026-09-26).
+  - ai-boost/awesome-harness-engineering#240: OPEN (mergeable: CONFLICTING due to upstream self-additions; left alone per wontfix-spend / standing no-ping rule: rebase only close to a merge signal).
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - Dokploy/mcp#81: OPEN (community implementation progressing with contributor moataz-hjaiji advancing dokploy-loadTools meta-tool PR).
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry; claim declined and stays declined.
+  - hesreallyhim/awesome-claude-code#2871: CLOSED (closed 2026-10-15T06:38Z by maintainer hesreallyhim with state_reason: not_planned; standing no-ping rule holds, no follow-up).
+- Touch budget: 0 of 5 used. No outgoing pings or unsolicited PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Result: 0 new repositories outside the seen list ("No repos outside the seen list. Nothing to read."). Sweep clean.
+
+**Ecosystem & useful repositories:**
+- `ptai-eng/chronos-agent` (v1.2.0): Open-source code intelligence harness and blast-radius analysis server combining an MCP server with Petgraph/KuzuDB, PageRank analysis, and mutation sandboxing. Contrast: chronos relies on native Rust compilation, heavy graph database infrastructure, and focused runtime profiling across 3 languages (TS/JS, Python, Rust), while trace-mcp provides instant zero-dependency Node execution with precomputed SQLite indexes across 81 languages and 87 frameworks designed specifically for fast token savings in LLM coding agents.
+- `giauphan/codeatlas-platform`: AI-powered codebase intelligence platform pairing MCP with AST analysis and SQLite/sqlite-vec.
+
+**Competitor intelligence & architectural observations:**
+- colbymchenry/codegraph:
+  - Chained C++ member call leakage (PR #2626, merged 2026-10-16T20:39Z): Chained member calls (`a.b.m()`, `a->b->m()`, or `options.cf_paths.emplace_back(...)` on a `std::vector`) were recorded by the extractor under their bare method name `m`, causing standard library container method calls to erroneously resolve to whatever project method shared the name `emplace_back`.
+  - Rust method resolution by bare name (Issue #2614 / PR #2625, opened 2026-10-16T18:34Z): Rust method calls were matched across the project purely by method name rather than resolving by the receiver's written type and trait implementations.
+  - Architectural contrast: trace-mcp relies on semantic tree-sitter AST queries with receiver type inference, strict scope chains, and qualified member path validation, preventing standard library member method calls from polluting project symbol call graphs.
+- DeusData/codebase-memory-mcp:
+  - Release wrapper smoke failure (PR #2669, merged 2026-10-16T21:38Z): v0.12.1 release run broke in Phase 13w package-wrapper smoke tests on macOS (missing Go toolchain) and Windows (locked worktree tmp dirs), illustrating the maintenance drag of multi-language native distribution wrappers.
+  - Java HTTP extraction limitation (Issue #2668, opened 2026-10-16T18:21Z): Outbound HTTP call extraction (`HTTP_CALLS`) fails for injected clients, format-string URLs, and fluent request builders, extracting edges only for hardcoded string literal URLs.
+  - External receiver call guessing (PR #2667, 2026-10-16): Attempting to suppress speculative name guessing on proven-external receivers.
+  - Architectural contrast: trace-mcp's zero-wrapper TypeScript/Node architecture provides deterministic cross-platform behavior without heavy native toolchains, and models call sites via syntactic call edges rather than fragile string-pattern regexes.
+- abhigyanpatwari/GitNexus:
+  - Cache identity derivation (PR #3606, opened 2026-10-16T21:01Z): Moving to automatically derive parser and PDG cache identities from executed artifacts instead of requiring manual schema version counter management.
+- jgravelle/jcodemunch-mcp:
+  - Release v1.108.373 (PR #1118, 2026-10-16): Updated `claude-md --refresh` to write the server's policy instructions directly.
+
+**Competitor pulse (as of 2026-10-17 early morning pass):**
+- nikolai-vysotskyi/trace-mcp: 194★ (=), 24 forks (=)
+- yamadashy/repomix: 28,870★ (+3), 1,618 forks (+1)
+- oraios/serena: 30,329★ (+6), 2,114 forks (+10)
+- DeusData/codebase-memory-mcp: 46,717★ (+6), 3,850 forks (+2)
+- tirth8205/code-review-graph: 32,195★ (=), 2,973 forks (+5)
+- colbymchenry/codegraph: 74,283★ (+3), 4,803 forks (=)
+- abhigyanpatwari/GitNexus: 47,918★ (+3), 5,199 forks (+1)
+- jgravelle/jcodemunch-mcp: 2,776★ (+1), 375 forks (=)
+- continuedev/continue: 36,233★ (+2), 5,479 forks (=)
+- Aider-AI/aider: 49,584★ (+1), 5,063 forks (-1)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+
+
+
+
+### Morning pass, 2026-10-17 (TRA-2490): mention sweep (wkoch/legacy), open threads audit, competitor triage (codegraph C++ chained & inherited member resolution PR #2627/#2628, DeusData symlink install crash #2671 & Lens local model endpoint #2670, jcodemunch PEP 405 venv prune PR #1122)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- Tracked external threads audit:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (Round 4 review from hetaoBackend, dedicated lane for Nikolai).
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds.
+  - ai-boost/awesome-harness-engineering#240: OPEN (mergeable: CONFLICTING due to upstream self-additions; left alone per wontfix-spend / standing no-ping rule: rebase only close to a merge signal).
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - Dokploy/mcp#81: OPEN (community implementation progressing with contributor moataz-hjaiji advancing dokploy-loadTools meta-tool PR).
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry; claim declined and stays declined.
+  - hesreallyhim/awesome-claude-code#2871: CLOSED (closed 2026-10-15T06:38Z by maintainer hesreallyhim with state_reason: not_planned; standing no-ping rule holds, no follow-up).
+- Touch budget: 0 of 5 used. No outgoing pings or unsolicited PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Discovered 1 genuine third-party evaluation surface outside the seen list:
+  - `wkoch/legacy` (0★, active 2026-10-16): Architecture planning documents `docs/automacao-rede-e-inteligencia.md` and `docs/decisoes.md` evaluating code intelligence architectures for decentralized AI agents. Evaluates `trace-mcp` (citing https://trace-mcp.com/code-graph-mcp.html for incremental local graphs and framework-specific relationships) alongside Graft as potential adapters for logical code mapping. Recommends starting with pilot language adapters. Added to Surfaces table and `ops/mentions-seen.txt`.
+- No outreach / do not ping: purely an independent architectural evaluation, thread untouched per rules.
+
+**Ecosystem & useful repositories:**
+- `wkoch/legacy`: Decentralized agent architecture study. Notable for framing code intelligence as a reconstructible revision-associated cache with origin tracking, contrasting Graft (Tree-sitter extraction + LSP) and trace-mcp (incremental local graph + framework semantics) as adapters rather than hard dependencies.
+- Continues the broader architectural pattern of agent builders recognizing the value of precomputed, lightweight local code maps over raw file reads and unstructured context dumps.
+
+**Competitor intelligence & architectural observations:**
+- colbymchenry/codegraph:
+  - Chained C++ member call linking to project classes (PR #2627, merged 2026-10-16T23:13Z): Step 2 of fixing C++ member-chain calls (`thread->rand.Next()` on `Random64`). Previously bare-name lookup fell back to whatever class declared a method named `Next` (or an implicit `this` call on the calling method's class). Implemented project class resolution via `matchCppMemberChainCall`.
+  - Inherited C++ member calls through chains (PR #2628, merged 2026-10-17T02:05Z): Step 3 of member-chain calls. Resolves calls on inherited members like `options.statistics->getTickerCount(…)` on RocksDB's `Options` by walking base class hierarchy up to depth 4 (`cppInheritedDataMember`) because `Options` inherits `statistics` from `DBOptions`.
+  - Architectural contrast: trace-mcp relies on semantic tree-sitter AST queries with scoped symbol namespaces, receiver type inference, and qualified member path validation, preventing standard library member method calls from polluting project symbol call graphs and avoiding speculative bare-name matching.
+- DeusData/codebase-memory-mcp:
+  - Symlink agent config installer crash (Issue #2671, opened 2026-10-17T04:00Z): `install.sh` downloads and verifies v0.12.1 binary, but crashes during agent configuration when any harness config file (e.g. `/Users/.../Library/Application Support/Zed/settings.json`) is a symlink (common dotfiles pattern). The single failure halts the entire installer, leaving 15+ agent configs in a partially modified state and failing to clean up.
+  - Self-hosted model gap in Lens chat (Issue #2670, opened 2026-10-17T02:41Z): Users request an OpenAI-compatible endpoint setting (Ollama / vLLM / llama.cpp) because CBM Lens enforces downloading small 0.5B-2B in-browser ONNX models per device via WebGPU or binds to a hardcoded `127.0.0.1:4141` loopback sidecar.
+  - Architectural contrast: trace-mcp follows a non-invasive, zero-side-effect architecture. It never silently rewrites 15 different agent config files or breaks on symlinked dotfiles, and requires no heavy multi-gigabyte browser models or native Go/C binaries.
+- jgravelle/jcodemunch-mcp:
+  - Virtualenv pruning by PEP 405 pyvenv.cfg (PR #1122, merged 2026-10-17T02:52Z): Prunes directories whose `pyvenv.cfg` carries a `home` key during indexing walks and watcher paths. Required multiple review rounds to ensure only `site-packages` is pruned rather than project root layout directories (`bin/`, `lib/`), preserving hand-written files.
+  - Test harness and Python 3.14 gaps (PR #1121, merged 2026-10-17T02:16Z): Addressed Python 3.14 `Optional[str]` string formatting divergence (`str | None`) and git blame timeouts under load.
+  - Architectural contrast: trace-mcp's walker (`src/indexer/walker.ts`) uses well-defined ignore patterns and project boundary definitions, preventing accidental exclusion of valid project source files.
+- abhigyanpatwari/GitNexus:
+  - Cache identity derivation (PR #3606, opened 2026-10-16T21:01Z): Automatic derivation of parser and PDG cache identities from executed artifacts.
+
+**Competitor pulse (as of 2026-10-17 morning pass):**
+- nikolai-vysotskyi/trace-mcp: 194★ (=), 24 forks (=)
+- yamadashy/repomix: 28,869★ (-1), 1,618 forks (=)
+- oraios/serena: 30,336★ (+7), 2,114 forks (=)
+- DeusData/codebase-memory-mcp: 46,724★ (+7), 3,849 forks (-1)
+- tirth8205/code-review-graph: 32,203★ (+8), 2,973 forks (=)
+- colbymchenry/codegraph: 74,300★ (+17), 4,804 forks (+1)
+- abhigyanpatwari/GitNexus: 47,919★ (+1), 5,200 forks (+1)
+- jgravelle/jcodemunch-mcp: 2,777★ (+1), 375 forks (=)
+- continuedev/continue: 36,234★ (+1), 5,480 forks (+1)
+- Aider-AI/aider: 49,588★ (+4), 5,064 forks (+1)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+
+
+
+
+### Afternoon pass, 2026-10-17 (TRA-2493): mention sweep clean, open threads audit, competitor triage (codegraph sync import member retry PR #2630 & Windows libuv suspended child leak PR #2629, DeusData duplicate index worker CPU storm & DB corruption #2673, jcodemunch protective boolean env typo PR #1125 & git blame fallback PR #1128, GitNexus rebuild journal consolidation PR #3613 & directory symlink crawler PR #3616)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- Tracked external threads audit:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (Round 4 review from hetaoBackend, dedicated lane for Nikolai).
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds.
+  - ai-boost/awesome-harness-engineering#240: OPEN (mergeable: CONFLICTING due to upstream self-additions; left alone per wontfix-spend / standing no-ping rule: rebase only close to a merge signal).
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry; claim declined and stays declined.
+  - hesreallyhim/awesome-claude-code#2871: CLOSED (closed 2026-10-15T06:38Z by maintainer hesreallyhim with state_reason: not_planned; standing no-ping rule holds, no follow-up).
+- Touch budget: 0 of 5 used. No outgoing pings or unsolicited PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Result: 0 new repos outside the seen list. Sweep verified clean across all search facets.
+- External touches: 0.
+
+**Ecosystem & useful repositories:**
+- Active architectural shift across agent code intelligence tools towards resilient background daemon management and atomic persistence.
+- Multi-client concurrency remains a significant pain point for competitors that lack unified single-instance daemon architectures, leading to SQLite contention and high CPU thrashing when multiple agent sessions connect to the same repository.
+
+**Competitor intelligence & architectural observations:**
+- colbymchenry/codegraph:
+  - Import member relinking on module change (PR #2630, merged 2026-10-17T07:56Z): Addressed failed references to members (`R.m`) accessed through imported module bindings when an edited or added module gains exports. Implemented SQLite expression index `idx_unresolved_failed_module_member` (schema v16) and prefix range lookups on `idx_unresolved_failed_module_name` to retry unresolved member calls without triggering full project re-indexes.
+  - Windows libuv suspended child leak on daemon respawn (PR #2629, merged 2026-10-17T05:14Z): Investigated libuv (v1.51.0 in Node 22) behavior on Windows where detached processes are spawned suspended and resumed only at `uv_spawn` completion. If an MCP launcher process was terminated during a daemon respawn attempt, the spawned daemon was left suspended and unrecorded, consuming 3.6 MB and holding open handles indefinitely without taking a lock. Hardened test teardown to close launcher stdin gracefully rather than killing parent processes synchronously during spawn loops.
+  - Architectural contrast: trace-mcp relies on semantic tree-sitter AST queries with deterministic symbol namespaces, avoiding complex unresolved reference expression parking in SQLite. trace-mcp's daemon lifecycle (hardened in TRA-2438 (#1631) and TRA-2443 (#1630)) correlates PIDs, verify timestamps, and aggregates aborted watcher reindex batches on clean shutdown without leaving unmanaged child processes.
+- DeusData/codebase-memory-mcp:
+  - macOS duplicate index worker CPU storm & database corruption (Issue #2673, opened 2026-10-17T05:08Z): On macOS Apple Silicon, running two concurrent MCP conversations against the same repository causes both servers to spawn duplicate full `index_repository` workers simultaneously (~400–450% CPU each, load average ~55, respawning every 1–8 minutes on file edits). Because staleness triggers a full re-extract rather than debounced incremental updates, and multi-process SQLite writers lack cross-server file locking, databases suffer recurring WAL starvation and corruption (9 quarantined `.db.corrupt` files, including a 669 MB database), forcing endless from-scratch rebuilds.
+  - Architectural contrast: trace-mcp utilizes a single background daemon per workspace with flock/PID synchronization, batch-debounced watcher reindexing, and sub-second incremental tree-sitter graph updates instead of launching multiple 400% CPU workers per client conversation or corrupting SQLite databases under concurrent agent sessions.
+- jgravelle/jcodemunch-mcp:
+  - Typo in boolean env vars silently disabling protections (PR #1125, opened 2026-10-17T05:30Z): In `config._parse_env_value`, any env value not strictly matching `("true", "1", "yes", "on")` evaluated to false. For protective settings enabled by default (`JCODEMUNCH_RESPECT_CACHEDIR_TAG`, `JCODEMUNCH_SKIP_VIRTUALENVS`, `JCODEMUNCH_RUNTIME_REDACT`, etc.), any typo silently switched off protections and PII redaction. Constrained to keep defaults on unrecognized values. Review also exposed that `install-pack` evaluates `JCODEMUNCH_SHARE_SAVINGS != "0"`, causing `false` or `off` to still transmit telemetry (logged as ledger L-212).
+  - Git blame silent failure under host contention (PR #1128, opened 2026-10-17T08:40Z): `GitBlameProvider.detect` probed git root using `git rev-parse --show-toplevel` with a 5s timeout in a bare `except: pass`, silently dropping blame annotations when git timed out on busy machines. Replaced with an in-process filesystem walk for `.git`.
+  - Release v1.108.374 (merged 2026-10-17T04:11Z): Automatically skips Python virtual environments regardless of folder name by inspecting PEP 405 `pyvenv.cfg`.
+  - Architectural contrast: trace-mcp uses strict schema validation for configuration and safe in-memory git metadata checks without brittle process timeouts that silently discard annotations.
+- abhigyanpatwari/GitNexus:
+  - Staged rebuild atomic swap & journal consolidation (PR #3613, opened 2026-10-17T07:56Z): Enforces a verified final checkpoint and consolidation of live journals before swapping the published database during staged full rebuilds, preventing missing or corrupted recovery files from breaking cold readers on interrupted writes.
+  - Directory symlink exclusion in crawler (PR #3616, opened 2026-10-17T08:12Z): Prevented directory symlinks returned by glob from causing repeated analyze/status content drift due to missing hash receipts, enforcing `stat` regular-file checks across traversal and include extractors.
+  - Architectural contrast: trace-mcp's file walker (`src/indexer/walker.ts`) natively differentiates regular files, directory symlinks, and circular links without drift, and uses atomic transactional updates to protect graph integrity.
+
+**Competitor pulse (as of 2026-10-17 afternoon pass):**
+- nikolai-vysotskyi/trace-mcp: 194★ (=), 24 forks (=)
+- yamadashy/repomix: 28,872★ (+3), 1,628 forks (+10)
+- oraios/serena: 30,339★ (+3), 2,138 forks (+24)
+- DeusData/codebase-memory-mcp: 46,739★ (+15), 3,850 forks (+1)
+- tirth8205/code-review-graph: 32,213★ (+10), 2,988 forks (+15)
+- colbymchenry/codegraph: 74,312★ (+12), 4,804 forks (=)
+- abhigyanpatwari/GitNexus: 47,919★ (=), 5,199 forks (-1)
+- jgravelle/jcodemunch-mcp: 2,778★ (+1), 375 forks (=)
+- continuedev/continue: 36,234★ (=), 5,479 forks (-1)
+- Aider-AI/aider: 49,594★ (+6), 5,065 forks (+1)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+
+
+
+
+### Evening pass, 2026-10-17 (TRA-2496): mention sweep clean, open threads audit, competitor triage (codegraph Python builtin member resolution PR #2632 & Rust Cargo workspace path resolution PR #2631, jcodemunch v1.108.375 & install-pack telemetry opt-out PR #1130, DeusData v0.12.1 release sync PR #2674 & musl libc build fix PR #2675, GitNexus OpenCode plugin hooks PR #3619 & semantic rename reviewed edit plan PR #3617)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- Tracked external threads audit:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (Round 4 review from hetaoBackend, dedicated lane for Nikolai).
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds.
+  - ai-boost/awesome-harness-engineering#240: OPEN (mergeable: CONFLICTING due to upstream self-additions; left alone per wontfix-spend / standing no-ping rule: rebase only close to a merge signal).
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry; claim declined and stays declined.
+  - hesreallyhim/awesome-claude-code#2871: CLOSED (closed 2026-10-15T06:38Z by maintainer hesreallyhim with state_reason: not_planned; standing no-ping rule holds, no follow-up).
+- Touch budget: 0 of 5 used. No outgoing pings or unsolicited PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Result: 0 new repos outside the seen list. Sweep verified clean across all search facets.
+- External touches: 0.
+
+**Ecosystem & useful repositories:**
+- Coding-agent tooling ecosystem continues rapid diversification across client-specific hooks (e.g. OpenCode plugin architecture) and multi-package workspace cross-reference extraction.
+- Edge cases in language-specific symbol resolution (Python absolute import member shadowing, Cargo cross-crate workspace paths) and telemetry compliance under configuration opt-outs remain central areas of ongoing maintenance for rival indexers.
+
+**Competitor intelligence & architectural observations:**
+- colbymchenry/codegraph:
+  - Python builtin-named member resolution on absolute imports (PR #2632, opened 2026-10-17T12:48Z by BGamboa13): Fixed project functions named like built-in methods (`get`, `write`, `update`, `items`, `find`, `read`) being dropped as standard dictionary/list/file methods when imported by absolute module path in src-layout projects (`from app import db; db.get(...)`). Added `findPythonModuleFile` fallback and local scope rebinding guards (parameters, `with ... as`, `for`, assignments, walrus operator, `del`, nested defs) to prevent false positives when receivers are rebound.
+  - Cargo workspace cross-crate path resolution (PR #2631, opened 2026-10-17T12:48Z by BGamboa13): Resolves paths into other crates of a Cargo workspace (`sim::items::ItemPool::for_def(...)`) by walking the module tree from anchor (`crate`, `self`, `super`, crate name, or file `use` binding) following `pub use` and glob re-exports; separated Rust path logic into dedicated `rust-paths.ts`.
+  - Architectural contrast: trace-mcp leverages Tree-sitter AST queries with deterministic symbol namespaces and lexical scoping, extracting symbol definitions and references directly without fragile naming heuristics or special-cased built-in method exclusion filters.
+- jgravelle/jcodemunch-mcp:
+  - Release v1.108.375 (published 2026-10-17T13:05Z): Enforces that unrecognized environment variable values for six default-on protective boolean settings (`JCODEMUNCH_RESPECT_CACHEDIR_TAG`, `JCODEMUNCH_SKIP_MSBUILD_OUTPUT`, `JCODEMUNCH_SKIP_NUGET_PACKAGES`, `JCODEMUNCH_SKIP_VIRTUALENVS`, `JCODEMUNCH_TRUSTED_FOLDERS_WHITELIST_MODE`, `JCODEMUNCH_RUNTIME_REDACT`) keep protections active and log warnings, preventing parser typos from silently disabling security and privacy settings.
+  - Starter pack telemetry honors all opt-outs (PR #1130, merged 2026-10-17T14:03Z, ledger L-212): Fixed `install-pack` telemetry sending events unless `JCODEMUNCH_SHARE_SAVINGS` was exactly `0`, ignoring `false`, `off`, `no`, or config `share_savings: false`.
+  - Architectural contrast: trace-mcp operates strictly on opt-in, zero-telemetry by default, conducts no background network telemetry calls in MCP runtime tool paths, and uses strict type-safe schema validation.
+- DeusData/codebase-memory-mcp:
+  - Packaging metadata sync for v0.12.1 (PR #2674, merged 2026-10-17T12:40Z): Synchronized post-release packaging manifests across Chocolatey, Scoop, Homebrew, Go installer, Nix flake, npm, and PyPI with VirusTotal candidate provenance artifacts.
+  - musl libc build fix (PR #2675, opened 2026-10-17T13:16Z by attilaolah): Resolved undefined behavior in `%s` format strings under musl-gcc when `phase` and `log` pointers are null, and enabled `$LD` environment variable override for linker toolchains.
+  - Architectural contrast: trace-mcp is distributed as a pure TypeScript/Node.js package with precompiled native tree-sitter bindings and an Electron desktop bundle, avoiding complex C/musl toolchain build matrices and gigabyte-sized dependencies.
+- abhigyanpatwari/GitNexus:
+  - OpenCode auto-loaded global plugin hooks (PR #3619, opened 2026-10-17T13:02Z by rgb-vgx): Added OpenCode integration parity via a self-contained ESM plugin (`~/.config/opencode/plugins/gitnexus.js`) implementing OpenCode's `tool.execute.after` hook for automatic graph-context augmentation after searches and stale-index hints after git mutations.
+  - Exact reviewed edit plan enforcement for semantic rename (PR #3617, opened 2026-10-17T09:56Z): Hardened semantic rename workflow to enforce verified token and edit plan application with atomic per-file writes, dirty-worktree graph refresh, and strict rollback reporting.
+  - Architectural contrast: trace-mcp exposes standard MCP protocol tools directly, providing clean, predictable context without mutating user global configuration directories or injecting background hook scripts into third-party agent directories.
+
+**Competitor pulse (as of 2026-10-17 evening pass):**
+- nikolai-vysotskyi/trace-mcp: 194★ (=), 24 forks (=)
+- yamadashy/repomix: 28,873★ (+1), 1,630 forks (+2)
+- oraios/serena: 30,343★ (+4), 2,148 forks (+10)
+- DeusData/codebase-memory-mcp: 46,744★ (+5), 3,854 forks (+4)
+- tirth8205/code-review-graph: 32,214★ (+1), 2,998 forks (+10)
+- colbymchenry/codegraph: 74,321★ (+9), 4,804 forks (=)
+- abhigyanpatwari/GitNexus: 47,920★ (+1), 5,198 forks (-1)
+- jgravelle/jcodemunch-mcp: 2,779★ (+1), 376 forks (+1)
+- continuedev/continue: 36,233★ (-1), 5,481 forks (+2)
+- Aider-AI/aider: 49,594★ (=), 5,066 forks (+1)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+
+
+### Late night pass, 2026-10-17 (TRA-2498): mention sweep clean, open threads audit, competitor triage (codegraph Vue module path resolution PR #2633, jcodemunch text-search zero-savings model L-180 PR #1135 & v1.108.376, GitNexus directory symlink convergence PR #3616 & RC v1.6.13-rc.117)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- Tracked external threads audit:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (Round 4 review from hetaoBackend, dedicated lane for Nikolai).
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds.
+  - ai-boost/awesome-harness-engineering#240: OPEN (mergeable: CONFLICTING due to upstream self-additions; left alone per wontfix-spend / standing no-ping rule: rebase only close to a merge signal).
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry; claim declined and stays declined.
+  - hesreallyhim/awesome-claude-code#2871: CLOSED (closed 2026-10-15T06:38Z by maintainer hesreallyhim with state_reason: not_planned; standing no-ping rule holds, no follow-up).
+- Touch budget: 0 of 5 used. No outgoing pings or unsolicited PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Result: 0 new repos outside the seen list. Sweep verified clean across all search facets.
+- External touches: 0.
+
+**Ecosystem & useful repositories:**
+- Coding-agent tooling ecosystem continues rapid diversification across framework-specific import aliases and bundler conventions (Vue CLI `@/` and `~/` module resolution), token-savings measurement integrity, and filesystem-level symlink edge cases.
+- Contrast across code-intelligence tools is increasingly defined by deterministic parsing and indexing vs heuristic regex/string fallbacks and ad-hoc multiplier credits.
+
+**Competitor intelligence & architectural observations:**
+- colbymchenry/codegraph:
+  - Vue module path import resolution (PR #2633, opened 2026-10-17T15:51Z by colbymchenry): Fixed flaw where Vue `@/...` and `~/...` module imports bypassed standard import resolution and returned `getNodesInFile(path)[0]` with 0.9 confidence, which bound imports to arbitrary first-stored constant or component nodes instead of the file node. This broke reference traversal during incremental sync (`reopenReferencesThroughAddedFiles`/`reopenReferencesThroughBarrels`), making graph syncs miss dependent importers in Vue/Nuxt projects. Fixed by delegating module path resolution to the import resolver first (respecting tsconfig paths and workspace packages), and only falling back to Vue CLI extension resolution (`.vue`, `/index.vue`) for SFCs and Vue CLI aliases before hitting virtual-module sinks.
+  - Architectural contrast: trace-mcp relies on `oxc-resolver` and Tree-sitter AST queries for deterministic symbol extraction and module resolution. File node identity and AST symbol declarations are strictly separated by architecture; import links are never bound to arbitrary node array offsets (`getNodesInFile()[0]`), ensuring rock-solid consistency across fresh indexes and incremental syncs.
+- jgravelle/jcodemunch-mcp:
+  - Text search zero-savings model (PR #1135, opened 2026-10-17T16:16Z by jgravelle; ledger L-180): Major correction to token-savings accounting. Previously, `search_text` and `check_references` were given inflated multiplier credits (12.0x and 15.0x) against a symbol-retrieval benchmark that never measured text search, resulting in larger search results claiming higher token savings. Empirical testing showed grep returns the exact same matching lines at a fraction of the token cost (grep tokens were 0.36 of `search_text` and 0.69 of `check_references` tokens). Removed multipliers from `_TOOL_MULTIPLIERS`, renamed metric to `Modeled gross savings`, and priced text-search actions at zero counterfactual savings credit.
+  - Release v1.108.376 (published 2026-10-17T17:50Z): "install-pack honours every savings opt-out".
+  - Batch ledger fixes (PR #1137, opened 2026-10-17T17:58Z): Consolidated fixes for ledgers L-209, L-142, L-144, L-149, L-180.
+  - Architectural contrast: trace-mcp measures token reduction directly against real-world PR review tasks across 60+ external repositories (`70.5% - 72.7%` median reduction in input tokens to achieve comprehension parity) rather than relying on synthetic per-tool multiplier heuristics over grep-like matching lines.
+- abhigyanpatwari/GitNexus:
+  - Directory symlink convergence during indexing (PR #3616, updated 2026-10-17T16:36Z by magyargergo): Fixed issue where repository directory symlinks caused repeated analyze/status runs to fail to converge because the walker returned directory symlinks that never received file hashes, leaving repository freshness permanently stale at the same commit. Fix filters directory symlinks using stat checks to retain only regular-file symlink targets.
+  - Release Candidate v1.6.13-rc.117 (published 2026-10-17T16:25Z).
+  - Architectural contrast: trace-mcp's indexer natively bounds directory traversal using git-ignore and realpath resolution, preventing symlink loops and stale hashes without requiring special-cased stat patches in the walker.
+
+**Competitor pulse (as of 2026-10-17 late night pass):**
+- nikolai-vysotskyi/trace-mcp: 194★ (=), 24 forks (=)
+- yamadashy/repomix: 28,876★ (+3), 1,630 forks (=)
+- oraios/serena: 30,344★ (+1), 2,148 forks (=)
+- DeusData/codebase-memory-mcp: 46,757★ (+13), 3,857 forks (+3)
+- tirth8205/code-review-graph: 32,219★ (+5), 2,997 forks (-1)
+- colbymchenry/codegraph: 74,329★ (+8), 4,806 forks (+2)
+- abhigyanpatwari/GitNexus: 47,925★ (+5), 5,198 forks (=)
+- jgravelle/jcodemunch-mcp: 2,780★ (+1), 376 forks (=)
+- continuedev/continue: 36,234★ (+1), 5,483 forks (+2)
+- Aider-AI/aider: 49,594★ (=), 5,067 forks (+1)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+
+
+### Morning pass, 2026-10-18 (TRA-2502): mention sweep clean, open threads audit, competitor triage (DeusData cross-file method linking in sequential pipeline PR #2678, jcodemunch licence lookup auto-config bug L-215 PR #1138, GitNexus rename preview plan-token binding PR #3617)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- Tracked external threads audit:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (Round 4 review from hetaoBackend, dedicated lane for Nikolai).
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds.
+  - ai-boost/awesome-harness-engineering#240: OPEN (mergeable: CONFLICTING due to upstream self-additions; left alone per wontfix-spend / standing no-ping rule: rebase only close to a merge signal).
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry; claim declined and stays declined.
+  - hesreallyhim/awesome-claude-code#2871: CLOSED (closed 2026-10-15T06:38Z by maintainer hesreallyhim with state_reason: not_planned; standing no-ping rule holds, no follow-up).
+- Touch budget: 0 of 5 used. No outgoing pings or unsolicited PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Result: 0 new repos outside the seen list. Sweep verified clean across all search facets.
+- External touches: 0.
+
+**Ecosystem & useful repositories:**
+- The coding-agent ecosystem is grappling with cross-file symbol resolution nondeterminism, tool configuration side-effects, and atomic refactoring plan guarantees.
+- Tools operating with complex pipelines (separate sequential vs parallel indexing paths, heuristic config file writers, separate preview/apply steps) increasingly surface bugs where AST/graph state diverges across runtime modes.
+- trace-mcp's architectural simplicity (single-pass deterministic AST indexing into SQLite, declarative MCP tool surface with no runtime configuration mutations, and stateless symbol search) avoids these failure modes by design.
+
+**Competitor intelligence & architectural observations:**
+- DeusData/codebase-memory-mcp:
+  - Sequential vs parallel pipeline method linking (PR #2678, opened 2026-10-17T21:35:26Z by DeusData): Fixed critical graph discrepancy between sequential (`CBM_WORKERS=1` or repos <= 50 files) and parallel indexing. In sequential mode, `DEFINES_METHOD` edges were linked during file registration rather than after all definitions exist. When `readdir` returned a file defining a method before the file declaring its parent type (e.g. Go multi-file packages or C++ out-of-line `.cpp` before `.h`), the parent definition was missing, causing silent drops of `DEFINES_METHOD`, `IMPLEMENTS`, and `OVERRIDE` edges (lost 236 `DEFINES_METHOD`, 22 `IMPLEMENTS`, 11 `OVERRIDE` on helm/helm). Fixed by deferring edge linking to a post-Phase 1 pass.
+  - Architectural contrast: trace-mcp uses two-phase indexing where symbol definitions and AST declarations are indexed into SQLite, and references/type relationships are resolved workspace-wide using `oxc-resolver` across the complete indexed repository manifest. Edge relationships never depend on directory walk order or worker count.
+  - DevOps/deployment expansion (PR #2677, opened 2026-10-17T19:14:50Z by DeusData): Added rendering for Helm images, default-valued image markers, CRDs and werf charts.
+  - Test impact optimization (PR #2676, merged 2026-10-17T21:56:50Z): Tightened PR test selection harness.
+- jgravelle/jcodemunch-mcp:
+  - Unsolicited config file generation in license lookup (PR #1138, opened 2026-10-17T21:15:15Z by jgravelle; ledger L-215): Fixed flaw where `install_pack.resolve_effective_license_key` called `load_config(create_missing=True)` before pack installations lacking `--license`. This unexpectedly generated a bare `config.jsonc` file on disk. Lacking a `tool_surface` key, this auto-generated file inadvertently locked first-time users into the bloated 91-tool `full` surface instead of the default lean surface, polluting Claude Code's prompt with unneeded tools.
+  - Architectural contrast: trace-mcp has zero global configuration side-effects on first run or on server invocation. Its MCP surface is intentionally lean and predictable (compact core tools like `get_symbol`, `search`, `get_task_context`, `get_outline`), never writes unsolicited configuration files or secretly toggles agent tool surface settings, and requires zero license checks or pack management.
+- abhigyanpatwari/GitNexus:
+  - Rename preview plan token binding (PR #3617, merged 2026-10-17T18:38:01Z by magyargergo): Introduced an opaque `plan_token` to bind rename preview to rename apply. Prevents `apply` from computing a divergent edit set when files on disk change between preview and execution.
+  - Directory symlink indexing convergence (PR #3616, merged 2026-10-17T18:37:46Z): Resolved infinite loops/non-convergence caused by directory symlinks lacking hashes.
+  - OpenCode integration (PR #3619, opened 2026-10-17T12:05:16Z by rgb-vgx): Shipping hooks as an auto-loaded global plugin for full OpenCode support.
+
+**Competitor pulse (as of 2026-10-18 morning pass):**
+- nikolai-vysotskyi/trace-mcp: 194★ (=), 24 forks (=)
+- yamadashy/repomix: 28,877★ (+1), 1,639 forks (+9)
+- oraios/serena: 30,347★ (+3), 2,164 forks (+16)
+- DeusData/codebase-memory-mcp: 46,774★ (+17), 3,859 forks (+2)
+- tirth8205/code-review-graph: 32,222★ (+3), 3,012 forks (+15)
+- colbymchenry/codegraph: 74,333★ (+4), 4,806 forks (=)
+- abhigyanpatwari/GitNexus: 47,926★ (+1), 5,198 forks (=)
+- jgravelle/jcodemunch-mcp: 2,780★ (=), 376 forks (=)
+- continuedev/continue: 36,235★ (+1), 5,482 forks (-1)
+- Aider-AI/aider: 49,599★ (+5), 5,068 forks (+1)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+
+
+### Pass 2026-10-18 (TRA-2511): mention sweep clean, ProSkills auto-listing verified, competitor triage (DeusData Python root-binding import base resolution PR #2679, jcodemunch v1.108.377 zero-savings text search model L-180 & post-edit filter leak L-142 PR #1140, GitNexus OpenCode plugin hooks PR #3619)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- Tracked external threads audit:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (Round 4 review from hetaoBackend, dedicated lane for Nikolai).
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds.
+  - ai-boost/awesome-harness-engineering#240: OPEN (mergeable: CONFLICTING due to upstream additions; left alone per wontfix-spend / standing no-ping rule: rebase only close to a merge signal).
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry; claim declined and stays declined.
+  - hesreallyhim/awesome-claude-code#2871: CLOSED (closed 2026-10-15T06:38Z by maintainer hesreallyhim with state_reason: not_planned; standing no-ping rule holds, no follow-up).
+- Touch budget: 0 of 5 used. No outgoing pings or unsolicited PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Result: 0 new repos outside the seen list. Sweep verified clean across all search facets.
+- External touches: 0.
+
+**Surfaces & Ecosystem findings:**
+- ProSkillsMD/proskills: Verified auto-scouting and publishing of all three in-repo agent skills (`skills/trace-mcp/SKILL.md` issue #8193 status `groot:published` and `review:pass`; `trace-mcp-codemod` issue #8194; `trace-mcp-pre-commit` issue #8195). Discovered via topic crawl (`claude-skills`).
+- activeing123/mcptoon: Investigated zero-dependency MCP management and token optimization CLI (277★, Apache-2.0). Focuses on tool schema minimization (-99.2% token overhead by stripping uncalled schemas out of agent prompt context). Its pre-packaged `code-review` bundle currently routes to standard GitHub/git/filesystem tools; recorded in ledger as an ecosystem observation.
+
+**Competitor intelligence & architectural observations:**
+- DeusData/codebase-memory-mcp:
+  - Python root-binding import base class resolution (PR #2679, opened 2026-10-18T03:30:00Z by DeusData): Fixed bug where `import pkg.mod.nodes` bound the root name `pkg`, but cross-LSP inheritance resolution (`pxc_resolve_base_qn`) looked up the import-map target `pkg.mod.nodes` joined with the remainder `mod.nodes.Context`, failing to match. As a result, `class X(pkg.mod.nodes.Context)` kept its raw unparsed spelling, breaking the Python LSP inheritance view and causing inherited member lookups to fall back to heuristic name guessing (`self.m()` -> `unique_name`, `super().m()` -> `suffix_match`).
+  - Architectural contrast: trace-mcp uses static AST symbol parsing into SQLite and resolves module imports deterministically via `oxc-resolver` across the indexed manifest, avoiding ad-hoc cross-LSP C string concatenation heuristics.
+- jgravelle/jcodemunch-mcp:
+  - Text search zero-savings model & post-edit ignore leak (PR #1140 / Release v1.108.377, opened 2026-10-18T03:51:13Z by jgravelle):
+    - Replaced inflated token savings multipliers for text searches with zero counterfactual credit (L-180), acknowledging plain text grepping does not compress context over raw file reads.
+    - Reversed previous design where `index_file` post-edit hook bypassed directory exclusion filters (`node_modules/`, `.next/`, virtualenvs, gitignores), which previously allowed ignored build directories and vendor trees to pollute the search index until the next full rebuild (L-142).
+    - Fixed silent timeout drops in `git_blame` detection (L-209).
+  - Architectural contrast: trace-mcp measures real PR-review token savings against actual file reads (70.5% - 72.7% median reduction) rather than synthetic multipliers, and enforces identical gitignore and path traversal filters across both initial indexing and incremental file watching.
+- abhigyanpatwari/GitNexus:
+  - OpenCode auto-loaded plugin integration (PR #3619, updated 2026-10-18T04:00:44Z by rgb-vgx): Adds OpenCode hooks by copying a self-contained ESM plugin into `~/.config/opencode/plugins/gitnexus.js` to augment graph context after search operations (`grep`/`glob`/`bash`) and provide stale-index hints after git mutations.
+  - Architectural contrast: trace-mcp relies on standard MCP client protocol endpoints and non-invasive CLI tools (`trace blast`, `trace impact`), without injecting persistent global plugin files into user config directories.
+
+**Competitor pulse (as of 2026-10-18 pass):**
+- nikolai-vysotskyi/trace-mcp: 193★ (-1), 24 forks (=)
+- yamadashy/repomix: 28,880★ (+3), 1,644 forks (+5)
+- oraios/serena: 30,352★ (+5), 2,170 forks (+6)
+- DeusData/codebase-memory-mcp: 46,788★ (+14), 3,860 forks (+1)
+- tirth8205/code-review-graph: 32,225★ (+3), 3,016 forks (+4)
+- colbymchenry/codegraph: 74,342★ (+9), 4,806 forks (=)
+- abhigyanpatwari/GitNexus: 47,929★ (+3), 5,198 forks (=)
+- jgravelle/jcodemunch-mcp: 2,779★ (-1), 376 forks (=)
+- continuedev/continue: 36,237★ (+2), 5,484 forks (+2)
+- Aider-AI/aider: 49,603★ (+4), 5,069 forks (+1)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+
+
+### Pass 2026-10-18 (TRA-2514): mention sweep clean, competitor triage (DeusData package-relative dot import resolution PR #2680, jcodemunch CLI deny_guard fail-closed hardening PR #1141, GitNexus LadybugDB WAL checkpoint accounting test PR #3624)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- Tracked external threads audit:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (Round 4 review from hetaoBackend, dedicated lane for Nikolai).
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds.
+  - ai-boost/awesome-harness-engineering#240: OPEN (mergeable: UNKNOWN/CONFLICTING due to upstream additions; left alone per wontfix-spend / standing no-ping rule: rebase only close to a merge signal).
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry; claim declined and stays declined.
+  - hesreallyhim/awesome-claude-code#2871: CLOSED (closed 2026-10-15T06:38Z by maintainer hesreallyhim with state_reason: not_planned; standing no-ping rule holds, no follow-up).
+- Touch budget: 0 of 5 used. No outgoing pings or unsolicited PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Result: 0 new repos outside the seen list. Sweep verified clean across all search facets.
+- External touches: 0.
+
+**Surfaces & Ecosystem findings:**
+- ashlrai/phantom-secrets: Local secret masking proxy and value-blind MCP server (v0.7.9, 18★, Rust 1.95) replacing real credentials with scoped `phm_` tokens for Claude Code, Cursor, Windsurf, and Codex. Complements the local privacy and token-boundary ecosystem alongside trace-mcp's redacted `get_env_vars` contract (TRA-1882/1884).
+
+**Competitor intelligence & architectural observations:**
+- DeusData/codebase-memory-mcp:
+  - Python package-relative dot import path extraction & caller/callee resolution (PR #2680, opened 2026-10-18T04:12:16Z by Martin Vogel / DeusData): Fixed an extractor bug where package-relative from-imports with modules composed solely of dots (`from . import x`, `from .. import x`, `from . import x as y`) joined the module to the imported name with an extra separator (`..x` instead of `.x`), causing relative imports to misidentify as parent package bindings. The import resolver then missed the real binding and silently fell back to lexicographically earliest global name guessing, cross-binding thousands of unrelated functions across different integrations (e.g. 7,175 caller/callee pairs in Home Assistant binding webhook handlers to AccuWeather functions). Fixed by joining without an extra separator when the module already ends with `.`.
+  - Architectural contrast: trace-mcp resolves relative imports deterministically against the indexed repository file hierarchy and AST import nodes without synthetic dot-string concatenation heuristics or fallback global name guessing.
+- jgravelle/jcodemunch-mcp:
+  - CLI agent deny_guard fail-closed hardening against irreversible API actions (PR #1141, opened 2026-10-18T04:16:35Z by jgravelle / Claude Opus 5.5): Hardens the Claude Code shell guard against command-line evasion techniques that bypass PR merge/delete blocks, such as flag equality spellings (`gh api --method=PUT`), `-X=PUT`, quoted methods (`--method 'PUT'`), clustered flags (`-iXPUT`), GraphQL mutation queries loaded from files (`-F query=@file`), shell alias bypasses (`gh alias set m`), and implicit POSTs from parameter flags (`-f ref=...`). Additionally changed failure exit code from 1 to 2 because Claude Code treated non-zero exit code 1 as non-blocking and proceeded to execute blocked commands.
+  - Architectural contrast: trace-mcp avoids brittle command-line string-matching heuristics by exposing structured, read-only analysis tools (`search`, `get_symbol`, `get_outline`, `get_task_context`, `trace blast`, `trace impact`) and enforcing strict read/write boundaries with explicit multi-file confirmation semantics within the MCP protocol itself.
+- abhigyanpatwari/GitNexus:
+  - Native LadybugDB WAL checkpoint file handle leak and max DB size accounting guard (PR #3624, opened 2026-10-18T09:22:24Z by rgb-vgx): Adds an integration regression test guarding against engine-level memory leaks during repeated WAL checkpoints. In engine pin `0.18.3`, `ShadowFile::reset()` orphaned `FileHandle` instances on each checkpoint, leaking 4 MiB VMRegion frame groups against `max_db_size` until reaching memory ceilings (256 MiB / 2^38) during heavy embedding writeback passes and failing with transient "Maximum database size ... has been reached" errors.
+  - Architectural contrast: trace-mcp uses standard embedded SQLite in WAL mode with fixed page caches and bounded memory usage, eliminating native engine VMRegion handle leaks during large-scale incremental repository indexing.
+
+**Competitor pulse (as of 2026-10-18 pass):**
+- nikolai-vysotskyi/trace-mcp: 193★ (=), 24 forks (=)
+- yamadashy/repomix: 28,881★ (+1), 1,654 forks (+10)
+- oraios/serena: 30,351★ (-1), 2,188 forks (+18)
+- DeusData/codebase-memory-mcp: 46,807★ (+19), 3,862 forks (+2)
+- tirth8205/code-review-graph: 32,230★ (+5), 3,029 forks (+13)
+- colbymchenry/codegraph: 74,352★ (+10), 4,805 forks (-1)
+- abhigyanpatwari/GitNexus: 47,930★ (+1), 5,198 forks (=)
+- jgravelle/jcodemunch-mcp: 2,779★ (=), 376 forks (=)
+- continuedev/continue: 36,240★ (+3), 5,487 forks (+3)
+- Aider-AI/aider: 49,606★ (+3), 5,070 forks (+1)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+
+
+### Pass 2026-10-18 (TRA-2516): mention sweep clean, ecosystem findings (spine-bank, rootpath, purser), competitor triage (GitNexus section filtering PR #3621 & eval PR #3622, jcodemunch config side-effect PR #1142 & release dispatch PR #1143, codegraph Vue resolver PR #2633)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- Tracked external threads audit:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (Round 4 review from hetaoBackend, dedicated lane for Nikolai).
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds (reminder budget spent).
+  - ai-boost/awesome-harness-engineering#240: OPEN (mergeable: UNKNOWN/CONFLICTING due to upstream additions; left alone per wontfix-spend / standing no-ping rule: rebase only close to a merge signal).
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry; claim declined and stays declined.
+  - hesreallyhim/awesome-claude-code#2871: CLOSED (closed 2026-10-15T06:38Z by maintainer hesreallyhim with state_reason: not_planned; standing no-ping rule holds, no follow-up).
+- Touch budget: 0 of 5 used. No outgoing pings or unsolicited PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Result: 0 new repos outside the seen list. Sweep verified clean across all search facets.
+- External touches: 0.
+
+**Surfaces & Ecosystem findings:**
+- romannekrasovaillm/spine-bank: Deterministic architectural gate and offline validation harness with an MCP server for CLI coding agents (Claude Code, GigaCode, Kimi Code, Qwen Code, OpenClaw). Features offline rule evaluation, verification memory, and rule enforcement without external LLM API calls.
+- IWhitebird/rootpath: Incident resolution agent running over a FalkorDB service/deployment/dependency graph. Connects as an MCP host and Claude Code plugin to trace production failures from alert triggers to root cause code locations.
+- neurot1ca/purser-claude-orchestrator: Claude Code orchestration plugin that delegates implementation tasks to Codex in parallel git worktrees while retaining Claude for planning and code review, reducing primary token expenditure.
+
+**Competitor intelligence & architectural observations:**
+- abhigyanpatwari/GitNexus:
+  - Agent section filtering in MCP graph responses (PR #3621, opened 2026-10-18T07:02:15Z by magyargergo): Implements explicit section and relationship-category filter arguments for graph queries, enabling agents to request targeted sub-graphs rather than consuming broad graph edge dumps that bloat context and trigger repeated model re-reading.
+  - PR cost evaluation benchmarking by label (PR #3622, opened 2026-10-18T08:14:29Z by magyargergo): Adds `run-cost-evaluation` PR label workflow executing 12 MCP test sessions comparing billed costs and task solve rates against latest main release benchmarks.
+  - Architectural contrast: trace-mcp avoids complex response-masking parameters by design; its atomic MCP tools (`get_symbol`, `get_outline`, `get_task_context`, `search`) return lean, pre-compacted code intelligence structures by default.
+- jgravelle/jcodemunch-mcp:
+  - CLI install-pack configuration side-effect elimination (PR #1142 / v1.108.378, opened 2026-10-18T13:46:31Z by jgravelle): Fixed a bug where running `install-pack <id>` without `--license` wrote a default `config.jsonc` file to disk during license checks if none existed. Because the generated default lacked the `tool_surface` key, it inadvertently pinned users to the `full` tool surface mode.
+  - CI release dispatch governance & token scoping (PR #1143, opened 2026-10-18T13:55:47Z by jgravelle): Hardened workflow triggers so `release.yml` executes only when initiated directly by maintainer `jgravelle`, while restricting GitHub App tokens to per-job minimal scopes after granting Actions write permissions for automated competitive evaluation dispatch.
+  - Architectural contrast: trace-mcp has zero license key lookup workflows, never mutates workspace config files during tool invocation, and isolates state within dedicated profile locations.
+- colbymchenry/codegraph:
+  - Vue import path resolution (@/ and ~/ aliases) fix (PR #2633, opened 2026-10-17T15:51:05Z by colbymchenry): Fixed an issue where `vueResolver.resolve` ran before the general import resolver on projects with Vue/Nuxt dependencies, naively rewriting `@/` and `~/` paths to `src/` and returning `getNodesInFile(path)[0]` at 0.9 confidence (whichever AST node was declared first in the file rather than the module itself).
+  - Architectural contrast: trace-mcp relies on `oxc-resolver` and tree-sitter AST symbol resolution honoring project path alias configurations (`tsconfig.json`/`jsconfig.json`) instead of path-string rewriting heuristics and arbitrary node-order fallbacks.
+
+**Competitor pulse (as of 2026-10-18 14:05 UTC pass):**
+- nikolai-vysotskyi/trace-mcp: 193★ (=), 24 forks (=)
+- yamadashy/repomix: 28,889★ (+8), 1,655 forks (+1)
+- oraios/serena: 30,360★ (+9), 2,189 forks (+1)
+- DeusData/codebase-memory-mcp: 46,824★ (+17), 3,864 forks (+2)
+- tirth8205/code-review-graph: 32,235★ (+5), 3,029 forks (=)
+- colbymchenry/codegraph: 74,361★ (+9), 4,807 forks (+2)
+- abhigyanpatwari/GitNexus: 47,931★ (+1), 5,198 forks (=)
+- jgravelle/jcodemunch-mcp: 2,781★ (+2), 376 forks (=)
+- continuedev/continue: 36,240★ (=), 5,489 forks (+2)
+- Aider-AI/aider: 49,610★ (+4), 5,072 forks (+2)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+
+### Pass 2026-10-18 (TRA-2518): mention sweep clean, ecosystem findings (Hivora, graphmaster, repomap, neat), competitor triage (GitNexus fetch-wrapper PR #3628, DeusData Rust generic impl PR #2685 & Python nested defs PR #2686, jcodemunch ledger PR #1144)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- Tracked external threads audit:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (Round 4 review from hetaoBackend, dedicated lane for Nikolai).
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds (reminder budget spent).
+  - ai-boost/awesome-harness-engineering#240: OPEN (mergeable: CONFLICTING due to upstream additions; left alone per wontfix-spend / standing no-ping rule: rebase only close to a merge signal).
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry; claim declined and stays declined.
+  - hesreallyhim/awesome-claude-code#2871: CLOSED (closed 2026-10-15T06:38Z by maintainer hesreallyhim with state_reason: not_planned; standing no-ping rule holds, no follow-up).
+- Touch budget: 0 of 5 used. No outgoing pings or unsolicited PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Result: 0 new repos outside the seen list. Sweep verified clean across all search facets.
+- External touches: 0.
+
+**Surfaces & Ecosystem findings:**
+- Enard52/Hivora: Open-source multi-agent orchestrator for Claude Code, Cursor, Copilot & Cline featuring symbol-level locking and git worktree isolation. Dependency detection (`packages/orchestrator/src/deps/dependents.ts`) uses synchronous recursive directory traversal (`walkCodeFiles`) and raw regex word-boundary scanning (`\b<symbol>\b`) across up to 2,000 files to infer dependent callers before locking.
+  - Architectural contrast: trace-mcp indexes true AST call-graph edges and module dependencies into SQLite via tree-sitter, providing instant, sub-millisecond call-path analysis (`trace blast`, `trace impact`, `get_symbol`) without regex false positives (variable names in comments/strings) or disk I/O thrashing.
+- pragmataW/graphmaster: Go-based local code graph engine serving 13 MCP tools (`callers`, `impact`, `find_symbol`, `search`, `inheritance`) over stdio with tree-sitter + SQLite. Implements token budgeting (`max_tokens`), edge confidence scoring (1-100), and a PreToolUse hook for Claude Code to steer Grep/Glob calls toward symbol queries.
+  - Architectural contrast: trace-mcp provides broader multi-language support (16 languages vs Go/TS/Python subset), an integrated Electron desktop UI, and persistent decision/state tracking (`decisions.db`, `state.db`) in addition to AST code navigation.
+- SylphxAI/repomap: Rust-based code mapping tool (unifying Spine, Locus, and CodeRAG) offering call trees, impact analysis, and hybrid search (BM25 + local embeddings downloaded from Hugging Face). Includes an opt-in Claude Code search-steering hook.
+  - Architectural contrast: trace-mcp operates with zero network dependencies or background model downloads (100% offline local static analysis via tree-sitter), eliminating model download overhead and Hugging Face API availability risks.
+- neat-technologies/neat: Graph engine fusing tree-sitter static analysis with OpenTelemetry runtime trace data, exposed over MCP (24 tools) and packaged as a Claude Code plugin with a `PreToolUse` search-nudge hook and web dashboard.
+  - Architectural contrast: trace-mcp provides lightweight, zero-daemon stdio execution tailored for resource-constrained local workflows without requiring OpenTelemetry collectors or external runtime telemetry infrastructure.
+
+**Competitor intelligence & architectural observations:**
+- abhigyanpatwari/GitNexus:
+  - Base-URL fetch wrapper linking for route extraction (PR #3628, opened 2026-10-18T17:20:13Z by abhigyanpatwari): Introduces AST walking for fetch wrapper chains (`fetchWithTimeout` -> `resilientFetch` -> `fetch`) and strips leading `${base}` templates to map frontend API calls to backend route definitions. Requires complex heuristic filters to prevent false positive bindings from string literals (`'Failed to fetch'`) or parameter sibling collisions (`/api/analyze/${id}`).
+  - Express router registration via helper parameters (PR #3629, opened 2026-10-18T17:21:20Z by abhigyanpatwari): Follows router registrations passed through helper parameters.
+  - Architectural contrast: trace-mcp focuses on semantic code intelligence, symbol definitions, references, import/export dependency graphs, and AST-level symbol outline/context (`get_symbol`, `get_outline`, `get_task_context`, `trace blast`, `trace impact`). It intentionally avoids brittle ad-hoc HTTP string-matching heuristics to simulate client-server RPCs.
+- DeusData/codebase-memory-mcp:
+  - Generic impl call scoping in Rust (PR #2685, opened 2026-10-18T15:26:04Z by Martin Vogel): Resolves issue #763 where calls inside methods of generic Rust impl blocks (`impl<T> Gen<T>`) kept type parameters in their caller qualified name (`Gen<T>.in_generic`), conflicting with the stripped definition qualified name (`Gen.in_generic`). Across 9 pinned Rust repositories (diesel, tokio, tauri, etc.), this mismatch had caused 22,287 method calls to collapse onto the root File node instead of the calling method node (−93% drop to 1,572 File-scoped calls upon stripping generic parameters).
+  - Lexical scoping and extraction for Python nested definitions (PR #2686, opened 2026-10-18T15:26:47Z by Martin Vogel): Extracts nested functions and classes (closures, app-factory routes, test helpers) with qualified names `<enclosing>.<name>` and resolves bare local calls lexically before global registry fallback. Previously, nested definitions were ignored, causing calls to collapse to File nodes and bare calls to erroneously bind to unrelated global definitions via loose name heuristics (`suffix_match`).
+  - Architectural contrast: trace-mcp's tree-sitter queries extract full lexical symbol hierarchies natively across all supported languages, correctly retaining parent-child scopes in symbol trees (`get_symbol`, `get_outline`) without collapsing nested definitions to file containers.
+- jgravelle/jcodemunch-mcp:
+  - Defect ledger and release governance updates (PR #1144, opened 2026-10-18T14:15:55Z by jgravelle): Documents ledger entry L-218 regarding a race in `open_selective` returning cached full index during fast-path test execution, registry publish verification timeout (C-27), and pre-PR branch validation hook across git worktrees (W-58).
+
+**Competitor pulse (as of 2026-10-18 18:05 UTC pass):**
+- nikolai-vysotskyi/trace-mcp: 193★ (=), 24 forks (=)
+- yamadashy/repomix: 28,895★ (+6), 1,665 forks (+10)
+- oraios/serena: 30,365★ (+5), 2,195 forks (+6)
+- DeusData/codebase-memory-mcp: 46,842★ (+18), 3,864 forks (=)
+- tirth8205/code-review-graph: 32,238★ (+3), 3,033 forks (+4)
+- colbymchenry/codegraph: 74,371★ (+10), 4,808 forks (+1)
+- abhigyanpatwari/GitNexus: 47,932★ (+1), 5,198 forks (=)
+- jgravelle/jcodemunch-mcp: 2,781★ (=), 376 forks (=)
+- continuedev/continue: 36,243★ (+3), 5,490 forks (+1)
+- Aider-AI/aider: 49,614★ (+4), 5,072 forks (=)
+
+**Catalogs:** Moratorium holds.
+**Touch budget:** 0 of 5 used.
+
+
+
+### Pass 2026-10-19 (TRA-2525): mention sweep clean, ecosystem findings (Ariadne, codegraph-go, Vex, Patchloom), competitor triage (DeusData Claude Code tool deferral PR #2698 & Python C3 MRO PR #2696, GitNexus routes PR #3629, jcodemunch CI tokens PR #1143)
+
+Audited read-only via GitHub API, nothing written outside this repository.
+
+**Open threads audit (via GitHub API read-only):**
+- Tracked external threads audit:
+  - MiniMax-AI/MiniMax-Code-Plugins#54: OPEN (Round 4 review from hetaoBackend, dedicated lane for Nikolai).
+  - GetBindu/awesome-claude-code-and-skills#195: OPEN, mergeable, standing no-ping rule holds.
+  - 0xNyk/awesome-hermes-agent#395: OPEN issue, standing no-ping rule holds.
+  - tolkonepiu/best-of-mcp-servers#384: OPEN, mergeable, standing no-ping rule holds (reminder budget spent).
+  - ai-boost/awesome-harness-engineering#240: OPEN (mergeable: CONFLICTING due to upstream additions; left alone per wontfix-spend / standing no-ping rule: rebase only close to a merge signal).
+  - natsukium/mcp-servers-nix#606: OPEN issue, standing no-ping rule holds.
+  - hashgraph-online/awesome-ai-plugins#182: MERGED, listed in HOL Registry; claim declined and stays declined.
+  - hesreallyhim/awesome-claude-code#2871: CLOSED (closed 2026-10-15T06:38Z by maintainer hesreallyhim with state_reason: not_planned; standing no-ping rule holds, no follow-up).
+- Touch budget: 0 of 5 used. No outgoing pings or unsolicited PRs opened.
+
+**Mention sweep (scripts/mention-sweep.sh):**
+- Ran both passes across all 9 search patterns (4 general/domain/npx queries, 5 paired competitor queries).
+- Result: 0 new repos outside the seen list. Sweep verified clean across all search facets.
+- External touches: 0.
+
+**Surfaces & Ecosystem findings:**
+- CRJFisher/ariadne: TypeScript/Node code intelligence engine and MCP server (`@ariadnejs/mcp`) using tree-sitter. Exposes entry-point discovery (`list_entrypoints`) and neighborhood traversal (`show_call_graph_neighborhood`), filtering framework-invoked routes and test functions. Supports 4 languages (JS, TS, Python, Rust).
+  - Architectural contrast: trace-mcp indexes true AST call-graph edges and module dependencies into a persistent SQLite database across 16 languages (vs 4 in Ariadne), provides an integrated Electron desktop UI, and persistent decision/state tracking (`decisions.db`, `state.db`) alongside AST navigation tools (`get_symbol`, `get_outline`, `get_task_context`, `trace blast`, `trace impact`).
+- isink17/codegraph: Go-based single-binary local code context engine and MCP server (29 tools) under FSL-1.1-MIT. Indexes source code into a persistent SQLite graph to serve symbol lookups, call graphs, impact analysis, and task context (`context_for_task`, `agentic_query`) across 12 languages.
+  - Architectural contrast: trace-mcp is fully permissive open-source (MIT), supports 16 languages, integrates with an Electron desktop application, executes via zero-daemon stdio, and separates static AST indexing from runtime memory/telemetry stores without embedding model dependencies.
+- tenatarika/vex: Rust-based hybrid structural and semantic code search CLI/MCP (32 commands) combining FST, BM25, and local HNSW vector index across 20 languages. Features persistent call graphs (`vex callers`, `vex callees`) and AST pattern matching (`vex pattern`).
+  - Architectural contrast: trace-mcp focuses on 100% offline static AST analysis with SQLite without the overhead, memory footprint, or Hugging Face model downloads required by local HNSW vector embeddings.
+- patchloom/patchloom: Rust single-binary structured file editor for AI agents (JSON/YAML/TOML, AST, multi-file batch/tx with undo, MCP server). Focuses on atomic write operations and syntax-preserving config mutations.
+  - Architectural contrast: Patchloom specializes in structured mutation/writing, whereas trace-mcp specializes in static read/navigation/token-reduction intelligence. They occupy complementary roles in an agent workspace.
+
+**Competitor intelligence & architectural observations:**
+- DeusData/codebase-memory-mcp:
+  - Claude Code MCP tool deferral upfront loading (PR #2698, opened 2026-10-18T21:46:17Z by Martin Vogel): Tackles Claude Code tool deferral where tools are omitted from upfront system prompt unless tagged. Adds `_meta["anthropic/alwaysLoad"]: true` to structural tools (`search_graph`, `trace_path`, `get_code_snippet`), keeping the remaining 14 tools deferred. Re-engineers server instructions (from 309 to 999 chars) to declare which structural questions the graph answers vs where grep fits better.
+  - Python C3 linearization for super() calls (PR #2696, opened 2026-10-18T21:17:28Z by Martin Vogel): Resolves `super()` calls through Python's C3 method resolution order instead of walking inheritance bases sequentially, preventing incorrect shared-base binding on mixin hierarchies (e.g. in scikit-learn, sqlalchemy, home-assistant).
+- abhigyanpatwari/GitNexus:
+  - Route linking via Express helper parameters (PR #3629, opened 2026-10-18T17:21:20Z by abhigyanpatwari): Follows router registrations passed through helper parameters.
+  - Base-URL fetch wrapper linking for route extraction (PR #3628, opened 2026-10-18T17:20:13Z by abhigyanpatwari): Traces AST wrapper chains (`fetchWithTimeout` -> `resilientFetch` -> `fetch`) and strips `${base}` templates to bind client calls to server endpoints.
+  - Architectural contrast: trace-mcp provides deterministic AST code navigation, definition/reference lookup, and lexical scope analysis without ad-hoc heuristic HTTP route matching.
+- jgravelle/jcodemunch-mcp:
+  - GitHub App token scoping and rerun reason guard (PR #1143, opened 2026-10-18T18:00:23Z by jgravelle): Scopes GitHub App tokens per release job and validates rerun reasons against strict regex to prevent GITHUB_OUTPUT injection.
+  - Defect ledger L-218 and fast-path cache race (PR #1144).
+
+**Competitor pulse (as of 2026-10-19 02:05 UTC pass):**
+- nikolai-vysotskyi/trace-mcp: 193★ (=), 24 forks (=)
+- yamadashy/repomix: 28,896★ (+1), 1,677 forks (+12)
+- oraios/serena: 30,368★ (+3), 2,216 forks (+21)
+- DeusData/codebase-memory-mcp: 46,857★ (+15), 3,870 forks (+6)
+- tirth8205/code-review-graph: 32,245★ (+7), 3,043 forks (+10)
+- colbymchenry/codegraph: 74,386★ (+15), 4,808 forks (=)
+- abhigyanpatwari/GitNexus: 47,936★ (+4), 5,197 forks (-1)
+- jgravelle/jcodemunch-mcp: 2,782★ (+1), 375 forks (-1)
+- continuedev/continue: 36,248★ (+5), 5,491 forks (+1)
+- Aider-AI/aider: 49,617★ (+3), 5,074 forks (+2)
 
 **Catalogs:** Moratorium holds.
 **Touch budget:** 0 of 5 used.

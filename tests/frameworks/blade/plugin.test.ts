@@ -9,6 +9,7 @@ import {
   xComponentToPath,
 } from '../../../src/indexer/plugins/integration/view/blade/index.js';
 import type { ProjectContext } from '../../../src/plugin-api/types.js';
+import { _resetYieldCountForTests, getYieldCount } from '../../../src/utils/event-loop.js';
 
 const FIXTURE_DIR = path.resolve(__dirname, '../../fixtures/blade-laravel');
 
@@ -141,6 +142,94 @@ describe('BladePlugin', () => {
     it('has correct name and dependencies', () => {
       expect(plugin.manifest.name).toBe('blade');
       expect(plugin.manifest.dependencies).toEqual(['laravel']);
+    });
+  });
+
+  describe('resolveEdges() file filtering (TRA-2394)', () => {
+    it('does not yield fair turns on non-Blade files', async () => {
+      const files = Array.from({ length: 500 }, (_, i) => ({
+        id: i + 1,
+        path: `src/file${i}.ts`,
+        language: 'typescript',
+      }));
+
+      let readFileCalls = 0;
+      const mockCtx: any = {
+        rootPath: '/dummy',
+        getAllFiles: () => files,
+        getSymbolsByFile: () => [],
+        getSymbolByFqn: () => undefined,
+        readFile: () => {
+          readFileCalls++;
+          return '';
+        },
+      };
+
+      _resetYieldCountForTests();
+      const result = await plugin.resolveEdges(mockCtx);
+      expect(result.isOk()).toBe(true);
+      expect(result._unsafeUnwrap()).toEqual([]);
+      // On pre-fix code, 500 non-Blade files yielded every 16 files (~32 times)
+      // and read each file from disk before checking .blade.php extension.
+      // With pre-filtering, 0 yields and 0 reads occur.
+      expect(getYieldCount()).toBe(0);
+      expect(readFileCalls).toBe(0);
+    });
+
+    it('restricts scanning to changeScope in incremental runs (TRA-2434)', async () => {
+      const files = [
+        { id: 1, path: 'resources/views/a.blade.php', language: 'php' },
+        { id: 2, path: 'resources/views/b.blade.php', language: 'php' },
+        { id: 3, path: 'resources/views/c.blade.php', language: 'php' },
+      ];
+
+      let readFileCalls = 0;
+      const mockCtx: any = {
+        rootPath: '/dummy',
+        changeScope: {
+          changedFileIds: new Set([2]),
+        },
+        getAllFiles: () => files,
+        getSymbolsByFile: () => [],
+        getSymbolByFqn: () => undefined,
+        readFile: (p: string) => {
+          readFileCalls++;
+          return '<div>Hello</div>';
+        },
+      };
+
+      _resetYieldCountForTests();
+      const result = await plugin.resolveEdges(mockCtx);
+      expect(result.isOk()).toBe(true);
+      expect(readFileCalls).toBe(1);
+      expect(getYieldCount()).toBe(0);
+    });
+
+    it('early-exits immediately when changeScope contains no blade files (TRA-2434)', async () => {
+      const files = [
+        { id: 1, path: 'resources/views/a.blade.php', language: 'php' },
+        { id: 2, path: 'app/Models/User.php', language: 'php' },
+      ];
+
+      let readFileCalls = 0;
+      const mockCtx: any = {
+        rootPath: '/dummy',
+        changeScope: {
+          changedFileIds: new Set([2]), // Only User.php changed
+        },
+        getAllFiles: () => files,
+        getSymbolsByFile: () => [],
+        getSymbolByFqn: () => undefined,
+        readFile: () => {
+          readFileCalls++;
+          return '';
+        },
+      };
+
+      const result = await plugin.resolveEdges(mockCtx);
+      expect(result.isOk()).toBe(true);
+      expect(result._unsafeUnwrap()).toEqual([]);
+      expect(readFileCalls).toBe(0);
     });
   });
 });

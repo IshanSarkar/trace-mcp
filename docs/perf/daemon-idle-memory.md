@@ -284,3 +284,110 @@ SQLite work or an event-loop stall. Correlate any wall-clock stall with
 `pmset -g log` before attributing it to indexing. TRA-2375 tracks a
 sleep-aware diagnostic and a separate check of framework-plugin timeouts
 observed around wake.
+
+---
+
+## 2026-10-15 — field baseline before the TRA-2434 release
+
+Read-only observation of the installed v3.37.3 daemon (PID 93105, port 3741),
+02:00–02:03:38 +0400. This build predates the merged scope-aware framework
+resolution fix in TRA-2434 / PR #1603; the observation is **not** a verdict on
+that fix.
+
+In `~/.agy/3/.trace/daemon.log`, the window contains 15 `Event loop stall`
+warnings (2,068–57,443 ms), all with `reindexInFlight: 2`; four
+`resolveEdges` timeouts (Laravel 1, Blade 1, Vue 2); 501 watcher
+`reindex-file` events; and two FSEvents drops. Vitals stayed near 1.94 GB RSS
+with two projects indexing. A `GET /health` timed out after 3 s while the
+process still owned the listening socket. `pmset -g log` has no sleep/wake
+transition in that window, so the 57 s stall should not be dismissed as a
+suspend-time artifact. The watcher events and FSEvents drops are concurrent
+signals, not an established cause of the stalls.
+
+After a release containing PR #1603 is installed, repeat the same bounded log
+query and `/health` probe during comparable indexing work. Compare timeout
+counts and stall duration, and keep `projects_indexing` in view: these are busy
+samples and must not be used to test the idle RSS ceiling above.
+
+---
+
+## 2026-10-16 — the field daemon exceeds the idle RSS ceiling (TRA-2459)
+
+Read-only observation of the installed v3.37.4 daemon, PID 74675. Between
+2026-10-15 21:42:38 and 21:47:38 UTC, six consecutive one-minute vitals
+samples had `projects_loaded: 3`, `projects_indexing: 0`, and RSS 1100–1102 MB
+(heap used 584–587 MB). The stated ceiling at three loaded projects is
+`250 + 75 × 3 = 475 MB`; this field window exceeds it by at least 625 MB.
+The log contains no indexing start/completion or warning in the window. Its
+seven watcher `reindex-file` telemetry records each indexed zero files and
+took 0–1 ms. This is a stronger idle check than filtering a single vitals
+sample, though it does not identify the retained objects.
+
+`GET /debug/memory` later, after the daemon loaded five projects and resumed
+indexing, reported 1509 MB RSS and 826 MB heap used. The session journal had
+zero entries and its compact buffer used zero bytes; the tree cache reported
+about 5.9 MB. Those later numbers are **not** an idle measurement. They only
+rule out the already-capped journal and the visible tree cache as explanations
+for the then-current heap size. TRA-2061 owns attribution of the remaining
+growth. Until that investigation is resolved and the ceiling is remeasured on
+a live build, treat `250 + 75 × projects_loaded` as an isolated-test target,
+not an achieved field bound.
+
+---
+
+## 2026-10-17 — repeated no-change reindex stalls on v3.37.7
+
+Read-only field observation of the installed v3.37.7 daemon (PID 69058,
+port 3741). Five watcher events for the same `assetfeed` log file, spaced
+about ten minutes apart, all reported `skippedHash: true`, `indexed: 0`, and
+`queuedMs: 0–4`. Nevertheless, each `indexFiles` run took 11,829–14,345 ms.
+Each run coincided with an `Event loop stall` warning of 6,939–9,126 ms and
+`reindexInFlight: 1`. The repeated no-change input gives TRA-2456 a narrow
+reproduction target: inspect why the postprocess shortcut is bypassed, then
+profile the synchronous work that remains. The logs do not establish which
+stage consumed the time or prove a client fallback in these five windows.
+
+Memory remains above the field ceiling on this build. With three projects
+loaded and `projects_indexing: 0`, consecutive one-minute vitals samples held
+at 889–947 MB RSS and 342–348 MB heap used, versus the 475 MB target. These
+samples were between the periodic reindexes, not during them. `/health`
+returned HTTP 200 in 0.6 ms when probed outside a stall. TRA-2061 continues
+to own memory attribution; these data do not identify retained objects.
+
+---
+
+## 2026-10-18 — idle RSS remains high on v3.37.8
+
+Read-only observation of the installed v3.37.8 daemon (PID 19856). Four
+consecutive one-minute vitals at 2026-10-17 21:55:58–21:58:58 UTC reported
+`projects_loaded: 3`, `projects_indexing: 0`, and RSS 903–913 MB (heap used
+389–399 MB). That is at least 428 MB above the `250 + 75 × 3 = 475 MB` idle
+target. The next vitals sample at 21:59:59 had `projects_indexing: 1`, so it
+is excluded from the idle window. The daemon was reachable at `/health` during
+this run; no restart or configuration change was made. This confirms that the
+field ceiling is still unmet after the v3.37.8 release, without identifying
+the retained objects. TRA-2061 and TRA-2459 continue to own attribution and
+remediation.
+
+---
+
+## 2026-10-19 — v3.37.10 field daemon remains above the idle target
+
+Read-only observation of the installed v3.37.10 daemon (PID 41509). At
+2026-10-18 21:56:32 UTC, the project sweeper logged five `Unloading idle
+project` events. Vitals changed from eight loaded projects and 754 MB RSS
+one minute earlier to three loaded projects and 737 MB RSS. Four consecutive
+one-minute samples through 21:59:32 held at 737 MB RSS, 191–193 MB heap used,
+`projects_loaded: 3`, and `projects_indexing: 0`. The three-project target is
+`250 + 75 × 3 = 475 MB`, so the post-unload plateau exceeds it by 262 MB.
+The log contains no full index in that interval. Its periodic `reindex-file`
+records indexed zero files. These checks mean it is not the isolated 0% CPU
+setup used to establish the target.
+
+At 22:00 UTC, project loads and a dropped-event reconcile triggered full
+indexing. The next vitals sample rose to 897 MB RSS / 327 MB
+heap used; it is excluded from the quiet-window comparison. `/health` later
+returned `ok` and version 3.37.10. The field gap predates that indexing burst.
+TRA-2061 owns attribution; these observations do not isolate the retained
+memory or demonstrate a new regression from v3.37.8. It does show that
+unloading five idle projects released only 17 MB of RSS within four minutes.

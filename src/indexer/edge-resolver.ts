@@ -116,6 +116,14 @@ export class EdgeResolver {
     resolveContext: ResolveContext,
     _scope?: ChangeScope,
   ): Promise<void> {
+    const scope = _scope ?? resolveContext.changeScope;
+    let changedFilePaths: string[] | null = null;
+    if (scope?.changedFileIds && scope.changedFileIds.size > 0) {
+      const allFiles = resolveContext.getAllFiles();
+      const idSet = scope.changedFileIds;
+      changedFilePaths = allFiles.filter((f) => idSet.has(f.id)).map((f) => f.path);
+    }
+
     // Root-level plugins
     const activeResult = this.state.registry.getActiveFrameworkPlugins(projectContext);
     if (activeResult.isOk()) {
@@ -131,7 +139,33 @@ export class EdgeResolver {
       for (const p of activeResult.value) seen.add(p.manifest.name);
     }
 
+    const allFiles = resolveContext.getAllFiles();
     for (const ws of this.state.workspaces) {
+      const wsPrefix = `${ws.path}/`;
+      // TRA-2505: when resolving incrementally, skip workspaces that contain
+      // no changed files. Scanning manifests, plugins, and files for uninvolved
+      // workspaces during small-batch reindexing starves the event loop.
+      if (changedFilePaths && !changedFilePaths.some((p) => p.startsWith(wsPrefix))) {
+        continue;
+      }
+
+      // TRA-2524: Memoize scoped workspace files and skip workspaces with no indexed files.
+      // Repeatedly filtering the entire 10k+ corpus without memoization and running
+      // plugins for empty workspaces starves the event loop.
+      let wsFilesCache: ReturnType<ResolveContext['getAllFiles']> | null = null;
+      const getWsFiles = () => {
+        if (!wsFilesCache) {
+          wsFilesCache = allFiles
+            .filter((f) => f.path.startsWith(wsPrefix))
+            .map((f) => ({ ...f, path: f.path.slice(wsPrefix.length) }));
+        }
+        return wsFilesCache;
+      };
+
+      if (allFiles.length > 0 && getWsFiles().length === 0) {
+        continue;
+      }
+
       // Per-project boundary: let pending I/O (/health, MCP requests) run
       // between workspaces rather than after all of them.
       await yieldToEventLoopFair();
@@ -154,19 +188,16 @@ export class EdgeResolver {
 
       // Create a scoped resolve context: paths are workspace-relative,
       // rootPath points to the workspace root.
-      const wsPrefix = `${ws.path}/`;
       const scopedCtx: ResolveContext = {
         rootPath: wsRoot,
-        getAllFiles: () =>
-          resolveContext
-            .getAllFiles()
-            .filter((f) => f.path.startsWith(wsPrefix))
-            .map((f) => ({ ...f, path: f.path.slice(wsPrefix.length) })),
+        getAllFiles: getWsFiles,
         getSymbolsByFile: resolveContext.getSymbolsByFile,
         getSymbolByFqn: resolveContext.getSymbolByFqn,
         getNodeId: resolveContext.getNodeId,
         createNodeIfNeeded: resolveContext.createNodeIfNeeded,
         readFile: (relPath: string) => resolveContext.readFile(wsPrefix + relPath),
+        changeScope: resolveContext.changeScope,
+        signal: resolveContext.signal,
       };
 
       for (const plugin of wsPlugins) {
@@ -209,8 +240,8 @@ export class EdgeResolver {
   }
 
   /** Pass 2c: TypeScript extends/implements edges. */
-  resolveTypeScriptHeritageEdges(scope?: ChangeScope): void {
-    timed('ts-heritage', () => _resolveHeritage(this.state, scope));
+  resolveTypeScriptHeritageEdges(scope?: ChangeScope): Promise<void> {
+    return timedAsync('ts-heritage', () => _resolveHeritage(this.state, scope));
   }
 
   /** Pass 2d: ES module import edges. */
@@ -311,8 +342,8 @@ export class EdgeResolver {
   }
 
   /** Pass 2i: structural member_of edges for every nested symbol → its parent. */
-  resolveMemberOfEdges(scope?: ChangeScope): void {
-    timed('member-of', () => _resolveMemberOf(this.state, scope));
+  resolveMemberOfEdges(scope?: ChangeScope): Promise<void> {
+    return timedAsync('member-of', () => _resolveMemberOf(this.state, scope));
   }
 
   /** Pass 2i-sql: CTE → CTE edges within `.sql` files. */

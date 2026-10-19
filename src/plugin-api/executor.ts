@@ -184,11 +184,52 @@ export async function executeFrameworkResolveEdges(
 ): Promise<TraceMcpResult<RawEdge[]>> {
   if (!plugin.resolveEdges) return ok([]);
 
+  // TRA-2434: For full-repository indexing on large repos (>3k files), scale default
+  // timeout with file count so legitimate large-repo passes do not hit 30s timeout.
+  // Explicit overrides (e.g. in tests) are preserved.
+  const effectiveTimeoutMs =
+    timeoutMs === DEFAULT_TIMEOUT_MS && typeof ctx.getAllFiles === 'function'
+      ? Math.max(DEFAULT_TIMEOUT_MS, Math.ceil(ctx.getAllFiles().length / 100) * 1000)
+      : timeoutMs;
+
+  const controller = new AbortController();
+  const linkedSignal = ctx.signal;
+  if (linkedSignal) {
+    if (linkedSignal.aborted) {
+      controller.abort();
+    } else {
+      linkedSignal.addEventListener('abort', () => controller.abort(), { once: true });
+    }
+  }
+
+  // TRA-2530: Memoize getSymbolByFqn and getSymbolsByFile to eliminate thousands of
+  // redundant synchronous SQLite queries during resolveEdges.
+  const fqnCache = new Map<string, ReturnType<ResolveContext['getSymbolByFqn']>>();
+  const fileSymbolsCache = new Map<number, ReturnType<ResolveContext['getSymbolsByFile']>>();
+
+  const timeoutCtx: ResolveContext = {
+    ...ctx,
+    signal: controller.signal,
+    getSymbolByFqn: (fqn: string) => {
+      if (fqnCache.has(fqn)) return fqnCache.get(fqn)!;
+      const res = ctx.getSymbolByFqn(fqn);
+      fqnCache.set(fqn, res);
+      return res;
+    },
+    getSymbolsByFile: (fileId: number) => {
+      if (fileSymbolsCache.has(fileId)) return fileSymbolsCache.get(fileId)!;
+      const res = ctx.getSymbolsByFile(fileId);
+      fileSymbolsCache.set(fileId, res);
+      return res;
+    },
+  };
+
   try {
     const result = await withTimeout(
-      () => plugin.resolveEdges!(ctx),
-      timeoutMs,
+      () => plugin.resolveEdges!(timeoutCtx),
+      effectiveTimeoutMs,
       `${plugin.manifest.name}.resolveEdges`,
+      controller,
     );
 
     // Guard: cap edge output to prevent runaway framework plugins
@@ -212,7 +253,12 @@ export async function executeFrameworkResolveEdges(
   }
 }
 
-async function withTimeout<T>(fn: () => T, timeoutMs: number, operationName: string): Promise<T> {
+async function withTimeout<T>(
+  fn: () => T,
+  timeoutMs: number,
+  operationName: string,
+  abortController?: AbortController,
+): Promise<T> {
   // For synchronous functions, just call directly
   const result = fn();
 
@@ -226,6 +272,7 @@ async function withTimeout<T>(fn: () => T, timeoutMs: number, operationName: str
           const checkDeadline = () => {
             const remaining = timeoutMs - (performance.now() - startedActive);
             if (remaining <= 0) {
+              abortController?.abort();
               reject(new Error(`Timeout: ${operationName} exceeded ${timeoutMs}ms`));
             } else {
               // A timer can fire on resume before the monotonic work budget

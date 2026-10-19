@@ -22,6 +22,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ok } from 'neverthrow';
 import type { TraceMcpResult } from '../../../../../errors.js';
+import { yieldToEventLoopFair } from '../../../../../utils/event-loop.js';
 import type {
   FileParseResult,
   FrameworkPlugin,
@@ -983,7 +984,7 @@ export class ShadcnPlugin implements FrameworkPlugin {
 
   // ── Cross-file resolution (Pass 2) ─────────────────────────────────────
 
-  resolveEdges(ctx: ResolveContext): TraceMcpResult<RawEdge[]> {
+  async resolveEdges(ctx: ResolveContext): Promise<TraceMcpResult<RawEdge[]>> {
     const edges: RawEdge[] = [];
     const allFiles = ctx.getAllFiles();
 
@@ -1003,9 +1004,24 @@ export class ShadcnPlugin implements FrameworkPlugin {
 
     // Link consumer imports to component definitions
     const consumerFiles = allFiles.filter(
-      (f) => !this.installedComponentPaths.has(f.path.replace(/\\/g, '/')),
+      (f) =>
+        !this.installedComponentPaths.has(f.path.replace(/\\/g, '/')) &&
+        (f.language == null ||
+          ['typescript', 'javascript', 'vue', 'svelte', 'astro'].includes(f.language) ||
+          /\.(tsx?|jsx?|vue|svelte|astro)$/.test(f.path)),
     );
-    for (const file of consumerFiles) {
+
+    // Scope-aware (TRA-2505): when resolving incrementally, narrow work to changed consumer files.
+    const scope = ctx.changeScope;
+    const isIncremental = Boolean(scope && scope.changedFileIds && scope.changedFileIds.size > 0);
+    const targetConsumerFiles = isIncremental
+      ? consumerFiles.filter((f) => scope!.changedFileIds.has(f.id))
+      : consumerFiles;
+
+    if (targetConsumerFiles.length === 0) return ok([]);
+
+    for (const [index, file] of targetConsumerFiles.entries()) {
+      if (index > 0 && index % 32 === 0) await yieldToEventLoopFair();
       const source = ctx.readFile(file.path);
       if (!source) continue;
 

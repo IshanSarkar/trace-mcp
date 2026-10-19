@@ -46,7 +46,8 @@ import { initializeDatabase } from '../../db/schema.js';
 import { Store } from '../../db/store.js';
 import { logger } from '../../logger.js';
 import { PluginRegistry } from '../../plugin-api/registry.js';
-import { isHotChurnPath } from '../../utils/hot-churn.js';
+import { HOT_CHURN_NATIVE_IGNORE_GLOBS, isHotChurnPath } from '../../utils/hot-churn.js';
+import picomatch from 'picomatch';
 import type { withLock } from '../../utils/pid-lock.js';
 import { collectFiles } from '../file-collector.js';
 import { FileExtractor, resetCannotReadEnoentDedupForTests } from '../file-extractor.js';
@@ -87,6 +88,61 @@ describe('isHotChurnPath ML checkpoint tmp siblings (TRA-2326)', () => {
   });
 });
 
+describe('ML training checkpoint temporary weights (TRA-2479)', () => {
+  it.each([
+    'runs/exp1/weights/best.pt.tmp',
+    'scratchpad/ocr_train/weights/last.pth.tmp',
+    'train/weights/best.pt.tmp',
+    'artifacts/best.pt.tmp',
+    'checkpoints/best.pth.tmp',
+    'C:\\project\\RUNS\\best.PT.TMP',
+  ])('drops %s before reading or debounce', (p) => {
+    expect(isHotChurnPath(p)).toBe(true);
+  });
+
+  it.each([
+    'src/best.pt.tmp',
+    'runtime/best.pt.tmp',
+    'myruns/best.pt.tmp',
+    'src/train.ts.tmp',
+    'runs/notes.tmp',
+    'runs/best.pt',
+  ])('preserves paths outside the narrowed rule: %s', (p) => {
+    expect(isHotChurnPath(p)).toBe(false);
+  });
+
+  it('native ignore globs include both temporary weight formats', () => {
+    const isIgnored = picomatch([...HOT_CHURN_NATIVE_IGNORE_GLOBS], { dot: true });
+    expect(isIgnored('runs/exp1/best.pt.tmp')).toBe(true);
+    expect(isIgnored('scratchpad/ocr_train/last.pth.tmp')).toBe(true);
+  });
+});
+
+describe('isHotChurnPath Claude Code atomic-write siblings (TRA-2401)', () => {
+  it.each([
+    'tests/Pest.php.tmp.4160559.e519625b15ee',
+    'src/App.vue.tmp.12345.ABCDEF012345',
+    'C:\\project\\src\\App.tsx.tmp.42.12345678',
+    'docs/README.md.tmp.0.abcdef012345',
+  ])('matches atomic-write sibling %s', (p) => {
+    expect(isHotChurnPath(p)).toBe(true);
+  });
+
+  it.each([
+    'src/App.tsx',
+    'src/App.tsx.tmp',
+    'src/App.tsx.tmp.42',
+    'src/App.tsx.tmp.abc.12345678',
+    'src/App.tsx.tmp.42.1234567',
+    'src/App.tsx.tmp.42.nothexadecimal',
+    'src/App.tsx.tmp.42.12345678.bak',
+    'src/file.tmp.42.12345678', // no extension before .tmp
+    'src/.env.tmp.42.12345678', // no basename before extension
+  ])('preserves other paths %s', (p) => {
+    expect(isHotChurnPath(p)).toBe(false);
+  });
+});
+
 describe('collectFiles drops ML checkpoint tmp siblings (TRA-2326)', () => {
   let workDir: string;
 
@@ -100,8 +156,10 @@ describe('collectFiles drops ML checkpoint tmp siblings (TRA-2326)', () => {
 
   it('lists real sources but drops ML checkpoint tmp siblings', async () => {
     mkdirSync(join(workDir, 'artifacts', 'run1'), { recursive: true });
+    mkdirSync(join(workDir, 'scratchpad', 'ocr_train'), { recursive: true });
     mkdirSync(join(workDir, 'src'), { recursive: true });
     writeFileSync(join(workDir, 'artifacts', 'run1', 'resume_mlx.npz.tmp'), 'binary data\n');
+    writeFileSync(join(workDir, 'scratchpad', 'ocr_train', 'best.pt.tmp'), 'binary data\n');
     writeFileSync(join(workDir, 'artifacts', 'notes.txt'), 'notes\n');
     writeFileSync(join(workDir, 'src', 'app.ts'), 'export const ready = true;\n');
 
@@ -117,6 +175,7 @@ describe('collectFiles drops ML checkpoint tmp siblings (TRA-2326)', () => {
     expect(result.files).toContain('src/app.ts');
     expect(result.files).toContain('artifacts/notes.txt');
     expect(result.files).not.toContain('artifacts/run1/resume_mlx.npz.tmp');
+    expect(result.files).not.toContain('scratchpad/ocr_train/best.pt.tmp');
   });
 });
 
@@ -170,12 +229,29 @@ describe('FileWatcher drops ML checkpoint tmp events (TRA-2326)', () => {
 
     await capturedCallback(null, [
       { type: 'update', path: join(tmpRoot, 'artifacts', 'resume_mlx.npz.tmp') },
+      { type: 'update', path: join(tmpRoot, 'runs', 'exp1', 'best.pt.tmp') },
       { type: 'update', path: join(tmpRoot, 'src', 'main.ts') },
     ]);
     await flush();
 
     expect(onChanges).toHaveBeenCalledTimes(1);
     expect(onChanges).toHaveBeenCalledWith([join(tmpRoot, 'src', 'main.ts')]);
+  });
+
+  it('drops Claude Code atomic-write sibling before debounce', async () => {
+    const onChanges = vi.fn().mockResolvedValue(undefined);
+    await watcher.start(
+      tmpRoot,
+      TraceMcpConfigSchema.parse({ root: tmpRoot, include: ['**/*'], exclude: [] }),
+      onChanges,
+    );
+
+    await capturedCallback(null, [
+      { type: 'create', path: join(tmpRoot, 'src', 'main.ts.tmp.123.abcdef012345') },
+    ]);
+    expect(setMock).not.toHaveBeenCalled();
+    await flush();
+    expect(onChanges).not.toHaveBeenCalled();
   });
 });
 

@@ -646,22 +646,65 @@ export class LaravelPlugin implements FrameworkPlugin {
       fileMap.set(f.path, f);
     }
 
-    for (const [index, file] of files.entries()) {
-      if (index % 16 === 0) await yieldToEventLoopFair();
+    // Pre-filter files relevant to Laravel/Blade/Composer (TRA-2394).
+    // In multi-language repos or bulk-indexing with 10k+ files (e.g. Python, text, data),
+    // yielding fair turns on unrelated files starves the plugin budget and causes timeouts.
+    const relevantFiles = files.filter(
+      (f) =>
+        f.language === 'php' || f.path.endsWith('.blade.php') || f.path.endsWith('composer.json'),
+    );
+
+    // Scope-aware (TRA-2434): when the pipeline passes a changeScope, narrow to changed files.
+    // Unchanged files keep their existing edges in SQLite; re-emitting only changed files prevents
+    // rescanning 10k+ files and starving the event loop on single-file watcher ticks.
+    const scope = ctx.changeScope;
+    const targetFiles =
+      scope && scope.changedFileIds && scope.changedFileIds.size > 0
+        ? relevantFiles.filter((f) => scope.changedFileIds.has(f.id))
+        : relevantFiles;
+
+    if (targetFiles.length === 0) return ok([]);
+
+    for (const [index, file] of targetFiles.entries()) {
+      if (ctx.signal?.aborted) break;
+      if (index > 0 && index % 32 === 0) await yieldToEventLoopFair();
       const source = ctx.readFile(file.path);
       if (!source) continue;
 
       if (file.language === 'php') {
-        // Core edge resolvers
-        resolveEloquentEdges(source, file, ctx, edges);
-        resolveFormRequestEdges(source, file, ctx, edges);
-        resolveEventEdges(source, file, ctx, edges);
-        resolveDispatchEdges(source, file, ctx, edges);
+        // Core edge resolvers: fast pre-checks avoid running heavy regex parsers across thousands of non-matching files
+        if (source.includes('Model')) {
+          resolveEloquentEdges(source, file, ctx, edges);
+        }
+        if (source.includes('Request')) {
+          resolveFormRequestEdges(source, file, ctx, edges);
+        }
+        if (source.includes('$listen')) {
+          resolveEventEdges(source, file, ctx, edges);
+        }
+        if (source.includes('dispatch') || source.includes('event(')) {
+          resolveDispatchEdges(source, file, ctx, edges);
+        }
 
         // Ecosystem edge resolvers
-        if (this.hasLivewire) resolveLivewirePhpEdges(source, file, ctx, edges, fileMap);
-        if (this.hasNova) resolveNovaEdges(source, file, ctx, edges);
-        if (this.hasFilament) resolveFilamentEdges(source, file, ctx, edges);
+        if (this.hasLivewire && isLivewireFile(file.path)) {
+          resolveLivewirePhpEdges(source, file, ctx, edges, fileMap);
+        }
+        if (
+          this.hasNova &&
+          (file.path.toLowerCase().includes('nova') || source.includes('Resource'))
+        ) {
+          resolveNovaEdges(source, file, ctx, edges);
+        }
+        if (
+          this.hasFilament &&
+          (file.path.toLowerCase().includes('filament') ||
+            source.includes('Resource') ||
+            source.includes('Widget') ||
+            source.includes('PanelProvider'))
+        ) {
+          resolveFilamentEdges(source, file, ctx, edges);
+        }
       }
 
       // Blade-side resolvers

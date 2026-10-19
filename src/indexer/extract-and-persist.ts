@@ -1,5 +1,10 @@
 import type { Store } from '../db/store.js';
-import { disableFts5Triggers, enableFts5Triggers, ensureFts5Triggers } from '../db/schema.js';
+import {
+  disableFts5Triggers,
+  enableFts5Triggers,
+  enableFts5TriggersAsync,
+  ensureFts5Triggers,
+} from '../db/schema.js';
 import { logger } from '../logger.js';
 import type { PluginRegistry } from '../plugin-api/registry.js';
 import type { ProjectContext } from '../plugin-api/types.js';
@@ -9,12 +14,19 @@ import type { GitignoreMatcher } from '../utils/gitignore.js';
 import { EdgeResolver } from './edge-resolver.js';
 import type { ExtractPool, ExtractRequest } from './extract-pool.js';
 import { logFrameworkExtractStats, resetFrameworkExtractStats } from '../plugin-api/executor.js';
-import { selectChangedFiles } from './change-prefilter.js';
-import { clearPackageEntriesCache, findPackageJsonEntriesAsync } from './package-entries.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { DEFAULT_MAX_FILE_SIZE } from '../utils/security.js';
+import { selectChangedFiles, selectChangedFilesAsync } from './change-prefilter.js';
+import {
+  clearPackageEntriesCache,
+  findPackageJsonEntriesAsync,
+  readCachedPackageEntries,
+} from './package-entries.js';
 import { FileExtractor } from './file-extractor.js';
 import { FilePersister } from './file-persister.js';
 import type { WorkspaceInfo } from './monorepo.js';
-import { detectRenames } from './rename-detector.js';
+import { detectRenames, detectRenamesAsync } from './rename-detector.js';
 import { renameTreeCacheFile } from '../parser/tree-cache.js';
 import type { FileExtraction, PipelineState } from './pipeline-state.js';
 
@@ -133,7 +145,12 @@ export async function extractAndPersist(
   // moves N files to new paths re-extracts every byte, even though the
   // content is identical to known DB rows. graphify v0.7.0 fixed the same
   // wasted work by keying its cache on content alone.
-  const { renamed, pairs: renamePairs } = detectRenames(store, rootPath, relPaths, existingFiles);
+  const { renamed, pairs: renamePairs } = await detectRenamesAsync(
+    store,
+    rootPath,
+    relPaths,
+    existingFiles,
+  );
   if (renamed > 0) {
     // Renamed paths are now keyed under their new path in the DB; refresh
     // the lookup map so the extractor sees them as "existing".
@@ -155,7 +172,7 @@ export async function extractAndPersist(
   // same question for every file whose mtime floor and byte size both
   // match; only the remainder reaches the extract loop below (which keeps
   // its own read+hash gate for mtime-drifted-but-identical content).
-  const { candidates, skipped: prefiltered } = selectChangedFiles(
+  const { candidates, skipped: prefiltered } = await selectChangedFilesAsync(
     rootPath,
     relPaths,
     existingFiles,
@@ -176,8 +193,32 @@ export async function extractAndPersist(
   if (relPaths.some((p) => p === 'package.json' || p.endsWith('/package.json'))) {
     clearPackageEntriesCache(rootPath);
   }
-  const forceIncludePaths =
-    candidates.length > 0 ? await findPackageJsonEntriesAsync(rootPath) : new Set<string>();
+  // TRA-2456: Consult package entries cache first. If cold, only perform the
+  // async directory walk when candidates exceed the bulk threshold or when at
+  // least one candidate file exceeds the default 1 MB size cap (where the 5 MB
+  // package-entry override actually matters). For normal small-file edits (< 1 MB),
+  // walking thousands of directories on a cold cache starves the event loop.
+  let forceIncludePaths = readCachedPackageEntries(rootPath);
+  if (!forceIncludePaths && candidates.length > 0) {
+    const BULK_THRESHOLD = 50;
+    const needsScan =
+      candidates.length > BULK_THRESHOLD ||
+      candidates.some((rel) => {
+        try {
+          return fs.statSync(path.resolve(rootPath, rel)).size > DEFAULT_MAX_FILE_SIZE;
+        } catch {
+          return false;
+        }
+      });
+    if (needsScan) {
+      forceIncludePaths = await findPackageJsonEntriesAsync(rootPath);
+    } else {
+      forceIncludePaths = new Set<string>();
+    }
+  }
+  if (!forceIncludePaths) {
+    forceIncludePaths = new Set<string>();
+  }
 
   const extractor = new FileExtractor({
     store,
@@ -378,7 +419,7 @@ export async function extractAndPersist(
     // leaves the triggers dropped and desyncs symbols_fts on every later
     // incremental write. No-op on the incremental path (triggers stayed live
     // and were re-armed via ensureFts5Triggers before the loop).
-    if (useFtsRebuild) enableFts5Triggers(store.db);
+    if (useFtsRebuild) await enableFts5TriggersAsync(store.db);
   }
 
   // Phase 4 phantom-rebind: expose the persister's diff maps so the caller can

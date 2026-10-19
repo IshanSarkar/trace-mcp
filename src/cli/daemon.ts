@@ -14,6 +14,7 @@ import {
   stopDaemon,
   waitForDaemonUp,
 } from '../daemon/lifecycle.js';
+import { DAEMON_SHUTDOWN_DEADLINE_MS } from '../server/bounded-shutdown.js';
 import {
   DAEMON_DISABLED_PATH,
   DAEMON_LOG_PATH,
@@ -36,6 +37,7 @@ import {
   renderHookStats,
   renderSessionFallbacks,
 } from './daemon-stats.js';
+import { findProcessDaemonLog } from './daemon-log-path.js';
 
 const PLIST_LABEL = 'com.trace-mcp.server';
 
@@ -152,8 +154,11 @@ daemonCommand
     // Same single-instance lock as `start` (TRA-1607): a restart kills the
     // running daemon first, so a concurrent starter racing it would spawn
     // into the gap and either double-serve or lose the bind race. Serialize.
+    // Allow up to DAEMON_SHUTDOWN_DEADLINE_MS (20s) for a running daemon's
+    // shutdown drain plus startup time for the replacement (TRA-2531).
+    const restartWaitMs = DAEMON_SHUTDOWN_DEADLINE_MS + 10_000;
     if (!acquireSpawnLock()) {
-      const up = await waitForDaemonUp(port, 10_000);
+      const up = await waitForDaemonUp(port, restartWaitMs);
       if (up) {
         console.log(
           `Another process is (re)starting the daemon — it is now responding on port ${port}.`,
@@ -176,10 +181,10 @@ daemonCommand
     // Block until /health responds — callers (the menu bar app's "Restart
     // Daemon" button, scripts, humans) need to know the daemon is actually
     // reachable, not just that launchd accepted the kickstart.
-    const up = await waitForDaemonUp(port, 10_000);
+    const up = await waitForDaemonUp(port, restartWaitMs);
     if (!up) {
       console.error(
-        `Daemon restart issued but /health did not respond on port ${port} within 10s.`,
+        `Daemon restart issued but /health did not respond on port ${port} within ${Math.round(restartWaitMs / 1000)}s.`,
       );
       console.error(`Check logs: trace-mcp daemon logs`);
       process.exit(1);
@@ -210,9 +215,12 @@ daemonCommand
         // daemon.log — surface it here so a down daemon's cause is one command away.
         for (const line of formatStallAlerts(summarizeStallAlerts(readRecentStallAlerts())))
           console.log(line);
-        // TRA-2056: a V8 heap OOM leaves its own breadcrumb — the .ips crash
-        // report — for the same reason.
-        for (const line of formatOomCrashes(readRecentOomCrashes())) console.log(line);
+        // TRA-2056, TRA-2443: a V8 heap OOM leaves its own breadcrumb — the .ips crash
+        // report — only surface recent crashes, not stale historical ones.
+        for (const line of formatOomCrashes(
+          readRecentOomCrashes({ maxAgeMs: 24 * 60 * 60 * 1000 }),
+        ))
+          console.log(line);
       }
       if (disabled) {
         console.log(`  Auto-spawn: disabled (opt-out file: ${DAEMON_DISABLED_PATH})`);
@@ -234,8 +242,9 @@ daemonCommand
     // line sits in stall-alerts.jsonl, not daemon.log.
     for (const line of formatStallAlerts(summarizeStallAlerts(readRecentStallAlerts())))
       console.log(line);
-    // TRA-2056: same for a V8 heap OOM — the .ips report, not daemon.log.
-    for (const line of formatOomCrashes(readRecentOomCrashes())) console.log(line);
+    // TRA-2056, TRA-2443: same for a V8 heap OOM — recent reports only.
+    for (const line of formatOomCrashes(readRecentOomCrashes({ maxAgeMs: 24 * 60 * 60 * 1000 })))
+      console.log(line);
     if (health.version) console.log(`  Version: ${health.version}`);
     if (health.pid != null) console.log(`  PID: ${health.pid}`);
     if (health.uptime != null) {
@@ -262,11 +271,34 @@ daemonCommand
   .description('Tail the daemon log file')
   .option('-n, --lines <n>', 'Number of lines to show', '50')
   .option('-f, --follow', 'Follow log output')
-  .action((opts: { lines: string; follow?: boolean }) => {
-    const logPath = DAEMON_LOG_PATH;
+  .option('-p, --port <port>', 'Daemon port to check', String(DEFAULT_DAEMON_PORT))
+  .option('--local', 'Read the current profile log even if another daemon is running')
+  .action(async (opts: { lines: string; follow?: boolean; port: string; local?: boolean }) => {
+    const port = parseInt(opts.port, 10);
+    const health = opts.local ? null : await getDaemonHealth(port);
+    let logPath = DAEMON_LOG_PATH;
+    if (health) {
+      const daemonLog = health.pid == null ? null : findProcessDaemonLog(health.pid);
+      if (!daemonLog) {
+        console.error(
+          `Daemon is running on port ${port}, but its log path could not be determined` +
+            `${health.pid == null ? '' : ` (PID ${health.pid})`}.`,
+        );
+        console.error(`Current profile log: ${DAEMON_LOG_PATH} (not shown).`);
+        console.error('Use --local to read that file explicitly.');
+        process.exitCode = 1;
+        return;
+      }
+      logPath = daemonLog;
+      if (logPath !== DAEMON_LOG_PATH) {
+        console.error(`Running daemon uses a different profile. Reading ${logPath}`);
+        console.error(`Current profile log: ${DAEMON_LOG_PATH}`);
+      }
+    }
     if (!fs.existsSync(logPath)) {
       console.log(`No log file found at ${logPath}`);
-      process.exit(1);
+      process.exitCode = 1;
+      return;
     }
 
     const args = ['-n', opts.lines];

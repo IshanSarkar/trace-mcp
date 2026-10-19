@@ -6,6 +6,179 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 
+## [3.37.10](https://github.com/nikolai-vysotskyi/trace-mcp/compare/v3.37.9...v3.37.10) (2026-10-18)
+
+
+### Bug Fixes
+
+* **memory:** prune expired decisions and deduplicate mined entries (TRA-2521) ([#1647](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1647)) ([9bf98e6](https://github.com/nikolai-vysotskyi/trace-mcp/commit/9bf98e6393fcb0340fe56740c488d77d3161c8bb))
+* **registry:** describe excluded descendant roots accurately (TRA-2522) ([#1646](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1646)) ([54bb591](https://github.com/nikolai-vysotskyi/trace-mcp/commit/54bb591833e54866e23ebd6266c971b657397808))
+
+
+### Documentation
+
+* **ops:** pass 2026-10-18, mention sweep clean, competitor triage (TRA-2511) ([#1641](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1641)) ([020ad9d](https://github.com/nikolai-vysotskyi/trace-mcp/commit/020ad9d6acd80a5f3ff5badccb8c1889920052c3))
+* **ops:** pass 2026-10-18, mention sweep clean, competitor triage (TRA-2514) ([#1643](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1643)) ([fa8dcd0](https://github.com/nikolai-vysotskyi/trace-mcp/commit/fa8dcd0c163913fa2b18c78936b8e77c21365fa3))
+* **ops:** pass 2026-10-18, mention sweep clean, competitor triage (TRA-2516) ([#1644](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1644)) ([30f1d59](https://github.com/nikolai-vysotskyi/trace-mcp/commit/30f1d59dd6bc1136329eba0a13ce578c4d4c6071))
+* **ops:** pass 2026-10-18, mention sweep clean, competitor triage (TRA-2518) ([#1645](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1645)) ([81b6d89](https://github.com/nikolai-vysotskyi/trace-mcp/commit/81b6d89492440408c3c4e9168bacd500c9697e2a))
+
+## [3.37.9](https://github.com/nikolai-vysotskyi/trace-mcp/compare/v3.37.8...v3.37.9) (2026-10-18)
+
+
+### Bug Fixes
+
+* **indexer:** prevent event-loop stalls during incremental postprocessing (TRA-2505) ([#1640](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1640)) ([d5929cd](https://github.com/nikolai-vysotskyi/trace-mcp/commit/d5929cd2474e8f0bbe67a5a5b6fed503453786db))
+
+
+### Documentation
+
+* **ops:** morning pass 2026-10-18, mention sweep clean, competitor triage (TRA-2502) ([#1636](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1636)) ([f498395](https://github.com/nikolai-vysotskyi/trace-mcp/commit/f498395db8ae0b9c516e7a5a70acdf12530e4b31))
+* record v3.37.8 daemon idle memory observation ([#1637](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1637)) ([169f899](https://github.com/nikolai-vysotskyi/trace-mcp/commit/169f899d9186398998f3a98a8fe56863036bfccf))
+
+## [3.37.8](https://github.com/nikolai-vysotskyi/trace-mcp/compare/v3.37.7...v3.37.8) (2026-10-17)
+
+
+### Bug Fixes
+
+* **daemon:** aggregate aborted watcher reindex batches on shutdown (TRA-2438) ([#1631](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1631)) ([ea376bd](https://github.com/nikolai-vysotskyi/trace-mcp/commit/ea376bd61fe724007308168e42e2706ba3e85911))
+* **daemon:** correlate unclean stop diagnosis with PID and time to prevent false OOM attribution (TRA-2443) ([#1630](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1630)) ([73ac96b](https://github.com/nikolai-vysotskyi/trace-mcp/commit/73ac96b1898555a394713ab5432afb8cb3e5661e))
+* **daemon:** prevent startup hang and /health starvation after restart (TRA-2442) ([#1629](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1629)) ([c57513b](https://github.com/nikolai-vysotskyi/trace-mcp/commit/c57513b913346d04ac364bf93849d72fb3e64484))
+* **indexer:** exclude browser runtime caches from walk and watcher (TRA-2500) ([#1635](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1635)) ([4942876](https://github.com/nikolai-vysotskyi/trace-mcp/commit/494287666634703345b2492e7bdd828294da6fe7))
+* **indexer:** prevent event-loop stalls on single-file incremental reindex (TRA-2456) ([#1626](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1626)) ([dae5d90](https://github.com/nikolai-vysotskyi/trace-mcp/commit/dae5d90365ed2b626ce452b30ab0f42a3d24745a))
+
+
+### Documentation
+
+* **ops:** afternoon pass 2026-10-17, mention sweep clean, competitor triage (TRA-2493) ([#1632](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1632)) ([6a4deff](https://github.com/nikolai-vysotskyi/trace-mcp/commit/6a4deffee15577908a1efc3c651c54eedce4d01d))
+* **ops:** early morning pass 2026-10-17, mention sweep clean, competitor triage (TRA-2481) ([#1623](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1623)) ([a0c9b96](https://github.com/nikolai-vysotskyi/trace-mcp/commit/a0c9b96d48cedcb772d52ffe661f5288a8ad8171))
+* **ops:** evening pass 2026-10-17, mention sweep clean, competitor triage (TRA-2496) ([#1633](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1633)) ([fc2a280](https://github.com/nikolai-vysotskyi/trace-mcp/commit/fc2a280d4464d671a8996c251889dc021b8436e6))
+* **ops:** late night pass 2026-10-17, mention sweep clean, competitor triage (TRA-2498) ([#1634](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1634)) ([ff29cc2](https://github.com/nikolai-vysotskyi/trace-mcp/commit/ff29cc2bab9f08f38fe6c92a6e4700010b208d4a))
+* **ops:** morning pass 2026-10-17, mention sweep (wkoch/legacy), competitor triage (TRA-2490) ([#1628](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1628)) ([876fe02](https://github.com/nikolai-vysotskyi/trace-mcp/commit/876fe023e74162ec65e34233a1bec44d38a4a8b4))
+* **perf:** record repeated no-change daemon stalls on 3.37.7 ([#1622](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1622)) ([c883f5d](https://github.com/nikolai-vysotskyi/trace-mcp/commit/c883f5d44b36177b7dc6bc35804e2aa8d123745c))
+
+
+### Tests
+
+* **app:** deflake Clients Escape sheet dismissal test (TRA-2460) ([#1625](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1625)) ([03c111b](https://github.com/nikolai-vysotskyi/trace-mcp/commit/03c111b0c3fb8da9bfbc074084f6a6060cab9d51))
+
+## [3.37.7](https://github.com/nikolai-vysotskyi/trace-mcp/compare/v3.37.6...v3.37.7) (2026-10-16)
+
+
+### Bug Fixes
+
+* **indexer:** ignore ML checkpoint weights and atomic swaps ([#1621](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1621)) ([0daf9e0](https://github.com/nikolai-vysotskyi/trace-mcp/commit/0daf9e0df9c71a6b7515eca53691f58edc0702ff))
+* **indexer:** prune missing files after truncated walks ([#1620](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1620)) ([e3ee02f](https://github.com/nikolai-vysotskyi/trace-mcp/commit/e3ee02f1018eeb0a746d987bfa0efb5656b536d0))
+
+
+### Documentation
+
+* **ops:** afternoon pass 2026-10-16, mention sweep (sayef/comind), competitor triage (TRA-2471) ([#1617](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1617)) ([2d03d7d](https://github.com/nikolai-vysotskyi/trace-mcp/commit/2d03d7d44df60fefd2167cc75b733653aaecc9d8))
+* **ops:** evening pass 2026-10-16, mention sweep clean, competitor triage (TRA-2473) ([#1618](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1618)) ([f555cdd](https://github.com/nikolai-vysotskyi/trace-mcp/commit/f555cddae32e71d6f8f6295f853c323235d07a93))
+* **ops:** late night pass 2026-10-16, mention sweep (daniyal44/Zyphuel), competitor triage (TRA-2475) ([#1619](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1619)) ([dcb55ba](https://github.com/nikolai-vysotskyi/trace-mcp/commit/dcb55ba774b5411ea18b5183cd00e852bbd0c293))
+* **ops:** morning pass 2026-10-16, mention sweep clean, competitor triage (TRA-2468) ([#1615](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1615)) ([c7b2a73](https://github.com/nikolai-vysotskyi/trace-mcp/commit/c7b2a738c07e6ce454e4c06f754254c7aaacee62))
+
+## [3.37.6](https://github.com/nikolai-vysotskyi/trace-mcp/compare/v3.37.5...v3.37.6) (2026-10-16)
+
+
+### Documentation
+
+* **ops:** early morning pass 2026-10-16, mention sweep clean, competitor triage (TRA-2458) ([#1613](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1613)) ([48ad5c8](https://github.com/nikolai-vysotskyi/trace-mcp/commit/48ad5c8028db4a6b81802baa6f3d7240d67aef5d))
+* **perf:** record field idle RSS ceiling breach (TRA-2459) ([#1612](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1612)) ([01967eb](https://github.com/nikolai-vysotskyi/trace-mcp/commit/01967eb3a66e5bf3319529d491e6e84e43e1e091))
+
+## [3.37.5](https://github.com/nikolai-vysotskyi/trace-mcp/compare/v3.37.4...v3.37.5) (2026-10-15)
+
+
+### Documentation
+
+* **ops:** afternoon pass 2026-10-15, mention sweep clean, competitor triage (TRA-2449) ([#1609](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1609)) ([1bb6af7](https://github.com/nikolai-vysotskyi/trace-mcp/commit/1bb6af74883a803ae668c0b6b523de13e9500cda))
+* **ops:** evening pass 2026-10-15, mention sweep clean, competitor triage (TRA-2451) ([#1610](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1610)) ([a5a37c7](https://github.com/nikolai-vysotskyi/trace-mcp/commit/a5a37c7104ee96117631987463e35b939565d604))
+* **ops:** late night pass 2026-10-15, mention sweep clean, competitor triage (TRA-2453) ([#1611](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1611)) ([6070819](https://github.com/nikolai-vysotskyi/trace-mcp/commit/6070819a864ca477112e75f0db1eb2b855bb047b))
+* **ops:** morning pass 2026-10-15, mention sweep clean, competitor triage (TRA-2446) ([#1607](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1607)) ([e252c52](https://github.com/nikolai-vysotskyi/trace-mcp/commit/e252c527ec0fae8e15ad38afa8379f6e745cab60))
+
+## [3.37.4](https://github.com/nikolai-vysotskyi/trace-mcp/compare/v3.37.3...v3.37.4) (2026-10-14)
+
+
+### Bug Fixes
+
+* **frameworks:** make resolveEdges scope-aware to prevent timeouts (TRA-2434) ([#1603](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1603)) ([5ebc795](https://github.com/nikolai-vysotskyi/trace-mcp/commit/5ebc79501f9349819890b337e645a2b5b77ba2b8))
+* **indexer:** resolve SQLite slow queries and event loop stalls (TRA-2433) ([#1602](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1602)) ([24db497](https://github.com/nikolai-vysotskyi/trace-mcp/commit/24db4978f324e1aaaea90e77798921a66200331f))
+
+
+### Documentation
+
+* **ops:** early morning pass 2026-10-15, mention sweep clean, competitor triage (TRA-2436) ([#1605](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1605)) ([25dc881](https://github.com/nikolai-vysotskyi/trace-mcp/commit/25dc881c3b74ca052e5716e2ca8f64aa42c5fdf8))
+* **perf:** record v3.37.3 daemon stall baseline (TRA-2437) ([#1606](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1606)) ([3da2d9c](https://github.com/nikolai-vysotskyi/trace-mcp/commit/3da2d9c23ec2015f2d200d17b64e2996fdaa88fa))
+
+## [3.37.3](https://github.com/nikolai-vysotskyi/trace-mcp/compare/v3.37.2...v3.37.3) (2026-10-14)
+
+
+### Bug Fixes
+
+* **ci:** stabilize Windows full-suite timeouts and contention (TRA-2427) ([#1599](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1599)) ([0438568](https://github.com/nikolai-vysotskyi/trace-mcp/commit/0438568b17efaf816bac63ba6a797076fb29dc34))
+
+
+### Documentation
+
+* **ops:** late night pass 2026-10-14, mention sweep clean, competitor triage (TRA-2430) ([#1601](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1601)) ([dac8635](https://github.com/nikolai-vysotskyi/trace-mcp/commit/dac8635098b04da03fb4a50017aa1ddb63941126))
+* **ops:** published content inventory and URL reconciliation (TRA-2417) ([#1594](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1594)) ([39dacdd](https://github.com/nikolai-vysotskyi/trace-mcp/commit/39dacdd74b44b695ed97ab23afd74139901fa52a))
+
+## [3.37.2](https://github.com/nikolai-vysotskyi/trace-mcp/compare/v3.37.1...v3.37.2) (2026-10-14)
+
+
+### Bug Fixes
+
+* **guard:** allow bare-origin worktree fallback (TRA-2415) ([#1595](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1595)) ([7decedc](https://github.com/nikolai-vysotskyi/trace-mcp/commit/7decedc6e9a3bbfbe3a4a7fc01b9f90de6ffa6b1))
+* **guard:** propagate consultation markers to target and intermediate project roots (TRA-2426) ([#1598](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1598)) ([0ee9c6a](https://github.com/nikolai-vysotskyi/trace-mcp/commit/0ee9c6aa3322461aa81c2b0730fdd184b924f3cf))
+
+## [3.37.1](https://github.com/nikolai-vysotskyi/trace-mcp/compare/v3.37.0...v3.37.1) (2026-10-14)
+
+
+### Bug Fixes
+
+* **framework:** pre-filter files before event-loop yields in resolveEdges (TRA-2394) ([#1584](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1584)) ([792661c](https://github.com/nikolai-vysotskyi/trace-mcp/commit/792661c310fef70bc27f7bce1e865e4c09e9743f))
+* **guard:** mark batch sub-call consultations ([#1588](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1588)) ([1c91cb3](https://github.com/nikolai-vysotskyi/trace-mcp/commit/1c91cb35539ec122f5b3183570326df4e3c2a80a))
+* **indexer:** eliminate event loop stalls in rename detection and deep globbing (TRA-2380) ([#1586](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1586)) ([af533d6](https://github.com/nikolai-vysotskyi/trace-mcp/commit/af533d62819cc2703818564ac1ef0e9177e86bf5))
+* **indexer:** skip Claude Code atomic-write siblings ([#1589](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1589)) ([c71e3e4](https://github.com/nikolai-vysotskyi/trace-mcp/commit/c71e3e4e6db1f81634e21936975747c629e0ca93))
+* keep proxy session alive during package swap ([#1590](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1590)) ([edd8d2a](https://github.com/nikolai-vysotskyi/trace-mcp/commit/edd8d2a8f7c6e9e82eec560e9978c46ddf4ce9eb))
+
+
+### Documentation
+
+* **ops:** afternoon pass 2026-10-13, mention sweep clean, competitor deep dive & architectural insights (TRA-2388) ([#1579](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1579)) ([e9dc47c](https://github.com/nikolai-vysotskyi/trace-mcp/commit/e9dc47c042e6def2ca93cb30b9ae9dd442f45c4f))
+* **ops:** early morning pass 2026-10-14, mention sweep clean, competitor triage (TRA-2397) ([#1587](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1587)) ([d2a01f5](https://github.com/nikolai-vysotskyi/trace-mcp/commit/d2a01f53b698bbf61bc71012042b32ee37796470))
+* **ops:** evening pass 2026-10-14, mention sweep clean, competitor triage (TRA-2413) ([#1593](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1593)) ([3a1cde6](https://github.com/nikolai-vysotskyi/trace-mcp/commit/3a1cde68a48537cb3920d0af20f514129c311be0))
+* **ops:** midday pass 2026-10-14, mention sweep clean, competitor triage (TRA-2411) ([#1592](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1592)) ([b5c660f](https://github.com/nikolai-vysotskyi/trace-mcp/commit/b5c660fe80619ae1c9574a811fe0bdaac7ac02b6))
+* **ops:** morning pass 2026-10-14, mention sweep (ACODE_ROUTE), competitor triage (TRA-2408) ([#1591](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1591)) ([b86517b](https://github.com/nikolai-vysotskyi/trace-mcp/commit/b86517baac1568f933ecd97aa04e2de2a07803d4))
+
+
+### Chores
+
+* **app-deps-dev:** bump the development-minor-patch group ([#1568](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1568)) ([d740cdd](https://github.com/nikolai-vysotskyi/trace-mcp/commit/d740cdd2d4e6aed1cef74a386b85e3bf24d3e20d))
+* **deps-dev:** bump vite ([#1569](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1569)) ([b312d7e](https://github.com/nikolai-vysotskyi/trace-mcp/commit/b312d7e567441e94a5c8fddd103dd56ef404dd1c))
+* **deps:** bump pino ([#1567](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1567)) ([e03adf4](https://github.com/nikolai-vysotskyi/trace-mcp/commit/e03adf4a92aa5535c22731daac812f0806d16c7a))
+* **vscode-deps-dev:** bump the development-minor-patch group ([#1570](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1570)) ([b9638df](https://github.com/nikolai-vysotskyi/trace-mcp/commit/b9638df44bf85e26cc36330c97398e8c625dfae6))
+
+## [3.37.0](https://github.com/nikolai-vysotskyi/trace-mcp/compare/v3.36.7...v3.37.0) (2026-10-13)
+
+
+### Features
+
+* **worktree:** serve a linked worktree from its own branch index ([#1490](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1490)) ([2d72351](https://github.com/nikolai-vysotskyi/trace-mcp/commit/2d72351bbe3145017b64b9be3ceafda9d3836aa7))
+
+
+### Bug Fixes
+
+* exclude macOS suspend time from diagnostics and plugin timeout ([#1575](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1575)) ([471c64f](https://github.com/nikolai-vysotskyi/trace-mcp/commit/471c64f48b5e6659191c1f02802830f2a415eb9e))
+* **indexer:** evict deleted directory contents (TRA-2371) ([#1572](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1572)) ([4b20d94](https://github.com/nikolai-vysotskyi/trace-mcp/commit/4b20d940842d62a3f96c4bef306070357e02ec4f))
+
+
+### Documentation
+
+* distinguish macOS sleep from daemon SQLite stalls ([#1573](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1573)) ([1e70531](https://github.com/nikolai-vysotskyi/trace-mcp/commit/1e7053190d03a9a7d8ff380a1fb774e3b54db6fa))
+* **ops:** early morning pass 2026-10-13, mention sweep (Graft, goCraft, TRACE), competitor deep dive (TRA-2373) ([#1574](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1574)) ([e6003bf](https://github.com/nikolai-vysotskyi/trace-mcp/commit/e6003bf78cc0b07194fed84219ad94f4023f93fe))
+* **ops:** morning pass 2026-10-13, mention sweep, assetfeed classification, competitor triage (TRA-2385) ([#1578](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1578)) ([42546d8](https://github.com/nikolai-vysotskyi/trace-mcp/commit/42546d89842841911dfc7f15c2f2cb10578d543c))
+* **sitemap:** refresh lastmod for configuration and config-index (TRA-2383) ([#1577](https://github.com/nikolai-vysotskyi/trace-mcp/issues/1577)) ([3c13165](https://github.com/nikolai-vysotskyi/trace-mcp/commit/3c131653cb7e9e2e985b4be0bdfb9d46c09792a2))
+
 ## [3.36.7](https://github.com/nikolai-vysotskyi/trace-mcp/compare/v3.36.6...v3.36.7) (2026-10-12)
 
 

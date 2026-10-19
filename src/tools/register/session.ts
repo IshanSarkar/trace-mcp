@@ -43,6 +43,9 @@ import { runLoadTools } from '../../server/tool-surface.js';
 import { getIndexHealth, getProjectMap } from '../project/project.js';
 import { getDeadCodeV2 } from '../refactoring/dead-code.js';
 import { markStaleOnBranch, staleOnBranchWarning } from '../../server/worktree-stale.js';
+import { markToolConsultation } from '../../server/consultation-markers.js';
+import type { WorktreeIndexTarget } from '../../server/worktree-index-route.js';
+import type { WorktreeDelta } from '../../worktree-delta.js';
 
 export function registerSessionTools(server: McpServer, ctx: MetaContext): void {
   const {
@@ -67,6 +70,8 @@ export function registerSessionTools(server: McpServer, ctx: MetaContext): void 
     onJournalEntry,
     sessionId,
     getWorktreeDelta,
+    worktreeIndex,
+    isSessionLocalTool,
   } = ctx;
 
   // --- Resources ---
@@ -957,8 +962,25 @@ export function registerSessionTools(server: McpServer, ctx: MetaContext): void 
     async ({ calls }) => {
       const results: { tool: string; result?: unknown; error?: string }[] = [];
       const excluded = new Set(config.tools?.exclude ?? []);
-      // Sub-calls bypass the gate, so flag worktree-changed files here too.
-      const worktreeDelta = getWorktreeDelta ? await getWorktreeDelta() : null;
+      // Sub-calls bypass the gate, so route them to a ready branch index and
+      // flag worktree-changed files here too. Without a branch index the
+      // canonical delta is resolved once, as before.
+      // Resolved on the first sub-call that can use it: a batch of
+      // session-local tools never waits for the branch index.
+      let worktreeTarget: WorktreeIndexTarget | null | undefined;
+      const loadWorktreeTarget = async (): Promise<WorktreeIndexTarget | null> => {
+        if (worktreeTarget === undefined) {
+          worktreeTarget = worktreeIndex ? await worktreeIndex.resolve() : null;
+        }
+        return worktreeTarget;
+      };
+      let canonicalDelta: WorktreeDelta | null | undefined;
+      const loadCanonicalDelta = async (): Promise<WorktreeDelta | null> => {
+        if (canonicalDelta === undefined) {
+          canonicalDelta = getWorktreeDelta ? await getWorktreeDelta() : null;
+        }
+        return canonicalDelta;
+      };
       for (const call of calls) {
         // `tools.exclude` is the one hard restriction — a tool excluded by
         // config must be unreachable through every door, including this one.
@@ -977,8 +999,14 @@ export function registerSessionTools(server: McpServer, ctx: MetaContext): void 
         }
         try {
           savings.recordCall(call.tool);
+          if (projectRoot) markToolConsultation(projectRoot, call.tool, call.args ?? {});
           const subStart = Date.now();
-          const response = await handler(call.args);
+          const target =
+            worktreeIndex && !isSessionLocalTool?.(call.tool) ? await loadWorktreeTarget() : null;
+          const branchResponse = target ? await target.run(call.tool, call.args) : undefined;
+          const response = branchResponse ?? (await handler(call.args));
+          const worktreeDelta =
+            branchResponse && target ? target.pending() : await loadCanonicalDelta();
           const subLatency = Date.now() - subStart;
           // Parse the JSON text from the response to embed inline
           const text = response.content?.[0]?.text;
@@ -1026,7 +1054,10 @@ export function registerSessionTools(server: McpServer, ctx: MetaContext): void 
                 parsed._budget_warning = undefined;
                 parsed._budget_level = undefined;
                 if (worktreeDelta) {
-                  const stale = staleOnBranchWarning(markStaleOnBranch(parsed, worktreeDelta));
+                  const stale = staleOnBranchWarning(
+                    markStaleOnBranch(parsed, worktreeDelta),
+                    branchResponse ? 'pending' : 'canonical',
+                  );
                   if (stale) {
                     const prior: unknown[] = Array.isArray(parsed._warnings)
                       ? parsed._warnings
