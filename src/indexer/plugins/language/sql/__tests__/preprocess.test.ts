@@ -56,4 +56,18 @@ SELECT * FROM scoped`;
     const scoped = spike.ctes.find((c) => c.name === 'scoped');
     expect(scoped?.lineStart).toBe(2);
   });
+
+  it('maps relation ref lines after DISTINCT/ON newline join (sql_reads ownership)', async () => {
+    const original = `WITH scoped AS (
+  SELECT DISTINCT
+    ON (student_id) student_id
+  FROM app.orders
+)
+SELECT 1`;
+    const spike = await spikeParseSqlSource(original);
+    const orders = spike.relationRefs.find((r) => r.text === 'app.orders');
+    expect(orders?.lineStart).toBe(4);
+    const scoped = spike.ctes.find((c) => c.name === 'scoped');
+    expect(scoped?.lineStart).toBe(1);
+  });
 });

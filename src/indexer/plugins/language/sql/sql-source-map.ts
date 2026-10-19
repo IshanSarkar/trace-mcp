@@ -62,20 +62,23 @@ export class SqlSourceMapBuilder {
     const original = this.original;
     const preprocessed = this.text;
     const toOrig = this.toOrig;
+    const origByteAt = (preIndex: number): number => {
+      if (toOrig.length === 0) return 0;
+      if (preIndex < 0) return toOrig[0] ?? 0;
+      if (preIndex >= toOrig.length) return toOrig[toOrig.length - 1] ?? 0;
+      return toOrig[preIndex] ?? 0;
+    };
     return {
       original,
       preprocessed,
-      origByteAt(preIndex: number): number {
-        if (toOrig.length === 0) return 0;
-        if (preIndex < 0) return toOrig[0] ?? 0;
-        if (preIndex >= toOrig.length) return toOrig[toOrig.length - 1] ?? 0;
-        return toOrig[preIndex] ?? 0;
-      },
+      origByteAt,
       origLineStart(preLine: number): number {
-        return lineAt(original, byteAtPreLine(preprocessed, preLine));
+        return lineAt(original, origByteAt(byteAtPreLine(preprocessed, preLine)));
       },
       origLineEnd(preLine: number): number {
-        return lineAt(original, byteAtPreLineEnd(preprocessed, preLine));
+        const preByte = byteAtPreLineEnd(preprocessed, preLine);
+        const clamped = Math.min(Math.max(preByte, 0), Math.max(0, preprocessed.length - 1));
+        return lineAt(original, origByteAt(clamped));
       },
     };
   }

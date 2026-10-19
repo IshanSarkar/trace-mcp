@@ -10,7 +10,11 @@ Maps maintainer review items to **automated** coverage in `npm run test:sql-corp
 | **3b. Duplicate CTE names** | Nested/repeated `x` emits multiple definitions | `ast-extract.test.ts` (`emits separate entries for repeated CTE names`) |
 | **4. `loads_sql` in comments/strings** | Commented loader + docstring path → no refs | `src/indexer/edge-resolvers/__tests__/python-sql-loader-paths.test.ts` |
 | **5. pnpm split** | Not a test — lockfile on pnpm 10 in PR | `package.json` `packageManager`, no `pnpm-workspace.yaml` |
+| **R2-1. Relation lines after newline-changing preprocess** | `DISTINCT`/`ON` join; `app.orders` line in original file | `preprocess.test.ts` (`maps relation ref lines after DISTINCT/ON…`), `sql-source-map.ts` (`origLineStart` via `origByteAt`) |
+| **R2-2. Nested duplicate CTE `sql_cte_ref` target** | Inner `x` wins inside `outer` | `tests/sql-corpus/sql-cte-refs.test.ts`, `sql-cte-refs.ts` scope resolver |
+| **R2-3. `qualified_literal` not masked at opening quote** | `Path("…/foo.sql")` → `via: qualified_literal` | `python-sql-loader-paths.test.ts` |
+| **R2-4. Token impact doc** | Label unmeasured (no fake token benchmark) | `indexing-cost-pr1482.md` § Retrieval token impact |
 
 **Positive-path fixtures** (unchanged role): `tests/sql-corpus/fixture-ground-truth.json`, `sql-plugin.test.ts`, `sql-plugin-metadata.test.ts`, `ast-spike.test.ts`, `loads-sql.test.ts`, `sql-regex-baseline.test.ts`.
 
-**Gate:** `npm run test:sql-corpus` — **35** tests (was 32 before review fixtures).
+**Gate:** `npm run test:sql-corpus` — **37** tests.

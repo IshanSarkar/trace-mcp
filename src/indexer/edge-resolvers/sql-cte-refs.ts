@@ -9,27 +9,73 @@ import { sqlCteSymbolId } from '../plugins/language/sql/sql-index-metadata.js';
 import type { Store } from '../../db/store.js';
 import type { PipelineState } from '../pipeline-state.js';
 
-/** First CTE definition with `name` in file (lowest line) when names repeat. */
-function resolveCteTargetSymbolId(store: Store, filePath: string, toName: string): string | null {
-  const rows = store.db
+type CteDefRow = {
+  symbol_id: string;
+  line_start: number;
+  line_end: number;
+  def_index: number;
+};
+
+function listCteDefsByName(store: Store, filePath: string, toName: string): CteDefRow[] {
+  return store.db
     .prepare(
-      `SELECT s.symbol_id
+      `SELECT s.symbol_id, s.line_start, s.line_end,
+              COALESCE(json_extract(s.metadata, '$.defIndex'), 0) AS def_index
        FROM symbols s
        JOIN files f ON f.id = s.file_id
        WHERE f.path = ?
          AND json_extract(s.metadata, '$.sqlKind') = 'cte'
          AND json_extract(s.metadata, '$.name') = ?
-       ORDER BY s.line_start ASC`,
+       ORDER BY s.line_start ASC, def_index ASC`,
     )
-    .all(filePath, toName) as Array<{ symbol_id: string }>;
-  if (rows.length > 0) return rows[0]!.symbol_id;
-  return sqlCteSymbolId(filePath, toName);
+    .all(filePath, toName) as CteDefRow[];
+}
+
+function pickBestCteDef(candidates: CteDefRow[]): CteDefRow | null {
+  if (candidates.length === 0) return null;
+  return candidates.reduce((best, cur) => {
+    if (cur.line_start > best.line_start) return cur;
+    if (cur.line_start === best.line_start && cur.def_index > best.def_index) return cur;
+    return best;
+  });
+}
+
+/** Resolve `toName` from the referencing CTE's lexical scope (nested WITH shadows outer names). */
+export function resolveCteTargetSymbolId(
+  store: Store,
+  filePath: string,
+  toName: string,
+  source: { symbol_id: string; line_start: number; line_end: number; def_index: number },
+): string | null {
+  const defs = listCteDefsByName(store, filePath, toName);
+  if (defs.length === 0) return sqlCteSymbolId(filePath, toName);
+
+  const nested = defs.filter(
+    (d) => d.line_start > source.line_start && d.line_start <= source.line_end,
+  );
+  const nestedPick = pickBestCteDef(nested);
+  if (nestedPick) return nestedPick.symbol_id;
+
+  const outer = defs.filter(
+    (d) =>
+      d.symbol_id !== source.symbol_id &&
+      (d.line_start < source.line_start ||
+        (d.line_start === source.line_start && d.def_index < source.def_index)),
+  );
+  const outerPick = pickBestCteDef(outer);
+  if (outerPick) return outerPick.symbol_id;
+
+  if (defs.length === 1) return defs[0]!.symbol_id;
+  return null;
 }
 
 type CteRow = {
   symbol_id: string;
   file_path: string;
   metadata: string;
+  line_start: number;
+  line_end: number;
+  def_index: number;
 };
 
 export function resolveSqlCteRefEdges(state: PipelineState, scope?: ChangeScope): void {
@@ -60,7 +106,8 @@ export function resolveSqlCteRefEdges(state: PipelineState, scope?: ChangeScope)
       const ph = chunk.map(() => '?').join(',');
       const chunkRows = store.db
         .prepare(
-          `SELECT s.symbol_id, f.path AS file_path, s.metadata
+          `SELECT s.symbol_id, f.path AS file_path, s.metadata, s.line_start, s.line_end,
+                  COALESCE(json_extract(s.metadata, '$.defIndex'), 0) AS def_index
            FROM symbols s
            JOIN files f ON f.id = s.file_id
            WHERE f.path LIKE '%.sql'
@@ -73,7 +120,8 @@ export function resolveSqlCteRefEdges(state: PipelineState, scope?: ChangeScope)
   } else {
     rows = store.db
       .prepare(
-        `SELECT s.symbol_id, f.path AS file_path, s.metadata
+        `SELECT s.symbol_id, f.path AS file_path, s.metadata, s.line_start, s.line_end,
+                COALESCE(json_extract(s.metadata, '$.defIndex'), 0) AS def_index
          FROM symbols s
          JOIN files f ON f.id = s.file_id
          WHERE f.path LIKE '%.sql'
@@ -97,7 +145,12 @@ export function resolveSqlCteRefEdges(state: PipelineState, scope?: ChangeScope)
     const refs = meta.referencesCtes;
     if (!refs?.length) continue;
     for (const toName of refs) {
-      const targetId = resolveCteTargetSymbolId(store, row.file_path, toName);
+      const targetId = resolveCteTargetSymbolId(store, row.file_path, toName, {
+        symbol_id: row.symbol_id,
+        line_start: row.line_start,
+        line_end: row.line_end,
+        def_index: row.def_index,
+      });
       if (!targetId) continue;
       pending.push({ source: row.symbol_id, target: targetId });
       symbolIdStrs.add(row.symbol_id);

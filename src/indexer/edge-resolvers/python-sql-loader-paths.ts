@@ -213,7 +213,8 @@ export function extractPythonSqlLoadRefs(source: string, pyFileRel: string): Pyt
   const litRe = /(?<![fF])['"]([^'"]+\.sql)['"]/g;
   for (const m of source.matchAll(litRe)) {
     const at = m.index ?? 0;
-    if (isOffsetInPythonCommentOrString(source, at)) continue;
+    // Mask comments / enclosing strings, not the candidate literal's opening quote.
+    if (at > 0 && isOffsetInPythonCommentOrString(source, at - 1)) continue;
     const sqlPath = m[1];
     if (!sqlPath || !isStaticSqlPathLiteral(sqlPath)) continue;
     if (!sqlPath.includes('/')) continue;

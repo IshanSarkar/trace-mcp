@@ -45,6 +45,14 @@ Example: read_sql_file("etl/doc_only.sql")
     expect(refs.map((r) => r.sqlPath)).toContain('ledger/payment_ledger.sql');
     expect(refs.some((r) => r.via === 'loader_call' && r.callee === 'render_sql_file')).toBe(true);
   });
+
+  it('captures Path("…/file.sql") via qualified_literal outside loader calls', () => {
+    const src = 'from pathlib import Path\nSQL = Path("scripts/queries/foo.sql")\n';
+    const refs = extractPythonSqlLoadRefs(src, 'python/runner.py');
+    expect(
+      refs.some((r) => r.sqlPath === 'scripts/queries/foo.sql' && r.via === 'qualified_literal'),
+    ).toBe(true);
+  });
 });
 
 describe('extractPathConstants', () => {

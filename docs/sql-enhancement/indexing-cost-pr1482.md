@@ -37,9 +37,11 @@ Full index cost is dominated by **Python + tree-sitter** extraction and existing
 
 New edge types are **additive**; DB size grows with symbol richness and SQL graph edges, not duplicate full-file storage.
 
-## Retrieval token impact (illustrative)
+## Retrieval token impact
 
-Not a formal benchmark harness in CI; illustrative MCP-style savings on the **public** synthetic fixture `tests/sql-corpus/fixtures/etl/two_cte_join_sample.sql` (generic `app` / `hr` tables — not a production path):
+**Unmeasured:** this doc does not include token counts from a fixed retrieval query (same fixture, same MCP options) on baseline **v3.34.6** vs this PR. The table below is an illustrative line/outline comparison only, not a token benchmark.
+
+Illustrative MCP-style savings on the **public** synthetic fixture `tests/sql-corpus/fixtures/etl/two_cte_join_sample.sql` (generic `app` / `hr` tables — not a production path):
 
 | Approach | `two_cte_join_sample.sql` (33 lines) |
 |----------|--------------------------------------|
@@ -53,7 +55,7 @@ Exact token counts depend on client and `detail_level`; the product goal is **ou
 Upstream gate for this PR:
 
 ```bash
-npm run test:sql-corpus   # 35 tests, public fixtures only
+npm run test:sql-corpus   # 37 tests, public fixtures only
 npm run build
 ```
 
