@@ -55,7 +55,7 @@ Exact token counts depend on client and `detail_level`; the product goal is **ou
 Upstream gate for this PR:
 
 ```bash
-npm run test:sql-corpus   # 37 tests, public fixtures only
+npm run test:sql-corpus   # 38 tests, public fixtures only
 npm run build
 ```
 

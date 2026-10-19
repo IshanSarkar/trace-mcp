@@ -82,4 +82,46 @@ describe('sql_reads resolver', () => {
       .all() as Array<{ relation: string }>;
     expect(relations.map((r) => r.relation)).toContain('app.orders');
   });
+
+  it('distinct_on_newline: app.orders sql_reads sources scoped CTE after DISTINCT/ON preprocess', async () => {
+    const rel = 'standalone/distinct_on_newline_reads.sql';
+    const sql = `WITH decoy AS (
+  SELECT 1
+),
+scoped AS (
+  SELECT DISTINCT
+    ON (student_id) student_id
+  FROM app.orders
+)
+SELECT 1`;
+    const harness = createTestHarness(plugin);
+    await harness.indexFile(rel, sql);
+
+    const fileId = harness.getFileId(rel);
+    expect(fileId).toBeDefined();
+    harness.store.createNode('file', fileId!);
+
+    resolveSqlReadEdges({ store: harness.store });
+
+    const rows = harness.store.db
+      .prepare(
+        `SELECT json_extract(src.metadata, '$.name') AS source_cte,
+                json_extract(tgt.metadata, '$.relation') AS relation,
+                json_extract(e.metadata, '$.lineStart') AS ref_line
+         FROM edges e
+         JOIN edge_types t ON t.id = e.edge_type_id
+         JOIN nodes sn ON sn.id = e.source_node_id
+         JOIN symbols src ON src.id = sn.ref_id AND sn.node_type = 'symbol'
+         JOIN nodes tn ON tn.id = e.target_node_id
+         JOIN symbols tgt ON tgt.id = tn.ref_id AND tn.node_type = 'symbol'
+         WHERE t.name = 'sql_reads'
+           AND json_extract(tgt.metadata, '$.relation') = 'app.orders'`,
+      )
+      .all() as Array<{ source_cte: string; relation: string; ref_line: number }>;
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.source_cte).toBe('scoped');
+    expect(rows[0]!.relation).toBe('app.orders');
+    expect(rows[0]!.ref_line).toBe(7);
+  });
 });
